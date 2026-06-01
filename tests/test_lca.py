@@ -75,7 +75,10 @@ def _build(flowsheet_ID):
 # sheets scoped to those a minimal system can produce: include 'Flowsheet'
 # (BioSTEAM leaves an internal flag unbound if it is omitted) and exclude
 # 'Water mass balance' (needs a ProcessWaterCenter facility).
-_SHEETS = {'Flowsheet', 'Itemized costs', 'Stream table', 'Design requirements'}
+# 'Flowsheet' is intentionally excluded: it renders the system diagram (graphviz),
+# which writes a stray flowsheet.png to the working directory and is BioSTEAM's own
+# rendering, not part of QSDsan's save_report unification (the appended 'LCA' sheet).
+_SHEETS = {'Itemized costs', 'Stream table', 'Design requirements'}
 
 
 def _skip_if_biosteam_report_broken(sys, tmp_path):

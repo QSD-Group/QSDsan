@@ -24,7 +24,8 @@ from thermo import TDependentProperty
 from chemicals.elements import (
     mass_fractions as get_mass_frac,
     molecular_weight,
-    charge_from_formula
+    charge_from_formula,
+    get_atoms,
     )
 from . import Chemical
 from ._compat import (
@@ -218,7 +219,7 @@ class Component(Chemical):
     __slots__ = _component_slots
 
     # ID must be provided
-    def __new__(cls, ID, cache=False, search_ID=None, chemical=None, formula=None, phase=None, measured_as=None,
+    def __new__(cls, ID, cache=False, search_ID=None, chemical=None, formula=None, formula_override=False, phase=None, measured_as=None,
                 i_C=None, i_N=None, i_P=None, i_K=None, i_Mg=None, i_Ca=None,
                 i_mass=None, i_charge=None, i_COD=None, i_NOD=None,
                 f_BOD5_COD=None, f_uBOD_COD=None, f_Vmass_Totmass=None,
@@ -254,14 +255,7 @@ class Component(Chemical):
             for field in chemical.__slots__:
                 setattr(self, field, copy_maybe(getattr(chemical, field, None)))
             self._ID = ID
-            if formula and formula != chemical.formula:
-                self._formula = formula
-                if self._Hf is None:
-                    self._chem_MW = molecular_weight(self.atoms)
-                else:
-                    self.reset_combustion_data()
-            else:
-                self._chem_MW = molecular_weight(self.atoms)
+            self._apply_formula(formula, formula_override)
             if phase: self.at_state(phase)
             TDependentProperty.RAISE_PROPERTY_CALCULATION_ERROR = False
             self._init_energies(self.Cn, self.Hvap, self.Psat, self.Hfus, self.Sfus,
@@ -282,13 +276,7 @@ class Component(Chemical):
                                        **chemical_properties)
                 if phase: lock_phase(self, phase)
             self._ID = ID
-            self._chem_MW = 1
-            if formula:
-                self._formula = None
-                self.formula = formula
-            else:
-                if self.formula:
-                    self._chem_MW = molecular_weight(self.atoms)
+            self._apply_formula(formula, formula_override)
 
         # Assign through the property setters so invalid values are caught at
         # creation (setters validate via `check_return_property`)
@@ -313,6 +301,33 @@ class Component(Chemical):
         self.i_COD = i_COD
         self.i_NOD = i_NOD
         return self
+
+
+    def _apply_formula(self, formula, formula_override):
+        '''
+        Apply a ``formula`` to a freshly built component and recompute the
+        dependent properties (``chem_MW`` and the element-content fractions).
+        Used by both construction paths so the re-init is consistent.
+
+        When the component was built from a database/source chemical that
+        already has a formula and the provided ``formula`` has a *different*
+        atomic composition, this is treated as an override and raises unless
+        ``formula_override=True`` is passed (a different spelling of the same
+        atoms, e.g. ``CH3CH2CH3`` for ``C3H8``, is not an override). A blank
+        custom component (no source formula) is never gated.
+        '''
+        if formula and self.formula and not formula_override \
+                and get_atoms(formula) != self.atoms:
+            raise ValueError(
+                f'the given formula {formula!r} does not match the formula '
+                f'{self.formula!r} of the source/database chemical for component '
+                f'{self.ID!r}; pass formula_override=True to override it.')
+        self._chem_MW = 1
+        if formula:
+            self._formula = None
+            self.formula = formula
+        elif self.formula:
+            self._chem_MW = molecular_weight(self.atoms)
 
 
     def __reduce__(self):
@@ -730,7 +745,7 @@ class Component(Chemical):
 
 
     @classmethod
-    def from_chemical(cls, ID, chemical=None, formula=None, phase=None, measured_as=None,
+    def from_chemical(cls, ID, chemical=None, formula=None, formula_override=False, phase=None, measured_as=None,
                       i_C=None, i_N=None, i_P=None, i_K=None, i_Mg=None, i_Ca=None,
                       i_mass=None, i_charge=None, i_COD=None, i_NOD=None,
                       f_BOD5_COD=None, f_uBOD_COD=None, f_Vmass_Totmass=None,
@@ -765,7 +780,7 @@ class Component(Chemical):
         >>> from qsdsan import Component
         >>> Struvite = Component.from_chemical('Struvite',
         ...                                    chemical='MagnesiumAmmoniumPhosphate',
-        ...                                    formula='NH4MgPO4·H12O6',
+        ...                                    formula='NH4MgPO4·H12O6', formula_override=True,
         ...                                    phase='l', particle_size='Particulate',
         ...                                    degradability='Undegradable', organic=False)
         >>> Struvite.show(chemical_info=True)
@@ -825,7 +840,7 @@ class Component(Chemical):
         # Thin wrapper around the constructor's `chemical=` path (see `__new__`).
         # `from_chemical`'s historical default is to use `ID` as the chemical.
         if chemical is None: chemical = ID
-        return cls(ID, chemical=chemical, formula=formula, phase=phase, measured_as=measured_as,
+        return cls(ID, chemical=chemical, formula=formula, formula_override=formula_override, phase=phase, measured_as=measured_as,
                    i_C=i_C, i_N=i_N, i_P=i_P, i_K=i_K, i_Mg=i_Mg, i_Ca=i_Ca,
                    i_mass=i_mass, i_charge=i_charge, i_COD=i_COD, i_NOD=i_NOD,
                    f_BOD5_COD=f_BOD5_COD, f_uBOD_COD=f_uBOD_COD, f_Vmass_Totmass=f_Vmass_Totmass,
