@@ -16,15 +16,15 @@ build:
     # golang: "1.17"
   jobs:
     post_build:
-      # Rebuild the chatbot search index from the just-built QSDsan HTML.
-      # Skips gracefully when VOYAGE_API_KEY is not set so docs builds and PR
-      # previews never fail just because the embedding key is absent.
+      # Rebuild the chatbot search index, but only on the dedicated 'docs-chatbot'
+      # version (where the widget is shown) and only when VOYAGE_API_KEY is set, so
+      # other versions and PR previews never run it or fail for a missing key.
       - |
-        if [ -n "$VOYAGE_API_KEY" ]; then
+        if [ "$READTHEDOCS_VERSION" = "docs-chatbot" ] && [ -n "$VOYAGE_API_KEY" ]; then
           pip install voyageai beautifulsoup4 &&
           python docs/chatbot/index_docs.py
         else
-          echo "VOYAGE_API_KEY not set; skipping chatbot reindex."
+          echo "Skipping chatbot reindex (runs only on the docs-chatbot version with VOYAGE_API_KEY set)."
         fi
 
 # Build documentation in the docs/ directory with Sphinx
