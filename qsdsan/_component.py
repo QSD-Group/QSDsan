@@ -127,7 +127,15 @@ class Component(Chemical):
     ID : str
         ID for the component, must be unique.
     search_ID : str
-        ID that will be passed to :class:`thermosteam.Chemical` to search the database.
+        A name/identifier looked up in the database to build the component. An
+        explicit `search_ID` that is not found raises a `LookupError`; a bare
+        `ID` that is not found falls back to a blank component to fill in
+        manually. Passing a :class:`thermosteam.Chemical` object to `search_ID`
+        raises a `TypeError`.
+    chemical : :class:`thermosteam.Chemical`
+        A pre-built chemical object to build the component from. A name string
+        passed to `chemical` is accepted as an alias for `search_ID`. Giving
+        both a Chemical object and a `search_ID` raises a `ValueError`.
     formula : str
         Formula for the component, formula from the database will be used
         if the component is constructed from the database and it has a formula in the database.
@@ -216,12 +224,33 @@ class Component(Chemical):
                 f_BOD5_COD=None, f_uBOD_COD=None, f_Vmass_Totmass=None,
                 description=None, particle_size=None,
                 degradability=None, organic=None, **chemical_properties):
+        # --- Normalize the `search_ID` / `chemical` keywords (see design contract) ---
+        # `search_ID` is a name to look up; `chemical` is a pre-built Chemical object.
+        if isinstance(search_ID, Chemical):
+            raise TypeError(
+                '`search_ID` must be a string identifier; pass a Chemical object '
+                'via the `chemical` keyword instead.')
+        if isinstance(chemical, Chemical):
+            if search_ID is not None:
+                raise ValueError(
+                    'Specify the chemical source once: a Chemical object via '
+                    '`chemical` or a name via `search_ID`, not both.')
+        elif chemical is not None:                      # a name string
+            if search_ID is not None and search_ID != chemical:
+                raise ValueError(
+                    f'Conflicting lookup names: chemical={chemical!r} and '
+                    f'search_ID={search_ID!r}.')
+            search_ID = search_ID or chemical
+            chemical = None
+        # `search_db` may arrive via **chemical_properties (e.g. Component.copy
+        # passes search_db=False to make a blank shell); pull it out so it does
+        # not collide with the explicit value passed to super().__new__ below.
+        search_db = chemical_properties.pop('search_db', True)
         if chemical is not None:
-            # Build from an existing `thermosteam.Chemical` (or a chemical name/CAS to
-            # look up); `Component.from_chemical` delegates here.
+            # Path A: build from an existing Chemical object by copying its data.
+            # thermosteam's constructor cannot ingest a Chemical instance, so we
+            # mimic Chemical.copy() (guarded by test_component_copy_matches_thermosteam).
             self = super().__new__(cls, ID=ID, cache=cache, search_db=False)
-            if isinstance(chemical, str):
-                chemical = Chemical(chemical, **chemical_properties)
             for field in chemical.__slots__:
                 setattr(self, field, copy_maybe(getattr(chemical, field, None)))
             self._ID = ID
@@ -239,14 +268,19 @@ class Component(Chemical):
                                 self.Tm, self.Tb, self.eos, self.phase_ref, self.S0)
             TDependentProperty.RAISE_PROPERTY_CALCULATION_ERROR = True
         else:
-            if search_ID:
+            # Path B: look up `search_ID or ID` and let thermosteam build natively,
+            # passing `phase` so it locks-then-inits in the canonical order. An
+            # explicit `search_ID` miss raises; a bare `ID` miss falls back to a
+            # blank custom component (phase-locked via lock_phase, unchanged).
+            try:
                 self = super().__new__(cls, ID=ID, cache=cache, search_ID=search_ID,
-                                       search_db=True, **chemical_properties)
-            else: # still try to search nonetheless
-                try: self = super().__new__(cls, ID=ID, cache=cache, **chemical_properties)
-                except LookupError:
-                    self = super().__new__(cls, ID=ID, cache=cache, search_db=False, **chemical_properties)
-
+                                       phase=phase, search_db=search_db, **chemical_properties)
+            except LookupError:
+                if search_ID is not None:
+                    raise
+                self = super().__new__(cls, ID=ID, cache=cache, search_db=False,
+                                       **chemical_properties)
+                if phase: lock_phase(self, phase)
             self._ID = ID
             self._chem_MW = 1
             if formula:
@@ -255,7 +289,6 @@ class Component(Chemical):
             else:
                 if self.formula:
                     self._chem_MW = molecular_weight(self.atoms)
-            if phase: lock_phase(self, phase)
 
         # Assign through the property setters so invalid values are caught at
         # creation (setters validate via `check_return_property`)
@@ -714,9 +747,10 @@ class Component(Chemical):
 
         .. note::
 
-            If you don't have a pre-constructed chemical, you are recommend to use
-            the kwargs `ID`, or `search_ID` in :class:`Component` to search the database
-            instead of using this :func:`Component.from_chemical`.
+            This method is retained for backward compatibility. For a database
+            name lookup, prefer ``Component(ID, search_ID='name', ...)``; and
+            ``Component.from_chemical(ID, chemical=obj_or_name, ...)`` is
+            equivalent to ``Component(ID, chemical=obj_or_name, ...)``.
 
             E.g., do
 
@@ -748,7 +782,7 @@ class Component(Chemical):
                  UNIFAC: <Empty>
                  PSRK: <Empty>
                  NIST: <Empty>
-        [Data]   MW: 137.31 g/mol
+        [Data]   MW: 245.41 g/mol
                  Tm: None
                  Tb: None
                  Tt: None
