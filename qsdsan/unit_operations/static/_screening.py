@@ -37,6 +37,21 @@ class Screening(SanUnit):
         Cost of compacted solids disposal, [$/ft3].
     power_demand : float
         Power usage for screening, [kW/MGD].
+
+    Examples
+    --------
+    >>> from qsdsan.utils import create_example_wwt_components
+    >>> cmps = create_example_wwt_components()
+    >>> from qsdsan import System, WasteStream
+    >>> from qsdsan.unit_operations import Screening
+    >>> inf = WasteStream('inf')
+    >>> inf.set_flow_by_concentration(flow_tot=20,
+    ...     concentrations={'Substrate': 300, 'X_inert': 100}, units=('mgd', 'mg/L'))
+    >>> SC = Screening('SC', ins=inf, outs='screened')
+    >>> sys = System('sys', path=(SC,))
+    >>> sys.simulate()
+    >>> round(SC.power_utility.rate, 2)  # kW
+    14.91
     '''
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  solids_yield=2, compaction=0.75,

@@ -44,7 +44,21 @@ class Sedimentation(SludgeSeparator, Decay):
 
     Examples
     --------
-    `bwaise systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/systems.py>`_
+    >>> from qsdsan.utils import create_example_sanitation_components
+    >>> cmps = create_example_sanitation_components()
+    >>> from qsdsan import System, WasteStream
+    >>> from qsdsan.unit_operations import Sedimentation
+    >>> ws = WasteStream('ws', H2O=1000, OtherSS=50, NH3=2, units='kg/hr')
+    >>> SD = Sedimentation('SD', ins=ws,
+    ...                    outs=('settled', 'effluent', 'CH4', 'N2O'),
+    ...                    split=0.5, decay_k_COD=3, max_CH4_emission=0.25)
+    >>> sys = System('sys', path=(SD,))
+    >>> sys.simulate()
+    >>> round(SD.outs[0].F_mass, 1)  # settled-solids mass flow, kg/hr
+    901.8
+
+    See `bwaise systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/systems.py>`_
+    for use in a complete sanitation system.
 
     References
     ----------

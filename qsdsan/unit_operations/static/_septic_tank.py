@@ -61,6 +61,26 @@ class SepticTank(SanUnit, Decay):
         Moisture content of the sludge, assumed to be 0.95 based on Tchobanoglous et al.
         (sludge leaving anaerobic treatment 2-5% solids).
 
+    Examples
+    --------
+    >>> from qsdsan.utils import create_example_sanitation_components
+    >>> cmps = create_example_sanitation_components()
+    >>> from qsdsan import System, WasteStream
+    >>> from qsdsan.unit_operations import SepticTank
+    >>> ws = WasteStream('ws', H2O=1000, NH3=5, NonNH3=2, P=2, K=1,
+    ...                  OtherSS=30, units='kg/hr')
+    >>> mg = WasteStream('mg', MagnesiumHydroxide=1, units='kg/hr')
+    >>> ST = SepticTank('ST', ins=(ws, mg),
+    ...                 outs=('treated', 'CH4', 'N2O', 'sludge', 'struvite'),
+    ...                 decay_k_COD=3, decay_k_N=3, max_CH4_emission=0.25, ppl=4)
+    >>> sys = System('sys', path=(ST,))
+    >>> sys.simulate()
+    >>> round(ST.design_results['FRP'], 1)  # kg fiber-reinforced plastic
+    1147.5
+
+    See the EXPOsan `reclaimer systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/reclaimer/systems.py>`_
+    for use in a complete system.
+
     References
     ----------
     [1] 2019.06 Technical report for BMGF V3 _ CC 2019.06.13.pdf

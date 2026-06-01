@@ -371,6 +371,28 @@ class MURT(Toilet):
     if_include_front_end : bool
         If False, will not consider the capital and operating costs of this unit.
 
+    Examples
+    --------
+    >>> from qsdsan.utils import create_example_sanitation_components
+    >>> cmps = create_example_sanitation_components()
+    >>> from qsdsan import System
+    >>> from qsdsan.unit_operations import Excretion, MURT
+    >>> U1 = Excretion('U1')
+    >>> # The decay rate constants and max CH4 emission are not loaded by
+    >>> # default; set them so the degradation calculation can run.
+    >>> U2 = MURT('U2', ins=(U1-0, U1-1, 'toilet_paper', 'flushing_water',
+    ...                      'cleansing_water', 'desiccant'),
+    ...           outs=('mixed', 'CH4', 'N2O'),
+    ...           decay_k_COD=3, decay_k_N=3, max_CH4_emission=0.25,
+    ...           N_user=4, N_tot_user=400)
+    >>> sys = System('sys', path=(U1, U2))
+    >>> sys.simulate()
+    >>> U2.N_toilet  # ceil(N_tot_user/N_user)
+    100
+
+    See `bwaise systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/systems.py>`_
+    for use in a complete sanitation system.
+
     See Also
     --------
     :class:`qsdsan.unit_operations.Toilet`
@@ -891,7 +913,25 @@ class UDDT(Toilet):
 
     Examples
     --------
-    `bwaise systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/systems.py>`_
+    >>> from qsdsan.utils import create_example_sanitation_components
+    >>> cmps = create_example_sanitation_components()
+    >>> from qsdsan import System
+    >>> from qsdsan.unit_operations import Excretion, UDDT
+    >>> U1 = Excretion('U1')
+    >>> # The decay rate constants and max CH4 emission are not loaded by
+    >>> # default; set them so the degradation calculation can run.
+    >>> U2 = UDDT('U2', ins=(U1-0, U1-1, 'toilet_paper', 'flushing_water',
+    ...                      'cleansing_water', 'desiccant'),
+    ...           outs=('liquid', 'solid', 'CH4', 'N2O', 'struvite', 'HAP'),
+    ...           decay_k_COD=3, decay_k_N=3, max_CH4_emission=0.25,
+    ...           N_user=4, N_tot_user=400)
+    >>> sys = System('sys', path=(U1, U2))
+    >>> sys.simulate()
+    >>> round(U2.design_results['Collection period'], 1)  # days
+    3.5
+
+    See `bwaise systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/systems.py>`_
+    for use in a complete sanitation system.
 
     References
     ----------

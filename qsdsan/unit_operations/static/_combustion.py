@@ -50,7 +50,20 @@ class BiogasCombustion(SanUnit):
 
     Examples
     --------
-    `bwaise systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/systems.py>`_
+    >>> from qsdsan.utils import create_example_sanitation_components
+    >>> cmps = create_example_sanitation_components()
+    >>> from qsdsan import System, WasteStream
+    >>> from qsdsan.unit_operations import BiogasCombustion
+    >>> biogas = WasteStream('biogas', CH4=10, units='kg/hr')
+    >>> BC = BiogasCombustion('BC', ins=(biogas, 'air'),
+    ...                       outs=('used', 'lost', 'wasted'), if_combustion=False)
+    >>> sys = System('sys', path=(BC,))
+    >>> sys.simulate()
+    >>> round(BC.outs[0].F_mass, 2)  # biogas used, kg/hr
+    4.95
+
+    See `bwaise systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/systems.py>`_
+    for use in a complete sanitation system.
     '''
     _N_ins = 2
     _N_outs = 3
@@ -145,6 +158,21 @@ class CombinedHeatPower(SanUnit, Facility):
             If energy in the feed (without natural gas) is sufficient enough,
             the system could still be producing power even when
             `supplement_power_utility` is False.
+
+    Examples
+    --------
+    >>> from qsdsan.utils import create_example_wwt_components
+    >>> cmps = create_example_wwt_components()
+    >>> from qsdsan import System, WasteStream
+    >>> from qsdsan.unit_operations import CombinedHeatPower
+    >>> biogas = WasteStream('biogas', CH4=50, units='kg/hr')
+    >>> CHP = CombinedHeatPower('CHP', ins=(biogas, 'natural_gas', 'air'),
+    ...                         outs=('emission', 'solids'),
+    ...                         include_construction=False)
+    >>> sys = System('sys', path=(CHP,))
+    >>> sys.simulate()
+    >>> round(CHP.power_utility.rate, 1)  # net power, kW (negative = produced)
+    -281.6
 
     References
     ----------
