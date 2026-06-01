@@ -40,7 +40,7 @@ class Tank(SanUnit, BSTTank, isabstract=True):
 
     See Also
     --------
-    :class:`biosteam.units.Tank`
+    `biosteam.units.Tank <https://biosteam.readthedocs.io/en/latest/API/units/tank.html>`_
     '''
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, *,
@@ -71,7 +71,7 @@ class MixTank(Tank, BSTMixTank):
 
     See Also
     --------
-    :class:`biosteam.units.MixTank`
+    `biosteam.units.MixTank <https://biosteam.readthedocs.io/en/latest/API/units/tank.html>`_
     '''
 
 
@@ -81,7 +81,7 @@ class StorageTank(Tank, BSTStorageTank):
 
     See Also
     --------
-    :class:`biosteam.units.StorageTank`
+    `biosteam.units.StorageTank <https://biosteam.readthedocs.io/en/latest/API/units/tank.html>`_
     '''
 
     _units = {'Diameter': 'ft',

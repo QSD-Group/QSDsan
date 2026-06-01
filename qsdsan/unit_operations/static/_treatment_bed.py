@@ -48,7 +48,22 @@ class DryingBed(SanUnit, Decay):
 
     Examples
     --------
-    `bwaise systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/systems.py>`_
+    >>> from qsdsan.utils import create_example_sanitation_components
+    >>> cmps = create_example_sanitation_components()
+    >>> from qsdsan import System, WasteStream
+    >>> from qsdsan.unit_operations import DryingBed
+    >>> ws = WasteStream('ws', H2O=1000, NH3=5, NonNH3=2, P=1, OtherSS=50,
+    ...                  units='kg/hr')
+    >>> DB = DryingBed('DB', ins=ws, outs=('solid', 'evaporated', 'CH4', 'N2O'),
+    ...                design_type='unplanted',
+    ...                decay_k_COD=3, decay_k_N=3, max_CH4_emission=0.25)
+    >>> sys = System('sys', path=(DB,))
+    >>> sys.simulate()
+    >>> DB.design_results['Number of covered bed']
+    19
+
+    See `bwaise systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/systems.py>`_
+    for use in a complete sanitation system.
 
     References
     ----------
@@ -301,7 +316,21 @@ class LiquidTreatmentBed(SanUnit, Decay):
 
     Examples
     --------
-    `bwaise systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/systems.py>`_
+    >>> from qsdsan.utils import create_example_sanitation_components
+    >>> cmps = create_example_sanitation_components()
+    >>> from qsdsan import System, WasteStream
+    >>> from qsdsan.unit_operations import LiquidTreatmentBed
+    >>> ws = WasteStream('ws', H2O=1000, NH3=5, NonNH3=2, P=1, OtherSS=30,
+    ...                  units='kg/hr')
+    >>> LB = LiquidTreatmentBed('LB', ins=ws, outs=('treated', 'CH4', 'N2O'),
+    ...                         decay_k_COD=3, decay_k_N=3, max_CH4_emission=0.25)
+    >>> sys = System('sys', path=(LB,))
+    >>> sys.simulate()
+    >>> round(LB.design_results['Single bed volume'], 1)  # m3
+    325.7
+
+    See `bwaise systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/systems.py>`_
+    for use in a complete sanitation system.
 
     References
     ----------

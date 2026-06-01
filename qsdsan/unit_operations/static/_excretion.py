@@ -43,7 +43,19 @@ class Excretion(SanUnit):
 
     Examples
     --------
-    `bwaise systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/systems.py>`_
+    >>> from qsdsan.utils import create_example_sanitation_components
+    >>> cmps = create_example_sanitation_components()
+    >>> from qsdsan.unit_operations import Excretion
+    >>> U1 = Excretion('U1')
+    >>> U1.simulate()
+    >>> urine, feces = U1.outs
+    >>> round(urine.TN, 1)  # total nitrogen in urine, mg/L
+    4277.9
+    >>> round(feces.COD, 1)  # COD in feces, mg/L
+    123224.0
+
+    See `bwaise systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/systems.py>`_
+    for use in a complete sanitation system.
 
     References
     ----------

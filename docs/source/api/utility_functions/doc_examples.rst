@@ -9,9 +9,24 @@ create_example_components
 .. autofunction:: qsdsan.utils.create_example_components
 
 
+create_example_sanitation_components
+------------------------------------
+.. autofunction:: qsdsan.utils.create_example_sanitation_components
+
+
+create_example_wwt_components
+-----------------------------
+.. autofunction:: qsdsan.utils.create_example_wwt_components
+
+
 create_example_system
 ---------------------
 .. autofunction:: qsdsan.utils.create_example_system
+
+
+create_example_treatment_systems
+--------------------------------
+.. autofunction:: qsdsan.utils.create_example_treatment_systems
 
 
 create_example_model
