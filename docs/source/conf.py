@@ -99,13 +99,22 @@ html_static_path = ['_static']
 html_css_files = [
 	'css/qsdsan.css',
  	'css/copybutton.css',
- 	'css/chatbot.css',
 # 	'css/theme_overrides.css',
  	]
 html_js_files = [
     'js/unit-operation-filters.js',
-    'js/chatbot.js',
 ]
+
+# Docs chatbot widget (internal-first): register the assets only on the dedicated
+# 'docs-chatbot' Read the Docs version, and on local builds for development. Set
+# CHATBOT_WIDGET_VERSIONS (comma-separated) to override which RTD versions show it.
+import os as _os
+_chatbot_versions = _os.environ.get("CHATBOT_WIDGET_VERSIONS", "docs-chatbot").split(",")
+_rtd_version = _os.environ.get("READTHEDOCS_VERSION")
+if _rtd_version is None or _rtd_version in _chatbot_versions:
+    html_css_files.append('css/chatbot.css')
+    html_js_files.append('js/chatbot.js')
+del _os, _chatbot_versions, _rtd_version
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
