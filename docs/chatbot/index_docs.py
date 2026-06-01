@@ -14,6 +14,14 @@ import chunking
 import embeddings
 
 
+# Pages indexed from the built docs: the tutorials / API / FAQ subtrees plus the
+# homepage (index.html), which carries the install and overview content. Read the
+# Docs build scaffolding is skipped.
+_INDEXED_DIRS = ("tutorials", "api", "faq")
+_INDEXED_ROOT_PAGES = ("index.html",)
+_SKIP_PAGES = {"genindex.html", "search.html", "py-modindex.html", "404.html"}
+
+
 def _page_type(rel_path: str) -> str:
     """Tag a built page by its location under the docs tree."""
     head = rel_path.replace(os.sep, "/").split("/", 1)[0]
@@ -21,25 +29,32 @@ def _page_type(rel_path: str) -> str:
         return "tutorial"
     if head == "api":
         return "api"
-    return "tutorial"
+    if head == "faq":
+        return "faq"
+    return "guide"
 
 
 def build_qsdsan_chunks(html_dir: str, base_url: str | None = None) -> list[dict]:
     """Walk a built Sphinx HTML tree and chunk each page by heading.
 
     Citation URL = readthedocs base + page path relative to html_dir + #anchor.
-    Only files under tutorials/ and api/ are indexed.
+    Indexes the tutorials/, api/, and faq/ subtrees plus the homepage; skips Read
+    the Docs build scaffolding (search, genindex, ...).
     """
     base_url = base_url or config.QSDSAN_DOCS_BASE
     chunks: list[dict] = []
     for root, _dirs, files in os.walk(html_dir):
         for fname in files:
-            if not fname.endswith(".html"):
+            if not fname.endswith(".html") or fname in _SKIP_PAGES:
                 continue
             abs_path = os.path.join(root, fname)
             rel_path = os.path.relpath(abs_path, html_dir).replace(os.sep, "/")
-            head = rel_path.split("/", 1)[0]
-            if head not in ("tutorials", "api"):
+            parts = rel_path.split("/")
+            is_root_page = len(parts) == 1
+            if not (
+                parts[0] in _INDEXED_DIRS
+                or (is_root_page and fname in _INDEXED_ROOT_PAGES)
+            ):
                 continue
             ptype = _page_type(rel_path)
             with open(abs_path, encoding="utf-8") as fh:

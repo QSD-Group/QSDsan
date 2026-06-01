@@ -152,6 +152,23 @@ def test_exposan_question_returns_pointer_without_calling_claude():
     assert out["citations"] == []
 
 
+def test_smalltalk_returns_greeting_without_calling_claude():
+    claude = FakeClaude("SHOULD NOT BE CALLED")
+    out = engine.answer_question(
+        "hello",
+        records=RECORDS,
+        embed_fn=embed_query_high,
+        claude_client=claude,
+        top_k=2,
+        threshold=0.5,
+        gen_model="claude-haiku-4-5-20251001",
+    )
+    assert claude.received is None  # Claude never invoked
+    assert "QSDsan documentation assistant" in out["answer"]
+    assert "couldn't find" not in out["answer"]
+    assert out["citations"] == []
+
+
 def test_empty_model_answer_refuses():
     claude = FakeClaude("")  # model returned no usable text
     out = engine.answer_question(

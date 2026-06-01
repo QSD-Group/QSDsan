@@ -30,6 +30,10 @@ def answer_question(
     gen_model,
 ):
     """Return {"answer": str, "citations": list[dict]}."""
+    # Non-technical: greetings and capability/meta questions get a friendly welcome.
+    if prompts.is_smalltalk(question):
+        return {"answer": prompts.greeting_message(), "citations": []}
+
     # EXPOsan / "what systems" questions are pointed to the Systems page and the
     # EXPOsan repo rather than answered from the index (EXPOsan is not indexed).
     if prompts.is_exposan_question(question):

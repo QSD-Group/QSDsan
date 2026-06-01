@@ -7,8 +7,11 @@ SYSTEM_PROMPT = (
     "You are the QSDsan documentation assistant. "
     "Answer ONLY using the numbered excerpts provided in the user message. "
     "Cite every claim with its excerpt number and URL, like [1]. "
-    "If the excerpts do not contain the answer, say you could not find it in the "
-    "QSDsan/EXPOsan docs and do not guess. "
+    "If the excerpts do not actually answer the question, do NOT guess and do NOT "
+    "list generic suggestions. Reply in one or two sentences that the QSDsan "
+    "documentation does not appear to cover it, and point the user to the search "
+    "bar at the top of the page or to opening an issue on the QSDsan GitHub "
+    "repository (https://github.com/QSD-Group/QSDsan). "
     "Refuse questions unrelated to QSDsan or EXPOsan. "
     "When you include code, keep it minimal and faithful to the excerpts. "
     "Format answers in GitHub-flavored Markdown: use ## headings for sections, "
@@ -41,17 +44,39 @@ def append_code_disclaimers(answer_md: str) -> str:
 
 
 def refusal_message() -> str:
-    """Out-of-scope / low-similarity refusal that also explains what the bot does.
-
-    Leading with the capability summary means meta questions ("what can you help
-    me with?") get a useful answer, while still signalling the strict grounding.
-    """
+    """Technical question the docs do not cover: point to search + the GitHub repo."""
     return (
-        "I'm the QSDsan documentation assistant. I answer questions "
-        "grounded in the QSDsan API and tutorials, such as how to create a "
-        "WasteStream, set up a dynamic simulation, or build a custom unit operation. "
-        "I couldn't find this in the QSDsan/EXPOsan docs, so try rephrasing or use "
-        "the search function at the top of the navigation bar."
+        "I couldn't find this in the QSDsan documentation. Try the search bar at the "
+        "top of the page, or open an issue on the "
+        f"[QSDsan GitHub repo]({config.QSDSAN_REPO_URL})."
+    )
+
+
+# Greetings and capability/meta questions. Matched against the whole (normalized)
+# message, so a real question that merely contains one of these words is unaffected.
+_SMALLTALK = {
+    "hi", "hello", "hey", "yo", "hiya", "howdy", "hi there", "hello there",
+    "good morning", "good afternoon", "good evening", "good day",
+    "thanks", "thank you", "ty", "thx", "cheers",
+    "how are you", "what's up", "whats up", "sup",
+    "help", "what can you do", "what can you help with",
+    "what can you help me with", "what do you do", "who are you",
+    "what are you", "what is this", "what can i ask", "what can i ask you",
+}
+
+
+def is_smalltalk(question: str) -> bool:
+    """True for greetings and capability/meta questions (non-technical)."""
+    norm = question.strip().lower().strip(" !.?")
+    return norm in _SMALLTALK
+
+
+def greeting_message() -> str:
+    """Friendly welcome for greetings and capability/meta questions."""
+    return (
+        "Hi! I'm the QSDsan documentation assistant. Ask me about the QSDsan API or "
+        "tutorials, such as how to create a WasteStream, set up a dynamic simulation, "
+        "or build a custom unit operation. What would you like to know?"
     )
 
 

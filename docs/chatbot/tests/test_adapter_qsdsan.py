@@ -26,3 +26,15 @@ def test_qsdsan_url_is_readthedocs_page_plus_anchor():
         "https://qsdsan.readthedocs.io/en/latest/"
         "tutorials/3_WasteStream.html#create-a-wastestream"
     )
+
+
+def test_homepage_install_section_is_indexed():
+    # Installation lives on the docs homepage (index.html), not under tutorials/api,
+    # so the indexer must cover the homepage for the bot to answer install questions.
+    chunks = index_docs.build_qsdsan_chunks(str(HTML_DIR))
+    inst = next(c for c in chunks if c["title"] == "Installation")
+    assert inst["type"] == "guide"
+    assert "pip install qsdsan" in inst["text"]
+    assert inst["url"] == (
+        "https://qsdsan.readthedocs.io/en/latest/index.html#installation"
+    )

@@ -43,3 +43,9 @@ EXPOSAN_REPO_URL = os.getenv(
     "CHATBOT_EXPOSAN_REPO_URL",
     "https://github.com/QSD-Group/EXPOsan",
 )
+
+# Where users are sent when the docs do not cover a technical question.
+QSDSAN_REPO_URL = os.getenv(
+    "CHATBOT_QSDSAN_REPO_URL",
+    "https://github.com/QSD-Group/QSDsan",
+)

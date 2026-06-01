@@ -38,10 +38,29 @@ def test_append_code_disclaimers_noop_without_code():
     assert prompts.append_code_disclaimers(md) == md
 
 
-def test_refusal_message_points_to_nav_search():
+def test_refusal_message_points_to_search_and_github():
     msg = prompts.refusal_message()
-    assert "couldn't find this in the QSDsan/EXPOsan docs" in msg
-    assert "search function at the top of the navigation bar" in msg
+    assert "couldn't find this" in msg
+    assert "search bar" in msg
+    assert "github.com/QSD-Group/QSDsan" in msg
+
+
+def test_is_smalltalk_detects_greetings_and_meta():
+    for q in ["hello", "Hi!", "hey", "thanks", "good morning",
+              "help", "what can you do?", "what can you help me with"]:
+        assert prompts.is_smalltalk(q), q
+
+
+def test_is_smalltalk_ignores_technical_questions():
+    assert not prompts.is_smalltalk("How do I create a WasteStream?")
+    assert not prompts.is_smalltalk("help me create a WasteStream")
+    assert not prompts.is_smalltalk("what systems are available")
+
+
+def test_greeting_message_is_a_welcome():
+    msg = prompts.greeting_message()
+    assert "QSDsan documentation assistant" in msg
+    assert "couldn't find" not in msg
 
 
 def test_is_exposan_question_detects_systems_and_exposan():
