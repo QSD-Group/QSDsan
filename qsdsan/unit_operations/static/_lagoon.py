@@ -49,7 +49,22 @@ class Lagoon(SanUnit, Decay):
 
     Examples
     --------
-    `bwaise systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/systems.py>`_
+    >>> from qsdsan.utils import create_example_sanitation_components
+    >>> cmps = create_example_sanitation_components()
+    >>> from qsdsan import System, WasteStream
+    >>> from qsdsan.unit_operations import Lagoon
+    >>> ws = WasteStream('ws', H2O=1000, NH3=5, NonNH3=2, P=1, K=1,
+    ...                  OtherSS=20, units='kg/hr')
+    >>> L = Lagoon('L', ins=ws, outs=('treated', 'CH4', 'N2O'),
+    ...            design_type='anaerobic', flow_rate=1000,
+    ...            decay_k_COD=3, max_CH4_emission=0.25)
+    >>> sys = System('sys', path=(L,))
+    >>> sys.simulate()
+    >>> L.design_results['Lagoon number']
+    3
+
+    See `bwaise systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/systems.py>`_
+    for use in a complete sanitation system.
 
     References
     ----------

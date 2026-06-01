@@ -75,6 +75,22 @@ class SludgeThickening(SanUnit, Splitter):
     disposal_cost : float
         Disposal cost of the dewatered solids. [$/kg].
 
+    Examples
+    --------
+    >>> from qsdsan.utils import create_example_wwt_components
+    >>> cmps = create_example_wwt_components()
+    >>> from qsdsan import System, WasteStream
+    >>> from qsdsan.unit_operations import SludgeThickening
+    >>> ws = WasteStream('ws')
+    >>> ws.set_flow_by_concentration(flow_tot=1,
+    ...     concentrations={'X': 5000, 'X_inert': 2000}, units=('mgd', 'mg/L'))
+    >>> U = SludgeThickening('U', ins=ws, outs=('thickened', 'effluent'),
+    ...     solids=('X', 'X_inert'))
+    >>> sys = System('sys', path=(U,))
+    >>> sys.simulate()
+    >>> U.sludge_moisture
+    0.96
+
     References
     ----------
     [1] Shoener et al., Design of Anaerobic Membrane Bioreactors for the
@@ -215,6 +231,22 @@ class BeltThickener(SludgeThickening):
     disposal_cost : float
         Disposal cost of the dewatered solids. [$/kg].
 
+    Examples
+    --------
+    >>> from qsdsan.utils import create_example_wwt_components
+    >>> cmps = create_example_wwt_components()
+    >>> from qsdsan import System, WasteStream
+    >>> from qsdsan.unit_operations import BeltThickener
+    >>> ws = WasteStream('ws')
+    >>> ws.set_flow_by_concentration(flow_tot=1,
+    ...     concentrations={'X': 5000, 'X_inert': 2000}, units=('mgd', 'mg/L'))
+    >>> U = BeltThickener('U', ins=ws, outs=('thickened', 'effluent'),
+    ...     solids=('X', 'X_inert'))
+    >>> sys = System('sys', path=(U,))
+    >>> sys.simulate()
+    >>> U.design_results['Number of thickeners']
+    2
+
     References
     ----------
     .. [1] `Industrial filtering equipment gravity thickener rotary thickening belt filter press. \
@@ -276,6 +308,22 @@ class SludgeCentrifuge(SludgeThickening, bst.units.SolidsCentrifuge):
     disposal_cost : float
         Disposal cost of the dewatered solids. [$/kg].
     
+    Examples
+    --------
+    >>> from qsdsan.utils import create_example_wwt_components
+    >>> cmps = create_example_wwt_components()
+    >>> from qsdsan import System, WasteStream
+    >>> from qsdsan.unit_operations import SludgeCentrifuge
+    >>> ws = WasteStream('ws')
+    >>> ws.set_flow_by_concentration(flow_tot=1,
+    ...     concentrations={'X': 5000, 'X_inert': 2000}, units=('mgd', 'mg/L'))
+    >>> U = SludgeCentrifuge('U', ins=ws, outs=('cake', 'centrate'),
+    ...     solids=('X', 'X_inert'), include_construction=False)
+    >>> sys = System('sys', path=(U,))
+    >>> sys.simulate()
+    >>> U.sludge_moisture
+    0.8
+
     References
     ----------
     [1] https://dolphincentrifuge.com/wastewater-centrifuge/ (accessed 12-4-2022).

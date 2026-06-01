@@ -115,10 +115,12 @@ class ElectrochemicalCell(SanUnit):
     >>> catalysts = qs.WasteStream('catalysts', H2SO4=0.00054697, units=('kg/hr'))
     >>> # kg/hr imass value derived from 0.145 moles used on average for one, 26 hour experiment in the model cell
     >>> catalysts.price = 8.4 #in $/kg
-    >>> # electricity price for ECS experiments in the default model tested by the Tarpeh Lab
-    >>> # if want to change the price of electricity,
-    >>> # use qs.PowerUtility, e.g., qs.PowerUtility.price = 0.1741
-    
+    >>> # Pin the electricity price so the reported cost is reproducible: the
+    >>> # qs.PowerUtility.price default drifts across biosteam versions. 0.1741
+    >>> # USD/kWh is the price used for the ECS experiments by the Tarpeh Lab.
+    >>> default_power_price = qs.PowerUtility.price
+    >>> qs.PowerUtility.price = 0.1741
+
     >>> # Set the unit
     >>> U1 = qs.unit_operations.ElectrochemicalCell('unit_1', ins=(influent, catalysts), outs=('recovered', 'removed', 'residual'))
     >>> # Simulate and look at the results
@@ -126,7 +128,7 @@ class ElectrochemicalCell(SanUnit):
     >>> U1.results() # doctest: +ELLIPSIS
     Electrochemical cell                                      Units                              unit_1
     Electricity         Power                                    kW                            5.42e-05
-                        Cost                                 USD/hr                            4.24e-06
+                        Cost                                 USD/hr                            9.44e-06
     Design              Electrode unit_1_Main_Anode - Nu...    ...                                   1
                         Electrode unit_1_Main_Anode - Ma...    ...  titanium grid catalyst welded t...
                         Electrode unit_1_Main_Anode - Su...      m2                                   1
@@ -153,7 +155,7 @@ class ElectrochemicalCell(SanUnit):
                         unit_1_Gas_Permeable_Membrane           USD                                29.3
                         Exterior                                USD                                60.5
     Total purchase cost                                         USD                                 679
-    Utility cost                                             USD/hr                            4.24e-06
+    Utility cost                                             USD/hr                            9.44e-06
     Additional OPEX                                          USD/hr                                 136
     >>> U1.show() # doctest: +ELLIPSIS
     ElectrochemicalCell: unit_1
@@ -162,6 +164,9 @@ class ElectrochemicalCell(SanUnit):
     phase: 'l', T: 298.15 K, P: 101325 Pa
     flow (g/hr): H2O        29.5
     ...
+    >>> # Restore the default electricity price so this example does not affect
+    >>> # other code that runs later in the same session
+    >>> qs.PowerUtility.price = default_power_price
     '''
 
     _N_ins = 2

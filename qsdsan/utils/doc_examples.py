@@ -26,6 +26,8 @@ from .. import (
 
 __all__ = (
     'create_example_components',
+    'create_example_sanitation_components',
+    'create_example_wwt_components',
     'create_example_system',
     'create_example_treatment_systems',
     'create_example_model',
@@ -93,6 +95,157 @@ def create_example_components(set_thermo=True):
     cmps.compile(ignore_inaccurate_molar_weight=True)
     cmps.set_synonym('H2O', 'Water')
     cmps.set_synonym('CH4', 'Methane')
+    if set_thermo: qs_set_thermo(cmps)
+    return cmps
+
+
+def create_example_sanitation_components(set_thermo=True):
+    '''
+    Load a set of pre-constructed components for sanitation-unit documentation.
+
+    These are the excreta/nutrient components used by the sanitation
+    :class:`~.SanUnit` examples (e.g.,
+    :class:`~.unit_operations.Excretion`,
+    :class:`~.unit_operations.PitLatrine`,
+    :class:`~.unit_operations.Trucking`); they are not part of the default
+    set returned by :func:`qsdsan.Components.load_default`.
+
+    Parameters
+    ----------
+    set_thermo : bool
+        Whether to set the returned components as the thermodynamic property
+        package (i.e., call :func:`qsdsan.set_thermo`).
+
+    Returns
+    -------
+    A :class:`qsdsan.CompiledComponents` object with the components
+    NH3 (measured as N), NonNH3, P, K, Mg, Ca, H2O, OtherSS, N2O, CH4,
+    Tissue, WoodAsh, Struvite, HAP, MagnesiumHydroxide, and LPG. The last four
+    are needed by some units (e.g., struvite recovery in
+    :class:`~.unit_operations.UDDT`/:class:`~.unit_operations.SepticTank`,
+    LPG combustion in :class:`~.unit_operations.SludgePasteurization`).
+
+    Examples
+    --------
+    >>> from qsdsan.utils import create_example_sanitation_components
+    >>> cmps = create_example_sanitation_components()
+    >>> cmps.IDs
+    ('NH3', 'NonNH3', 'P', 'K', 'Mg', 'Ca', 'H2O', 'OtherSS', 'N2O', 'CH4', 'Tissue', 'WoodAsh', 'Struvite', 'HAP', 'MagnesiumHydroxide', 'LPG')
+
+    See Also
+    --------
+    :func:`create_example_components`
+
+    :func:`create_example_wwt_components`
+    '''
+    from .components import add_V_from_rho
+
+    def mk(ID, **kwargs):
+        kwargs.setdefault('phase', 'l')
+        kwargs.setdefault('particle_size', 'Soluble')
+        kwargs.setdefault('degradability', 'Undegradable')
+        kwargs.setdefault('organic', False)
+        return Component(ID, **kwargs)
+
+    NH3 = mk('NH3', measured_as='N')
+    NonNH3 = mk('NonNH3', formula='N', measured_as='N', description='Non-NH3 nitrogen')
+    P = mk('P')
+    K = mk('K')
+    Mg = mk('Mg')
+    Ca = mk('Ca')
+    H2O = mk('H2O')
+    OtherSS = mk('OtherSS', description='Unspecified soluble solids')
+    N2O = mk('N2O', phase='g', particle_size='Dissolved gas')
+    CH4 = mk('CH4', phase='g', particle_size='Dissolved gas',
+             degradability='Slowly', organic=True)
+    Tissue = mk('Tissue', MW=1, phase='s', particle_size='Particulate',
+                description='Toilet paper')
+    WoodAsh = mk('WoodAsh', MW=1, phase='s', particle_size='Particulate',
+                 description='Wood ash desiccant')
+    Struvite = mk('Struvite', search_ID='MagnesiumAmmoniumPhosphate',
+                  formula='NH4MgPO4', phase='s', particle_size='Particulate')
+    HAP = mk('HAP', search_ID='Hydroxyapatite', phase='s',
+             particle_size='Particulate', description='Hydroxyapatite')
+    MgOH2 = mk('MagnesiumHydroxide', search_ID='MagnesiumHydroxide', phase='s',
+               particle_size='Particulate')
+    LPG = mk('LPG', search_ID='Propane', phase='g', particle_size='Dissolved gas',
+             degradability='Slowly', organic=True, description='Liquefied petroleum gas')
+
+    cmps = Components((NH3, NonNH3, P, K, Mg, Ca, H2O, OtherSS,
+                       N2O, CH4, Tissue, WoodAsh, Struvite, HAP, MgOH2, LPG))
+    for cmp in cmps:
+        cmp.default()
+        cmp.copy_models_from(H2O, ('sigma', 'epsilon', 'kappa', 'Cn', 'mu'))
+    # Particulate solids need a volume model before the set can be compiled
+    for cmp, rho in ((Tissue, 375), (WoodAsh, 760), (Struvite, 1711),
+                     (HAP, 3150), (MgOH2, 2340)):
+        add_V_from_rho(cmp, rho)
+
+    cmps.compile(ignore_inaccurate_molar_weight=True)
+    for cmp in cmps:
+        for attr in ('HHV', 'LHV', 'Hf'):
+            if getattr(cmp, attr) is None:
+                setattr(cmp, attr, 0)
+
+    if set_thermo: qs_set_thermo(cmps)
+    return cmps
+
+
+def create_example_wwt_components(set_thermo=True):
+    '''
+    Load a minimal set of pre-constructed components for wastewater-treatment
+    unit documentation.
+
+    These are the lumped COD-based components used by the wastewater-treatment
+    :class:`~.SanUnit` examples (e.g.,
+    :class:`~.unit_operations.ActivatedSludgeProcess`,
+    :class:`~.unit_operations.BeltThickener`,
+    :class:`~.unit_operations.CombinedHeatPower`). The ``active_biomass``,
+    ``inert_biomass``, and ``substrates`` component groups expected by several of
+    those units are defined here.
+
+    Parameters
+    ----------
+    set_thermo : bool
+        Whether to set the returned components as the thermodynamic property
+        package (i.e., call :func:`qsdsan.set_thermo`).
+
+    Returns
+    -------
+    A :class:`qsdsan.CompiledComponents` object with X (biomass), X_inert
+    (inert biomass), Substrate, and CH4, plus the default combustion components
+    (O2, CO2, H2O, N2, P4O10, SO2).
+
+    Examples
+    --------
+    >>> from qsdsan.utils import create_example_wwt_components
+    >>> cmps = create_example_wwt_components()
+    >>> cmps.IDs
+    ('X', 'X_inert', 'Substrate', 'CH4', 'O2', 'CO2', 'H2O', 'N2', 'P4O10', 'SO2')
+    >>> [c.ID for c in cmps.substrates]
+    ['Substrate']
+
+    See Also
+    --------
+    :func:`create_example_sanitation_components`
+    '''
+    X = Component('X', phase='s', measured_as='COD', i_COD=1, description='Biomass',
+                  organic=True, particle_size='Particulate', degradability='Readily')
+    X_inert = Component('X_inert', phase='s', measured_as='COD', i_COD=1,
+                        description='Inert biomass', organic=True,
+                        particle_size='Particulate', degradability='Undegradable')
+    Substrate = Component('Substrate', phase='l', measured_as='COD', i_COD=1,
+                          organic=True, particle_size='Soluble',
+                          degradability='Readily')
+    CH4 = Component('CH4', phase='g', organic=True, particle_size='Dissolved gas',
+                    degradability='Readily')
+
+    cmps = Components([X, X_inert, Substrate, CH4])
+    cmps = Components.append_combustion_components(cmps, lock_state_at='')
+    cmps.define_group('active_biomass', IDs=('X',))
+    cmps.define_group('inert_biomass', IDs=('X_inert',))
+    cmps.define_group('substrates', IDs=('Substrate',))
+
     if set_thermo: qs_set_thermo(cmps)
     return cmps
 

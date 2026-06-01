@@ -35,7 +35,20 @@ class CropApplication(SanUnit):
 
     Examples
     --------
-    `bwaise systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/systems.py>`_
+    >>> from qsdsan.utils import create_example_sanitation_components
+    >>> cmps = create_example_sanitation_components()
+    >>> from qsdsan import System
+    >>> from qsdsan.unit_operations import Excretion, CropApplication
+    >>> U1 = Excretion('U1')
+    >>> CA = CropApplication('CA', ins=U1-0, outs=('applied', 'loss'),
+    ...                      loss_ratio=0.02)
+    >>> sys = System('sys', path=(U1, CA))
+    >>> sys.simulate()
+    >>> round(CA.outs[1].F_mass / U1.outs[0].F_mass, 3)  # fraction lost
+    0.02
+
+    See `bwaise systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/systems.py>`_
+    for use in a complete sanitation system.
 
     References
     ----------

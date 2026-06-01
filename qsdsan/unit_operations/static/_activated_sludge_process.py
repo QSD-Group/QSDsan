@@ -118,6 +118,23 @@ class ActivatedSludgeProcess(SanUnit):
     kwargs : dict
         Other attributes to be set.
 
+    Examples
+    --------
+    >>> from qsdsan.utils import create_example_wwt_components
+    >>> cmps = create_example_wwt_components()
+    >>> from qsdsan import System, WasteStream
+    >>> from qsdsan.unit_operations import ActivatedSludgeProcess
+    >>> inf = WasteStream('inf')
+    >>> inf.set_flow_by_concentration(flow_tot=20,
+    ...     concentrations={'Substrate': 300, 'X': 50, 'X_inert': 100},
+    ...     units=('mgd', 'mg/L'))
+    >>> ASP = ActivatedSludgeProcess('ASP', ins=(inf, 'air'),
+    ...                              outs=('treated', 'was', 'offgas'))
+    >>> sys = System('sys', path=(ASP,))
+    >>> sys.simulate()
+    >>> round(ASP.outs[0].COD, 1)  # effluent COD, mg/L
+    19.0
+
     References
     ----------
     .. [1] Rittmann, B.; McCarty, P.; McCarty, P. L.; Bruce, R.

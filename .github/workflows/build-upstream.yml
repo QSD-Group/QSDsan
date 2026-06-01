@@ -36,4 +36,4 @@ jobs:
         pip install --no-deps --force-reinstall git+https://github.com/BioSTEAMDevelopmentGroup/biosteam.git@master
     - name: Test with pytest
       run: |
-        pytest tests
+        pytest
