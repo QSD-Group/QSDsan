@@ -82,10 +82,26 @@ jobs:
         python -m pip install --upgrade pip
         pip install -c .github/requirements-release.txt -e ".[ci]"
         pip install git+https://github.com/QSD-Group/EXPOsan.git
-    - name: Run integration tests
+    - name: Run integration tests and generate coverage report
       run: |
         mkdir -p tmps
-        pytest -m integration -n 2 --dist loadfile --basetemp=tmps/pytest-int-${{ github.run_id }}-${{ github.run_attempt }}
+        pytest -m integration -n 2 --dist loadfile --basetemp=tmps/pytest-int-${{ github.run_id }}-${{ github.run_attempt }} --cov=./ --cov-report=xml
+    - name: Upload integration coverage to Codecov
+      # Merged with the `build` job's report by Codecov (per-commit) so EXPOsan-
+      # exercised qsdsan code still counts toward total coverage, without gating.
+      uses: codecov/codecov-action@v6
+      continue-on-error: true
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      with:
+        directory: ./coverage/reports/
+        env_vars: OS,PYTHON
+        fail_ci_if_error: false
+        files: ./coverage.xml
+        flags: integration
+        name: codecov-integration
+        use_oidc: true
+        verbose: true
 
   retry-with-upstream-master:
     needs: build
