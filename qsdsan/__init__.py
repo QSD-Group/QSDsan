@@ -153,9 +153,40 @@ def __getattr__(name):
 def __dir__():
     return sorted((*globals(), *_lazy_modules, *_legacy_aliases, 'CEPCI'))
 
-def default():
-    _bst.default()
-    main_flowsheet.set_flowsheet('default', new=True)
+def default(utilities=True, CEPCI=True, flowsheet=True):
+    '''
+    Reset utilities, the chemical plant cost index (CEPCI), and/or the active
+    flowsheet back to ``qsdsan``'s defaults (whichever are requested).
+
+    Parameters
+    ----------
+    utilities : bool, optional
+        Whether to reset the heating/cooling utility agents (and their prices)
+        to BioSTEAM's defaults. The default is True.
+    CEPCI : bool, optional
+        Whether to reset the Chemical Engineering Plant Cost Index (:func:`qsdsan.CEPCI`)
+        to BioSTEAM's default. The default is True.
+    flowsheet : bool, optional
+        Whether to reset the active flowsheet to a fresh one named ``'default'``,
+        clearing all registered streams, units, systems, and LCA objects
+        (impact indicators/items, construction, and transportation). The default
+        is True.
+
+    Notes
+    -----
+    Regardless of the arguments, the stream/unit/system auto-naming counters and
+    the cached chemical lookups are always reset (this mirrors ``biosteam.default``).
+
+    Unlike ``biosteam.default`` (whose ``flowsheet`` argument defaults to False),
+    ``qsdsan.default`` resets the flowsheet by default, pass ``flowsheet=False`` to keep the current flowsheet.
+
+    See Also
+    --------
+    `biosteam.default <https://biosteam.readthedocs.io/en/latest/API/process_tools/default.html>`_
+    '''
+    _bst.default(utilities=utilities, CEPCI=CEPCI, flowsheet=False)
+    if flowsheet:
+        main_flowsheet.set_flowsheet('default', new=True)
 
 # ── Upgrade main_flowsheet to SanMainFlowsheet in-place ──────────────────────
 # _construction.py / _transportation.py imported main_flowsheet by reference

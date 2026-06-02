@@ -490,7 +490,10 @@ class ADMtoASM(ADMjunction):
     '''
     Interface unit to convert anaerobic digestion model (ADM) components
     to activated sludge model (ASM) components.
-    
+
+    `T` and `pH` (used for acid-base speciation) are read from the upstream
+    stream rather than set explicitly.
+
     Parameters
     ----------
     upstream : stream or str
@@ -742,7 +745,7 @@ class ASMtoADM(ADMjunction):
     '''
     Interface unit to convert activated sludge model (ASM) components
     to anaerobic digestion model (ADM) components.
-    
+
     Parameters
     ----------
     upstream : stream or str
@@ -751,6 +754,12 @@ class ASMtoADM(ADMjunction):
         Effluent stream with ADM components.
     adm1_model : obj
         The anaerobic digestion process model (:class:`qsdsan.process_models.ADM1`).
+    T : float
+        Temperature of the downstream [K], used for acid-base speciation;
+        overridden by the downstream sink's temperature when connected.
+    pH : float
+        pH of the downstream, used for acid-base speciation; overridden by
+        the downstream sink's pH when connected.
     xs_to_li : float
         Split of slowly biodegradable substrate COD to lipid, 
         after all N is mapped into protein.
@@ -1044,7 +1053,7 @@ class ASM2dtoADM1(ADMjunction):
     '''
     Interface unit to convert activated sludge model No. (ASM2d) components
     to original anaerobic digestion model (ADM1) components.
-    
+
     Parameters
     ----------
     upstream : stream or str
@@ -1053,6 +1062,12 @@ class ASM2dtoADM1(ADMjunction):
         Effluent stream with ADM components.
     adm1_model : obj
         The anaerobic digestion process model (:class:`qsdsan.process_models.ADM1`).
+    T : float
+        Temperature of the downstream [K], used for acid-base speciation;
+        overridden by the downstream sink's temperature when connected.
+    pH : float
+        pH of the downstream, used for acid-base speciation; overridden by
+        the downstream sink's pH when connected.
     xs_to_li : float
         Split of slowly biodegradable substrate COD to lipid, 
         after all N is mapped into protein.
@@ -1084,7 +1099,37 @@ class ASM2dtoADM1(ADMjunction):
     xs_to_li = 0.7
     bio_to_li = 0.4
     frac_deg = 0.68
-    
+
+    def __init__(self, ID='', upstream=None, downstream=(), thermo=None,
+                 init_with='WasteStream', F_BM_default=None, isdynamic=False,
+                 adm1_model=None, T=298.15, pH=7):
+        self._T = T
+        self._pH = pH
+        super().__init__(ID=ID, upstream=upstream, downstream=downstream,
+                         thermo=thermo, init_with=init_with,
+                         F_BM_default=F_BM_default, isdynamic=isdynamic,
+                         adm1_model=adm1_model)
+
+    @property
+    def T(self):
+        '''[float] Temperature of the downstream [K].'''
+        try: return self.outs[0].sink.T
+        except: return self._T
+    @T.setter
+    def T(self, T):
+        self._T = self.outs[0].T = T
+
+    @property
+    def pH(self):
+        '''[float] downstream pH.'''
+        if self._pH: return self._pH
+        else:
+            try: return self.outs[0].sink.outs[1].pH
+            except: return 7.
+    @pH.setter
+    def pH(self, ph):
+        self._pH = self.outs[0].pH = ph
+
     def isbalanced(self, lhs, rhs_vals, rhs_i):
         rhs = sum(rhs_vals*rhs_i)
         error = rhs - lhs
@@ -1347,7 +1392,10 @@ class ADM1toASM2d(ADMjunction):
     '''
     Interface unit to convert anaerobic digestion model no. 1 (ADM1) components
     to activated sludge model no. 2 (ASM2d) components.
-    
+
+    `T` and `pH` (used for acid-base speciation) are read from the upstream
+    stream rather than set explicitly.
+
     Parameters
     ----------
     upstream : stream or str
@@ -1386,8 +1434,20 @@ class ADM1toASM2d(ADMjunction):
     
     # whether to conserve the nitrogen split between soluble and particulate components
     conserve_particulate_N = False
-    
-    
+
+    @property
+    def T(self):
+        '''[float] Temperature of the upstream/downstream [K].'''
+        return self.ins[0].T
+    @T.setter
+    def T(self, T):
+        self.ins[0].T = self.outs[0].T = T
+
+    @property
+    def pH(self):
+        '''[float] pH of the upstream/downstream.'''
+        return self.ins[0].pH
+
     def isbalanced(self, lhs, rhs_vals, rhs_i):
         rhs = sum(rhs_vals*rhs_i)
         error = rhs - lhs

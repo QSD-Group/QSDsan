@@ -329,7 +329,11 @@ class ActivatedSludgeProcess(SanUnit):
         # Particulate components
         try:
             active_biomass = cmps.active_biomass
-            X_a_inf = inf.iconc['active_biomass'].sum()
+            X_a_inf_conc = inf.iconc['active_biomass']
+            # `iconc[group]` returns a bare Python scalar (no `.sum()`) when the
+            # group concentration is exactly zero, so coerce robustly instead of
+            # mistaking the resulting AttributeError for an undefined group.
+            X_a_inf = X_a_inf_conc.sum() if hasattr(X_a_inf_conc, 'sum') else X_a_inf_conc
         except AttributeError:
             warn('The `active_biomass` group of current `CompiledComponents` '
                  'has not been defined and is assumed to be 0.')

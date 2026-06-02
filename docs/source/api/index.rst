@@ -15,7 +15,7 @@ See the following sections for detailed documentation of each class and its attr
 .. toctree::
    :maxdepth: 1
 
-   public_api
+   biosteam_api
    major_classes/index
    process_models/index
    equipments/index

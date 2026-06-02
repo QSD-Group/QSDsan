@@ -173,6 +173,19 @@ def assert_addons_persisted(qs_unit):
 def test_default():
     qs.default() # default everything
 
+    # The flowsheet flag controls whether the active flowsheet is reset; the
+    # other flags pass through to ``biosteam.default``.
+    cmps = qs.Components.load_default()
+    qs.set_thermo(cmps)
+    s = qs.Stream('s_test_default')
+    qs.CEPCI = 800.
+    qs.default(flowsheet=False) # reset utilities/CEPCI but keep the flowsheet
+    assert qs.CEPCI != 800.                      # CEPCI was reset
+    assert qs.main_flowsheet.stream.search('s_test_default') is s  # stream kept
+    qs.default() # full reset
+    assert qs.main_flowsheet.stream.search('s_test_default') is None  # stream cleared
+    assert qs.main_flowsheet.ID == 'default'
+
 
 def test_units_attribute_is_dict():
     '''
