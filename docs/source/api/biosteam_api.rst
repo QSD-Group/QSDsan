@@ -1,7 +1,7 @@
-.. _public_api:
+.. _biosteam_api:
 
-Public API (using ``qsdsan`` without ``biosteam``)
-==================================================
+BioSTEAM API in QSDsan
+======================
 
 ``QSDsan`` is built on top of `BioSTEAM <https://github.com/BioSTEAMDevelopmentGroup/biosteam>`_
 and BioSTEAM's thermodynamic library `Thermosteam <https://github.com/BioSTEAMDevelopmentGroup/thermosteam>`_. QSDsan re-exports the parts of those libraries that a typical user needs.
@@ -87,6 +87,10 @@ Utilities and costing globals
      - Electricity; set the price via ``qs.PowerUtility.price = ...``.
    * - ``qs.UtilityAgent``
      - Define a custom heating/cooling agent.
+   * - ``qs.default``
+     - Reset utilities, the CEPCI, and/or the active flowsheet to ``qsdsan``'s
+       defaults; choose what to reset with ``utilities`` / ``CEPCI`` / ``flowsheet``
+       (e.g. ``qs.default(flowsheet=False)``).
    * - ``qs.default_utilities``
      - Reset utilities to their defaults.
    * - ``qs.stream_utility_prices``
