@@ -185,6 +185,11 @@ def default(utilities=True, CEPCI=True, flowsheet=True):
     `biosteam.default <https://biosteam.readthedocs.io/en/latest/API/process_tools/default.html>`_
     '''
     _bst.default(utilities=utilities, CEPCI=CEPCI, flowsheet=False)
+    # `biosteam.default` resets the native stream/unit/system ticket counters; do the
+    # same for the qsdsan LCA classes, whose ticket_numbers are also class-level
+    # globals that `set_flowsheet` does not swap.
+    for i in (ImpactIndicator, ImpactItem, Construction, Transportation):
+        i.ticket_numbers.clear()
     if flowsheet:
         main_flowsheet.set_flowsheet('default', new=True)
 
