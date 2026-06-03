@@ -140,10 +140,9 @@ def test_bare_id_miss_creates_blank_component():
     c = Component('S_F', formula='C5H7O2N', particle_size='Particulate',
                   degradability='Slowly', organic=True)
     assert c.formula == 'C5H7O2N'
-    # Organic component built from a formula: thermosteam estimates Hf from the
-    # composition, and the inorganic guard keeps it (organic estimates are
-    # in-domain for the Dulong/Boie correlations).
-    assert c.Hf is not None
+    # A bare ID with no database hit falls back to a blank custom component,
+    # so the CAS defaults to the ID.
+    assert c.CAS == 'S_F'
 
 def test_blank_custom_component_with_phase_is_locked():
     c = Component('X_solid', formula='C5H7O2N', phase='s', particle_size='Particulate',
@@ -224,6 +223,26 @@ def test_blank_component_formula_not_gated():
     c = Component('S_F', formula='C5H7O2N', particle_size='Particulate',
                   degradability='Slowly', organic=True)
     assert c.formula == 'C5H7O2N'
+
+# --- inorganic-energetics guard ---
+# thermosteam >=0.53.5 estimates Hf/HHV/LHV/combustion from a fuel correlation
+# (Dulong/Boie) for any formula-bearing chemical, including inorganic salts with
+# no measured data; QSDsan restores those to None. On earlier thermosteam they
+# are already None, so both assertions below hold across versions.
+
+def test_inorganic_without_measured_Hf_has_no_energetics():
+    s = Component('Struvite', search_ID='MagnesiumAmmoniumPhosphate',
+                  formula='NH4MgPO4·H12O6', formula_override=True, phase='s', **_pkw)
+    assert s.Hf is None
+    assert s.HHV is None
+    assert s.LHV is None
+    assert s.combustion is None
+
+def test_inorganic_with_measured_Hf_is_kept():
+    # NH3 has a measured heat of formation, so the guard leaves it untouched.
+    c = Component('NH3', search_ID='Ammonia', phase='g', particle_size='Dissolved gas',
+                  degradability='Undegradable', organic=False)
+    assert c.Hf is not None
 
 def get_atoms_equal(atoms_dict, formula):
     from chemicals.elements import get_atoms

@@ -825,40 +825,12 @@ class Component(Chemical):
         ...                                    formula='NH4MgPO4·H12O6', formula_override=True,
         ...                                    phase='l', particle_size='Particulate',
         ...                                    degradability='Undegradable', organic=False)
-        >>> Struvite.show(chemical_info=True)
+        >>> # `show(chemical_info=True)` also prints the underlying Chemical's
+        >>> # thermo data, but that block varies across thermosteam versions, so
+        >>> # here we show only the Component-specific properties. `chem_MW`
+        >>> # confirms the hexahydrate `formula_override` (MW ~245, not ~137).
+        >>> Struvite.show()
         Component: Struvite (phase_ref='l') at phase='l'
-        [Names]  CAS: 7785-21-9
-                 InChI: Mg.H3N.H3O4P/c;;1-5(...
-                 InChI_key: MXZRMHIULZDAKC-U...
-                 common_name: 7785-21-9
-                 iupac_name: ('azanium;magne...
-                 pubchemid: 1.7873e+05
-                 smiles: [NH4+].[O-]P(=O)([O...
-                 formula: NH4MgPO4·H12O6
-        [Groups] Dortmund: <Empty>
-                 UNIFAC: <Empty>
-                 PSRK: <Empty>
-                 NIST: <Empty>
-                 atoms: {'N': 1, 'H': 16, 'M...
-        [Data]   MW: 245.41 g/mol
-                 Tm: None
-                 Tb: None
-                 Tt: None
-                 Tc: None
-                 Pt: None
-                 Pc: None
-                 Vc: None
-                 Hf: None
-                 S0: 0 J/K/mol
-                 LHV: None
-                 HHV: None
-                 Hfus: 0 J/mol
-                 Sfus: None
-                 omega: None
-                 dipole: None
-                 similarity_variable: 0.080108
-                 iscyclic_aliphatic: 0
-                 combustion: None
         Component-specific properties:
         [Others] measured_as: None
                  description: None
