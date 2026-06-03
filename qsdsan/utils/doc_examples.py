@@ -162,6 +162,10 @@ def create_example_sanitation_components(set_thermo=True):
                 description='Toilet paper')
     WoodAsh = mk('WoodAsh', MW=1, phase='s', particle_size='Particulate',
                  description='Wood ash desiccant')
+    # Anhydrous formula (not the MgNH4PO4*6H2O mineral): the toilet/septic units
+    # assign struvite recovery in mol without sourcing crystal water, so the
+    # anhydrous MW keeps the recovered mass balanced. The hexahydrate is used only
+    # to demonstrate formula_override (Component.from_chemical / test_component.py).
     Struvite = mk('Struvite', search_ID='MagnesiumAmmoniumPhosphate',
                   formula='NH4MgPO4', phase='s', particle_size='Particulate')
     HAP = mk('HAP', search_ID='Hydroxyapatite', phase='s',

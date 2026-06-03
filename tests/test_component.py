@@ -140,7 +140,10 @@ def test_bare_id_miss_creates_blank_component():
     c = Component('S_F', formula='C5H7O2N', particle_size='Particulate',
                   degradability='Slowly', organic=True)
     assert c.formula == 'C5H7O2N'
-    assert c.Hf is None
+    # Organic component built from a formula: thermosteam estimates Hf from the
+    # composition, and the inorganic guard keeps it (organic estimates are
+    # in-domain for the Dulong/Boie correlations).
+    assert c.Hf is not None
 
 def test_blank_custom_component_with_phase_is_locked():
     c = Component('X_solid', formula='C5H7O2N', phase='s', particle_size='Particulate',
@@ -181,6 +184,9 @@ def test_component_copy_roundtrips():
 
 
 # --- formula override gate (formula_override) ---
+# These use the MgNH4PO4*6H2O hexahydrate to exercise formula_override. The
+# mass-balanced recovery component set (qsdsan.utils.doc_examples) deliberately
+# uses anhydrous NH4MgPO4 instead; the two representations are intentional.
 _pkw = dict(particle_size='Particulate', degradability='Undegradable', organic=False)
 
 def test_formula_mismatch_raises_without_override():

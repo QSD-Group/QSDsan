@@ -27,6 +27,7 @@ from chemicals.elements import (
     charge_from_formula,
     get_atoms,
     )
+from chemicals.reaction import Hfg as _Hfg, Hfl as _Hfl, Hfs as _Hfs
 from . import Chemical
 from ._compat import (
     chemical_fields as _chemical_fields,
@@ -56,6 +57,20 @@ def unpickle_component(cmp_data):
     for field, value in cmp_data.items():
         setfield(cmp, field, value)
     return cmp
+
+
+def _has_measured_Hf(CAS):
+    '''Whether the `chemicals` database carries a measured heat of formation
+    for this CAS (in any phase).'''
+    if not CAS:
+        return False
+    for fn in (_Hfg, _Hfl, _Hfs):
+        try:
+            if fn(CAS) is not None:
+                return True
+        except Exception:
+            pass
+    return False
 
 # =============================================================================
 # Representation
@@ -247,6 +262,10 @@ class Component(Chemical):
         # passes search_db=False to make a blank shell); pull it out so it does
         # not collide with the explicit value passed to super().__new__ below.
         search_db = chemical_properties.pop('search_db', True)
+        # If the user explicitly provides combustion energetics, never clear
+        # them in the inorganic guard applied at the end of construction.
+        _user_energetics = any(k in chemical_properties
+                               for k in ('Hf', 'HHV', 'LHV', 'combustion'))
         if chemical is not None:
             # Path A: build from an existing Chemical object by copying its data.
             # thermosteam's constructor cannot ingest a Chemical instance, so we
@@ -300,6 +319,7 @@ class Component(Chemical):
         if not self.MW and not self.formula: set_chemical_MW(self, 1.)
         self.i_COD = i_COD
         self.i_NOD = i_NOD
+        self._clear_estimated_energetics(_user_energetics)
         return self
 
 
@@ -328,6 +348,27 @@ class Component(Chemical):
             self.formula = formula
         elif self.formula:
             self._chem_MW = molecular_weight(self.atoms)
+
+
+    def _clear_estimated_energetics(self, user_supplied):
+        '''
+        Drop combustion energetics that thermosteam (>=0.53.5) estimates from an
+        empirical fuel correlation (Dulong/Boie) for any formula-bearing
+        chemical. Those correlations are defined for organic fuels; for an
+        inorganic component with no measured heat of formation (and none
+        supplied by the user) the estimate has no basis, so restore
+        ``Hf``/``HHV``/``LHV``/``combustion`` to ``None`` (the behavior of
+        thermosteam <=0.53.4).
+
+        Organic components, components with a measured ``Hf`` in the database
+        (e.g. H2, NH3, CO, H2S), and components given an explicit ``Hf`` are
+        left untouched.
+        '''
+        if self.organic or user_supplied:
+            return
+        if _has_measured_Hf(self.CAS):
+            return
+        self._Hf = self._HHV = self._LHV = self._combustion = None
 
 
     def __reduce__(self):
@@ -679,10 +720,11 @@ class Component(Chemical):
                     units = component_units_of_measure.get(field, '')
                     if units:
                         if field.startswith('i_'):
-                            if self._measured_as: denom = self._measured_as
-                            else: denom = ''
-                            if field == 'i_charge': line += f' {units} +/g {denom}'
-                            else: line += f' {units} {field[2:]}/g {denom}'
+                            numer = '+' if field == 'i_charge' else field[2:]
+                            line += f' {units} {numer}/g'
+                            # Append the measured-as basis only when set, so an
+                            # unmeasured component does not leave a trailing space.
+                            if self._measured_as: line += f' {self._measured_as}'
                         else: line += f' {units}'
                 else:
                     value = str(value)
@@ -797,6 +839,7 @@ class Component(Chemical):
                  UNIFAC: <Empty>
                  PSRK: <Empty>
                  NIST: <Empty>
+                 atoms: {'N': 1, 'H': 16, 'M...
         [Data]   MW: 245.41 g/mol
                  Tm: None
                  Tb: None
