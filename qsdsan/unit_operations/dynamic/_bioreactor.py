@@ -1432,7 +1432,7 @@ class AerobicDigester(CSTR):
                 ID = self._model.__class__.__name__ + '_particulate_inert_degrade'
                 self._dig_addon = ASM_AeDigAddOn(
                     ID=ID,
-                    components=self.thermo.chemicals
+                    components=self.components
                     )
         else:
             raise TypeError('organic_particulate_inert_degradation_process must be'

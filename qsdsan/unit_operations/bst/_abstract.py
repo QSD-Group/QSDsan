@@ -138,7 +138,7 @@ class Splitter(SanUnit, BSTSplitter):
         SanUnit.__init__(self, ID, ins, outs, thermo,
                          init_with=init_with, F_BM_default=F_BM_default,
                          isdynamic=isdynamic)
-        self._isplit = self.thermo.chemicals.isplit(split, order)
+        self._isplit = self.components.isplit(split, order)
 
 
     @property

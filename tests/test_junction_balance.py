@@ -146,7 +146,7 @@ def test_asm2d_madm1_pair():
 
     # Forward: ASM2d -> mADM1
     inf_asm = _make_stream('inf_asm2d_m', pc.create_asm2d_cmps, _asm2d_inf)
-    cmps_asm = qs.get_thermo().chemicals
+    cmps_asm = qs.get_components()
     thermo_asm = qs.get_thermo()        # capture ASM2d thermo before switching sides
     asm = pc.ASM2d()
     cmps_adm = pc.create_adm1_p_extension_cmps()
@@ -183,7 +183,7 @@ def test_masm2d_adm1p_pair():
 
     # Forward: mASM2d -> ADM1p
     inf_asm = _make_stream('inf_masm2d_p', pc.create_masm2d_cmps, _ASM2D_INF)
-    cmps_asm = qs.get_thermo().chemicals
+    cmps_asm = qs.get_components()
     thermo_asm = qs.get_thermo()        # capture mASM2d thermo before switching sides
     # Build mASM2d model while the mASM2d thermo is still active
     asm = pc.mASM2d()

@@ -131,7 +131,7 @@ class GasExtractionMembrane(SanUnit):
         dct_gas_wc = WilkeChang or self._WilkeChang
         self.set_WilkeChang(**dct_gas_wc)
         
-        cmps = self.thermo.chemicals
+        cmps = self.components
         # self.indexer = cmps.index
         # self.idx ensures that the indexing in further code is only for gases 
         # and not all components in the influent

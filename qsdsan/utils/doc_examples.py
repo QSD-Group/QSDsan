@@ -16,7 +16,7 @@ for license details.
 from .. import (
     Component,
     Components,
-    get_thermo,
+    get_components,
     Model,
     SanStream,
     set_thermo as qs_set_thermo,
@@ -292,8 +292,8 @@ def create_example_system(components=None):
     if components: qs_set_thermo(components)
     else:
         try:
-            thermo = get_thermo()
-            if not ('H2O', 'Methanol', 'Ethanol', 'NaCl') in thermo.components.names:
+            cmps = get_components()
+            if not ('H2O', 'Methanol', 'Ethanol', 'NaCl') in cmps.names:
                 qs_set_thermo(create_example_components())
         except: qs_set_thermo(create_example_components())
 

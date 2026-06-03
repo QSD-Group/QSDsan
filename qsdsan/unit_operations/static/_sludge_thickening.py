@@ -153,7 +153,7 @@ class SludgeThickening(SanUnit, Splitter):
                 idx = np.where(mixed.mass!=0)
                 split[idx] = eff.mass[idx]/mixed.mass[idx]
                 self.SKIPPED = False
-        self._isplit = self.thermo.chemicals.isplit(split)
+        self._isplit = self.components.isplit(split)
 
 
     @staticmethod
