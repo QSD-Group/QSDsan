@@ -482,8 +482,8 @@ class Incinerator(SanUnit):
     --------    
     >>> import qsdsan as qs
     >>> cmps = qs.Components.load_default()
-    >>> CO2 = qs.Component.from_chemical('S_CO2', search_ID='CO2', 
-    ...                                  particle_size='Soluble', 
+    >>> CO2 = qs.Component.from_chemical('S_CO2', chemical='CO2',
+    ...                                  particle_size='Soluble',
     ...                                  degradability='Undegradable', 
     ...                                  organic=False)
     >>> cmps_test = qs.Components([cmps.S_F, cmps.S_NH4, cmps.X_OHO, cmps.H2O, 

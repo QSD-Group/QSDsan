@@ -26,6 +26,19 @@ __all__ = (
 
 _lb_to_kg = qs.utils.auom('lb').conversion_factor('kg')
 
+# SanUnit add-on kwargs siphoned by these wrappers before forwarding to the
+# BioSTEAM ``__init__``; the BST ``__init__`` does not accept them and the
+# wrapper's ``_init_sanunit_addons`` consumes them after.
+_SANUNIT_ADDON_KEYS = (
+    'include_construction', 'construction', 'transportation', 'equipment',
+    'add_OPEX', 'lifetime', 'F_BM_default', 'isdynamic', 'exogenous_vars',
+)
+
+
+def _split_sanunit_addons(kwargs):
+    return {k: kwargs.pop(k) for k in tuple(_SANUNIT_ADDON_KEYS) if k in kwargs}
+
+
 class BinaryDistillation(bst.units.BinaryDistillation, qs.SanUnit):
     '''
     Similar to biosteam.units.BinaryDistillation, but can include construction impact calculation.
@@ -36,6 +49,11 @@ class BinaryDistillation(bst.units.BinaryDistillation, qs.SanUnit):
     '''
 
     include_construction = True
+
+    def __init__(self, *args, **kwargs):
+        addons = _split_sanunit_addons(kwargs)
+        super().__init__(*args, **kwargs)
+        self._init_sanunit_addons(**addons)
 
     def _design(self):
         super()._design()
@@ -61,14 +79,26 @@ class ShortcutColumn(bst.units.ShortcutColumn, qs.SanUnit):
     `biosteam.units.ShortcutColumn <https://biosteam.readthedocs.io/en/latest/API/units/distillation.html>`_
     '''
 
+    def __init__(self, *args, **kwargs):
+        addons = _split_sanunit_addons(kwargs)
+        super().__init__(*args, **kwargs)
+        self._init_sanunit_addons(**addons)
+
+
 class MESHDistillation(bst.units.MESHDistillation, qs.SanUnit):
     '''
     biosteam.units.MESHDistillation with QSDsan properties.
 
     See Also
     --------
-    `biosteam.units.ShortcutColumn <https://biosteam.readthedocs.io/en/latest/API/units/distillation.html>`_
+    `biosteam.units.MESHDistillation <https://biosteam.readthedocs.io/en/latest/API/units/distillation.html>`_
     '''
+
+    def __init__(self, *args, **kwargs):
+        addons = _split_sanunit_addons(kwargs)
+        super().__init__(*args, **kwargs)
+        self._init_sanunit_addons(**addons)
+
 
 class AdiabaticMultiStageVLEColumn(bst.units.AdiabaticMultiStageVLEColumn, qs.SanUnit):
     '''
@@ -76,5 +106,10 @@ class AdiabaticMultiStageVLEColumn(bst.units.AdiabaticMultiStageVLEColumn, qs.Sa
 
     See Also
     --------
-    `biosteam.units.ShortcutColumn <https://biosteam.readthedocs.io/en/latest/API/units/distillation.html>`_
+    `biosteam.units.AdiabaticMultiStageVLEColumn <https://biosteam.readthedocs.io/en/latest/API/units/distillation.html>`_
     '''
+
+    def __init__(self, *args, **kwargs):
+        addons = _split_sanunit_addons(kwargs)
+        super().__init__(*args, **kwargs)
+        self._init_sanunit_addons(**addons)

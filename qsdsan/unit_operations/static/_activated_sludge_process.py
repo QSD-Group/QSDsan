@@ -118,6 +118,23 @@ class ActivatedSludgeProcess(SanUnit):
     kwargs : dict
         Other attributes to be set.
 
+    Examples
+    --------
+    >>> from qsdsan.utils import create_example_wwt_components
+    >>> cmps = create_example_wwt_components()
+    >>> from qsdsan import System, WasteStream
+    >>> from qsdsan.unit_operations import ActivatedSludgeProcess
+    >>> inf = WasteStream('inf')
+    >>> inf.set_flow_by_concentration(flow_tot=20,
+    ...     concentrations={'Substrate': 300, 'X': 50, 'X_inert': 100},
+    ...     units=('mgd', 'mg/L'))
+    >>> ASP = ActivatedSludgeProcess('ASP', ins=(inf, 'air'),
+    ...                              outs=('treated', 'was', 'offgas'))
+    >>> sys = System('sys', path=(ASP,))
+    >>> sys.simulate()
+    >>> round(ASP.outs[0].COD, 1)  # effluent COD, mg/L
+    19.0
+
     References
     ----------
     .. [1] Rittmann, B.; McCarty, P.; McCarty, P. L.; Bruce, R.
@@ -215,7 +232,7 @@ class ActivatedSludgeProcess(SanUnit):
         self.air_piping = air_piping = GasPiping('air_piping', linked_unit=self, N_reactor=N_train)
         self.equipments = (blower, air_piping)
         self.F_BM.update(F_BM)
-        self._default_equipment_lifetime.update(lifetime)
+        self.equipment_lifetime.update(lifetime)
 
         for attr, value in kwargs.items(): setattr(self, attr, value)
 
@@ -312,7 +329,11 @@ class ActivatedSludgeProcess(SanUnit):
         # Particulate components
         try:
             active_biomass = cmps.active_biomass
-            X_a_inf = inf.iconc['active_biomass'].sum()
+            X_a_inf_conc = inf.iconc['active_biomass']
+            # `iconc[group]` returns a bare Python scalar (no `.sum()`) when the
+            # group concentration is exactly zero, so coerce robustly instead of
+            # mistaking the resulting AttributeError for an undefined group.
+            X_a_inf = X_a_inf_conc.sum() if hasattr(X_a_inf_conc, 'sum') else X_a_inf_conc
         except AttributeError:
             warn('The `active_biomass` group of current `CompiledComponents` '
                  'has not been defined and is assumed to be 0.')

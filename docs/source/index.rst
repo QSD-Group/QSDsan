@@ -121,7 +121,7 @@ If you would like to contribute, please follow our `Contributing Guidelines`_ an
    :maxdepth: 2
    :hidden:
 
-   FAQ
+   faq/index
 
 
 .. toctree::

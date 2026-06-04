@@ -36,7 +36,7 @@ Via the command line
 
 #. On your fork's page, click the green "Code" button and copy the HTTPS address; it looks like ``https://github.com/<YOUR_USERNAME>/QSDsan.git``.
 
-#. In a terminal, navigate to where you keep your projects and clone your fork:
+#. In a terminal, navigate to where you keep your projects (for example, ``cd ~/projects`` on macOS/Linux or ``cd %USERPROFILE%\projects`` on Windows) and clone your fork. The ``git clone`` command creates a new ``QSDsan/`` folder inside the current directory, then ``cd QSDsan`` moves you into it:
 
    .. code:: bash
 
@@ -45,26 +45,56 @@ Via the command line
 
    If you don't have ``git``, see the `installation instructions <https://git-scm.com/book/en/v2/Getting-Started-Installing-Git>`_. The ``--depth=1`` flag makes a faster, smaller clone by fetching only recent history; ``--no-single-branch`` keeps all branches available. If you later need full history (for example, for ``git blame`` or ``git bisect``), run ``git fetch --unshallow``.
 
-#. Create and activate a virtual environment so ``QSDsan`` and its dependencies stay isolated from your other projects:
+   The remaining setup steps all run from inside this ``QSDsan/`` folder. If you close your terminal and come back later, ``cd`` back into it before continuing.
+
+#. Create and activate a virtual environment so ``QSDsan`` and its dependencies stay isolated from your other projects. Pick **one** of the two options below; both produce a ``.venv/`` folder inside ``QSDsan/``. ``QSDsan`` requires Python 3.12 or newer, so make sure the interpreter you use here meets that.
+
+   **Option A: standard library (pip).**
 
    .. code:: bash
 
+       # from inside the QSDsan/ folder
        python -m venv .venv
-       # then activate it:
-       #   Windows:        .venv\Scripts\activate
-       #   macOS / Linux:  source .venv/bin/activate
 
-#. Install ``QSDsan`` in editable mode with the development dependencies. This installs ``QSDsan`` from your local clone along with the packages needed for testing and building the documentation:
+       # then activate it:
+       #   Windows (PowerShell):  .venv\Scripts\Activate.ps1
+       #   Windows (cmd.exe):     .venv\Scripts\activate.bat
+       #   macOS / Linux:         source .venv/bin/activate
+
+   **Option B:** `uv <https://docs.astral.sh/uv/>`_ **(faster, drop-in alternative).**
+
+   ``uv`` manages Python interpreters itself, so you don't need a pre-installed Python 3.12. From inside the ``QSDsan/`` folder:
 
    .. code:: bash
 
+       # 1. have uv download Python 3.12 (skip if you already have 3.12+ on PATH)
+       uv python install 3.12
+
+       # 2. create .venv/ pinned to that interpreter
+       uv venv --python 3.12
+
+       # 3. activate it (same paths as Option A):
+       #   Windows (PowerShell):  .venv\Scripts\Activate.ps1
+       #   Windows (cmd.exe):     .venv\Scripts\activate.bat
+       #   macOS / Linux:         source .venv/bin/activate
+
+   Once activated, your shell prompt typically shows ``(.venv)`` at the start. Every command in the rest of this guide assumes you are still inside ``QSDsan/`` with this environment activated.
+
+#. Install ``QSDsan`` in editable mode with the development dependencies. This installs ``QSDsan`` from your local clone along with the packages needed for testing and building the documentation. Use the command matching the option you chose above:
+
+   .. code:: bash
+
+       # from inside the QSDsan/ folder, with .venv activated
+
+       # Option A (pip):
        pip install -e ".[dev]"
 
-   .. tip::
+       # Option B (uv):
+       uv pip install -e ".[dev]"
 
-      Prefer `uv <https://docs.astral.sh/uv/>`_? It is a faster, drop-in alternative. Create the environment with ``uv venv`` instead of ``python -m venv``, and prefix the install with ``uv`` (``uv pip install -e ".[dev]"``). Every other command in this guide is unchanged.
+   The ``.`` in ``-e "."`` refers to the current directory (``QSDsan/``), which is why this step must be run from inside the cloned folder.
 
-#. Add the root ``QSDsan`` repository as the ``upstream`` remote, then check your remotes:
+#. Add the root ``QSDsan`` repository as the ``upstream`` remote, then check your remotes (still from inside ``QSDsan/``):
 
    .. code:: bash
 
@@ -98,7 +128,58 @@ If you are new to the command line, `GitHub Desktop <https://desktop.github.com/
 
 #. You can now `make commits <https://docs.github.com/en/desktop/contributing-and-collaborating-using-github-desktop/making-changes-in-a-branch/committing-and-reviewing-changes-to-your-project>`_ and `push <https://docs.github.com/en/desktop/contributing-and-collaborating-using-github-desktop/making-changes-in-a-branch/pushing-changes-to-github>`_ to your fork. To pull in later updates from ``QSDsan``, use the "Current Branch" menu to merge the corresponding ``upstream`` branch; you may occasionally need to `resolve conflicts <https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/addressing-merge-conflicts/resolving-a-merge-conflict-on-github>`_.
 
-#. Open a terminal in the cloned folder and complete steps 4–5 of the command-line instructions above (create a virtual environment and install in editable mode).
+#. Open a terminal in the cloned ``QSDsan/`` folder (in GitHub Desktop: **Repository → Open in Terminal**) and complete steps 4–5 of the command-line instructions above to create a virtual environment and install ``QSDsan`` in editable mode.
+
+.. _also-contributing-to-exposan:
+
+Also contributing to EXPOsan?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Systems built with ``QSDsan`` live in the separate `EXPOsan <https://github.com/QSD-Group/EXPOsan>`_ repository. If you only plan to change ``QSDsan`` itself, you can stop after the steps above. If you also plan to contribute to ``EXPOsan`` (for example, by adding a new system or modifying an existing one), use the side-by-side layout below instead so a change you make in ``QSDsan`` is immediately visible to ``EXPOsan``.
+
+Put both clones inside a single workspace folder, with **one shared virtual environment at the workspace root**:
+
+.. code-block:: text
+
+   qsdsan-dev/          workspace folder (create this; open it in your editor)
+   ├── QSDsan/          git clone of your QSDsan fork
+   ├── EXPOsan/         git clone of your EXPOsan fork
+   └── .venv/           shared virtual environment (one level above each repo)
+
+The setup differs from the single-repo flow in two places:
+
+#. Create the workspace folder first, then clone **both** forks into it (fork ``EXPOsan`` the same way you forked ``QSDsan``):
+
+   .. code:: bash
+
+       mkdir qsdsan-dev
+       cd qsdsan-dev
+       git clone --depth=1 --no-single-branch https://github.com/<YOUR_USERNAME>/QSDsan.git
+       git clone --depth=1 --no-single-branch https://github.com/<YOUR_USERNAME>/EXPOsan.git
+
+#. Create the virtual environment **at the workspace root** (``qsdsan-dev/``), not inside either repo, then install both packages in editable mode from that same folder:
+
+   .. code:: bash
+
+       # still in qsdsan-dev/, with .venv created and activated as in step 4 above
+
+       # Option A (pip):
+       pip install -e "./QSDsan[dev]"
+       pip install -e "./EXPOsan[dev]"
+
+       # Option B (uv):
+       uv pip install -e "./QSDsan[dev]"
+       uv pip install -e "./EXPOsan[dev]"
+
+The remaining ``git remote add upstream`` / branching steps are unchanged, but run them **inside each repo separately** (``cd QSDsan`` to configure ``QSDsan``, ``cd ../EXPOsan`` to configure ``EXPOsan``); they have independent upstreams and independent feature branches.
+
+.. note::
+
+   Keep this workspace folder out of cloud-synced locations (OneDrive, Dropbox, iCloud). A virtual environment is tens of thousands of files; syncing them is slow and can corrupt the environment's tooling.
+
+.. tip:: Keep the environment relocatable
+
+   If you create the environment with ``uv``, add the ``--relocatable`` flag (``uv venv --relocatable``). A normal environment hard-codes the absolute path of its Python interpreter into every console-script launcher (``pytest``, ``sphinx-build``, and so on); renaming or moving ``qsdsan-dev/`` afterwards breaks those launchers with errors like *"failed to canonicalize script path"*. ``--relocatable`` makes them use relative paths, so the folder can be safely moved. If you hit this with an environment that already exists, recreate it.
 
 Notes
 ^^^^^

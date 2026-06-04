@@ -17,7 +17,9 @@ __all__ = (
     'test_sum_system_utility_handles_power_heat_and_invalid_utility',
     'test_create_example_components',
     'test_create_example_system',
+    'test_create_example_treatment_systems',
     'test_create_example_model',
+    'test_cost_decorator_accepts_CEPCI_alias',
     )
 
 from pathlib import Path
@@ -194,6 +196,23 @@ def test_create_example_system():
     assert 'H1' in unit_ids
 
 
+def test_create_example_treatment_systems():
+    import qsdsan as qs
+    from qsdsan.utils import create_example_treatment_systems
+    # exported on the qsdsan.utils namespace
+    assert hasattr(qs.utils, 'create_example_treatment_systems')
+
+    aer_sys, ana_sys = create_example_treatment_systems()
+    aer_sys.simulate(); ana_sys.simulate()
+    assert [u.ID for u in aer_sys.units] == ['aer']
+    assert [u.ID for u in ana_sys.units] == ['ana']
+    # the aerobic plant draws aeration power; the anaerobic plant needs heating
+    assert aer_sys.units[0].power_utility.rate > 0
+    assert sum(hu.duty for hu in ana_sys.units[0].heat_utilities) > 0
+    # the anaerobic plant earns a biogas credit (positive price on the biogas outlet)
+    assert ana_sys.units[0].outs[2].price > 0
+
+
 def test_create_example_model():
     from qsdsan.utils import create_example_model
     model = create_example_model(evaluate=False)
@@ -203,3 +222,27 @@ def test_create_example_model():
     model_eval = create_example_model(evaluate=True, N=20, seed=554)
     assert model_eval.table is not None
     assert len(model_eval.table) == 20
+
+
+def test_cost_decorator_accepts_CEPCI_alias():
+    '''qsdsan's @cost accepts CEPCI as an alias for BioSTEAM's CE (same index).'''
+    from qsdsan import SanUnit
+    from qsdsan.utils import cost
+
+    @cost('Flow rate', 'Pump', CE=567.5, cost=1000, S=1, units='kg/hr')
+    class _UnitCE(SanUnit): pass
+
+    @cost('Flow rate', 'Pump', CEPCI=567.5, cost=1000, S=1, units='kg/hr')
+    class _UnitCEPCI(SanUnit): pass
+
+    # the alias is stored as the same reference index on the cost item
+    assert _UnitCE.cost_items['Pump'].CE == _UnitCEPCI.cost_items['Pump'].CE == 567.5
+
+    # passing both is ambiguous; passing neither is an error (CE is required)
+    with pytest.raises(ValueError):
+        @cost('Flow rate', 'Pump', CE=500, CEPCI=600, cost=1000, S=1, units='kg/hr')
+        class _UnitBoth(SanUnit): pass
+
+    with pytest.raises(TypeError):
+        @cost('Flow rate', 'Pump', cost=1000, S=1, units='kg/hr')
+        class _UnitNeither(SanUnit): pass

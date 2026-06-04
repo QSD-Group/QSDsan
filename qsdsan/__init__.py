@@ -38,11 +38,34 @@ HeatUtility = _bst.HeatUtility
 PowerUtility = _bst.PowerUtility
 Unit = _bst.Unit
 System = _bst.System
+AgileSystem = _bst.AgileSystem
+Facility = _bst.Facility
 Scope = _bst.utils.Scope
 Model = _bst.Model
 Metric = _bst.Metric
 Parameter = _bst.Parameter
 default_utilities = _bst.default_utilities
+get_OSBL = _bst.get_OSBL
+
+# Thermo/utility configuration objects, re-exported so users can configure QSDsan
+# without ``import biosteam``. ``settings`` and ``stream_utility_prices`` are
+# mutated in place (e.g. ``qs.settings.thermo.ideal()``), never rebound, so a
+# plain re-export of the shared object is correct; ``test_public_api`` asserts the
+# identity so a future BioSTEAM rebind would fail loudly. The settable scalar
+# global ``bst.CE`` is exposed separately as the ``CEPCI`` property below.
+settings = _bst.settings
+# ``preferences`` controls display/diagram defaults (dark mode, stream labels,
+# graphviz format, etc.); re-exported so users can tweak them via ``qs.preferences``
+# and as the home for any future QSDsan-specific display preferences.
+preferences = _bst.preferences
+stream_utility_prices = _bst.stream_utility_prices
+Thermo = _bst.Thermo
+UtilityAgent = _bst.UtilityAgent
+MissingStream = _bst.utils.MissingStream
+
+# ``biosteam.report`` is imported eagerly by ``import biosteam`` above, so a plain
+# re-export (no lazy machinery) is enough for ``qs.report.voc_table`` etc.
+report = _bst.report
 
 # Reaction APIs (defined in Thermosteam, re-exported through BioSTEAM) so users can
 # do ``from qsdsan import Reaction`` instead of reaching into BioSTEAM/Thermosteam.
@@ -130,9 +153,45 @@ def __getattr__(name):
 def __dir__():
     return sorted((*globals(), *_lazy_modules, *_legacy_aliases, 'CEPCI'))
 
-def default():
-    _bst.default()
-    main_flowsheet.set_flowsheet('default', new=True)
+def default(utilities=True, CEPCI=True, flowsheet=True):
+    '''
+    Reset utilities, the chemical plant cost index (CEPCI), and/or the active
+    flowsheet back to ``qsdsan``'s defaults (whichever are requested).
+
+    Parameters
+    ----------
+    utilities : bool, optional
+        Whether to reset the heating/cooling utility agents (and their prices)
+        to BioSTEAM's defaults. The default is True.
+    CEPCI : bool, optional
+        Whether to reset the Chemical Engineering Plant Cost Index (:func:`qsdsan.CEPCI`)
+        to BioSTEAM's default. The default is True.
+    flowsheet : bool, optional
+        Whether to reset the active flowsheet to a fresh one named ``'default'``,
+        clearing all registered streams, units, systems, and LCA objects
+        (impact indicators/items, construction, and transportation). The default
+        is True.
+
+    Notes
+    -----
+    Regardless of the arguments, the stream/unit/system auto-naming counters and
+    the cached chemical lookups are always reset (this mirrors ``biosteam.default``).
+
+    Unlike ``biosteam.default`` (whose ``flowsheet`` argument defaults to False),
+    ``qsdsan.default`` resets the flowsheet by default, pass ``flowsheet=False`` to keep the current flowsheet.
+
+    See Also
+    --------
+    `biosteam.default <https://biosteam.readthedocs.io/en/latest/API/process_tools/default.html>`_
+    '''
+    _bst.default(utilities=utilities, CEPCI=CEPCI, flowsheet=False)
+    # `biosteam.default` resets the native stream/unit/system ticket counters; do the
+    # same for the qsdsan LCA classes, whose ticket_numbers are also class-level
+    # globals that `set_flowsheet` does not swap.
+    for i in (ImpactIndicator, ImpactItem, Construction, Transportation):
+        i.ticket_numbers.clear()
+    if flowsheet:
+        main_flowsheet.set_flowsheet('default', new=True)
 
 # ── Upgrade main_flowsheet to SanMainFlowsheet in-place ──────────────────────
 # _construction.py / _transportation.py imported main_flowsheet by reference
@@ -185,10 +244,28 @@ class _SanModule(_sys.modules[__name__].__class__):
 _sys.modules[__name__].__class__ = _SanModule
 
 
+# BioSTEAM/Thermosteam objects re-exported for a self-contained ``qsdsan`` surface
+_bst_reexports = (
+    'Chemical', 'Chemicals', 'CompiledChemicals',
+    'Stream', 'MultiStream', 'MissingStream',
+    'set_thermo', 'get_components', 'get_thermo', 'settings', 'preferences',
+    'HeatUtility', 'PowerUtility', 'stream_utility_prices',
+    'Unit', 'System', 'AgileSystem', 'Facility',
+    'Scope', 'Model', 'Metric', 'Parameter',
+    'default_utilities', 'get_OSBL',
+    'Thermo', 'UtilityAgent', 'report',
+    'Reaction', 'ReactionItem', 'ReactionSet',
+    'ParallelReaction', 'SeriesReaction', 'ReactionSystem',
+    'Rxn', 'RxnI', 'RxnS', 'PRxn', 'SRxn', 'RxnSys',
+    'CEPCI', 'CEPCI_by_year',
+    'Flowsheet', 'main_flowsheet', 'F',
+    )
+
 __all__ = (
     'units_of_measure',
     'SanFlowsheet',
     'SanMainFlowsheet',
+    *_bst_reexports,
     *_component.__all__,
     *_components.__all__,
     *_construction.__all__,

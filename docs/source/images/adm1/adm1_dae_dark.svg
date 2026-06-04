@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 420" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <style>
+    .liq      { fill: #1e3a55; stroke: #6fb1ff; stroke-width: 1.6; }
+    .gas      { fill: #3a2f12; stroke: #e8b04a; stroke-width: 1.6; }
+    .transfer { fill: #1f3b18; stroke: #8ad07b; stroke-width: 1.4; stroke-dasharray: 4,3; }
+    .out      { fill: #222222; stroke: #aaaaaa; stroke-width: 1.2; }
+    .heading  { font-size: 15px; font-weight: 700; fill: #ebebeb; }
+    .sub      { font-size: 12px; fill: #ebebeb; }
+    .mono     { font-family: 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace;
+                font-size: 12px; fill: #ebebeb; }
+    .mono-sm  { font-family: 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace;
+                font-size: 11px; fill: #ebebeb; }
+    .muted    { font-size: 11px; fill: #aaaaaa; font-style: italic; }
+    .tag      { font-size: 11px; font-weight: 700; fill: #6fb1ff; letter-spacing: 0.5px; }
+    .tag-gas  { font-size: 11px; font-weight: 700; fill: #e8b04a; letter-spacing: 0.5px; }
+    .tag-trans { font-size: 11px; font-weight: 700; fill: #8ad07b; letter-spacing: 0.5px; }
+  </style>
+
+  <defs>
+    <marker id="arr-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#6fb1ff"/>
+    </marker>
+    <marker id="arr-gray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#aaaaaa"/>
+    </marker>
+    <marker id="arr-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#8ad07b"/>
+    </marker>
+  </defs>
+
+  <rect class="liq" x="30" y="40" width="360" height="240" rx="10" ry="10"/>
+  <text class="tag" x="50" y="62">ODE BLOCK</text>
+  <text class="heading" x="210" y="62" text-anchor="middle">Liquid phase</text>
+
+  <text class="mono" x="50" y="100">d[S, X] / dt  =  A · ρ(S, X, T, pH)</text>
+  <text class="mono-sm" x="70" y="120">+ (Q / V_liq) · ([S, X]_in − [S, X])</text>
+
+  <text class="sub" x="50" y="156">26 state variables:</text>
+  <text class="mono-sm" x="60" y="176">S_su, S_aa, S_fa, S_va, S_bu, S_pro, S_ac,</text>
+  <text class="mono-sm" x="60" y="192">S_h2, S_ch4, S_IC, S_IN, S_I,</text>
+  <text class="mono-sm" x="60" y="208">X_c, X_ch, X_pr, X_li,</text>
+  <text class="mono-sm" x="60" y="224">X_su, X_aa, X_fa, X_c4, X_pro, X_ac, X_h2, X_I,</text>
+  <text class="mono-sm" x="60" y="240">S_cat, S_an</text>
+
+  <text class="muted" x="50" y="266">22 process rates feed into the matrix A</text>
+
+  <rect class="gas" x="430" y="40" width="360" height="240" rx="10" ry="10"/>
+  <text class="tag-gas" x="450" y="62">ALGEBRAIC BLOCK</text>
+  <text class="heading" x="610" y="62" text-anchor="middle">Headspace</text>
+
+  <text class="sub" x="450" y="100">Partial pressures (ideal gas):</text>
+  <text class="mono-sm" x="460" y="120">p_H2  = S_H2(gas) · R · T</text>
+  <text class="mono-sm" x="460" y="136">p_CH4 = S_CH4(gas) · R · T</text>
+  <text class="mono-sm" x="460" y="152">p_CO2 = S_CO2(gas) · R · T</text>
+  <text class="mono-sm" x="460" y="168">p_H2O = saturation(T)</text>
+
+  <text class="sub" x="450" y="200">Ion balance &amp; pH:</text>
+  <text class="mono-sm" x="460" y="220">S_H+  from charge balance</text>
+  <text class="mono-sm" x="460" y="236">acid/base equilibria for VFAs,</text>
+  <text class="mono-sm" x="460" y="252">CO2 / HCO3⁻, NH3 / NH4+</text>
+
+  <text class="muted" x="450" y="270">algebraic_h2=True moves S_h2 into this block</text>
+
+  <line x1="390" y1="160" x2="430" y2="160" stroke="#8ad07b" stroke-width="1.8" marker-end="url(#arr-green)" stroke-dasharray="5,3"/>
+  <line x1="430" y1="200" x2="390" y2="200" stroke="#8ad07b" stroke-width="1.8" marker-end="url(#arr-green)" stroke-dasharray="5,3"/>
+  <text class="tag-trans" x="410" y="148" text-anchor="middle">gas-liquid transfer</text>
+  <text class="mono-sm" x="410" y="184" text-anchor="middle">k_L·a · (S_aq − K_H · p)</text>
+  <text class="muted" x="410" y="222" text-anchor="middle">applied to S_h2, S_ch4, S_IC</text>
+
+  <line x1="210" y1="280" x2="210" y2="335" stroke="#aaaaaa" stroke-width="1.6" marker-end="url(#arr-gray)"/>
+  <rect class="out" x="120" y="340" width="180" height="34" rx="5" ry="5"/>
+  <text class="sub" x="210" y="362" text-anchor="middle">Liquid effluent  Q_eff</text>
+
+  <line x1="610" y1="280" x2="610" y2="335" stroke="#aaaaaa" stroke-width="1.6" marker-end="url(#arr-gray)"/>
+  <rect class="out" x="520" y="340" width="180" height="34" rx="5" ry="5"/>
+  <text class="sub" x="610" y="362" text-anchor="middle">Biogas  Q_gas</text>
+
+  <text class="muted" x="410" y="402" text-anchor="middle">Each integrator step of AnaerobicCSTR evaluates the ODE block, the algebraic block, and the transfer terms linking them.</text>
+</svg>

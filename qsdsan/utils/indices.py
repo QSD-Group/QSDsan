@@ -96,8 +96,6 @@ ChemPPI_by_year = {
     2018: 290.2,
     2019: 292.1,
     2020: 289.0,
-    2021: 708.8,
-    2022: 816.0,
     }
 
 # U.S. Energy Information Administration (EIA) Annual Energy Outlook (AEO)

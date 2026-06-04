@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 360" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <style>
+    .heading  { font-size: 16px; font-weight: 600; fill: #1a1a1a; }
+    .muted    { font-size: 12px; fill: #555555; }
+    .mono     { font-family: 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace;
+                font-size: 13px; fill: #1a1a1a; }
+    .eq       { font-family: 'SFMono-Regular', Menlo, Consolas, monospace;
+                font-size: 14px; fill: #1a1a1a; }
+  </style>
+
+  <defs>
+    <marker id="arr-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#2c6fb5"/>
+    </marker>
+  </defs>
+
+  <!-- Inflow arrows -->
+  <line x1="60"  y1="90"  x2="125" y2="90"  stroke="#2c6fb5" stroke-width="1.7" marker-end="url(#arr-blue)"/>
+  <line x1="60"  y1="150" x2="125" y2="150" stroke="#2c6fb5" stroke-width="1.7" marker-end="url(#arr-blue)"/>
+  <line x1="60"  y1="210" x2="125" y2="210" stroke="#2c6fb5" stroke-width="1.7" marker-end="url(#arr-blue)"/>
+  <text class="mono" x="55" y="86"  text-anchor="end">Q₁, C₁</text>
+  <text class="mono" x="55" y="146" text-anchor="end">Q₂, C₂</text>
+  <text class="mono" x="55" y="206" text-anchor="end">Q₃, C₃</text>
+  <text class="muted" x="55" y="228" text-anchor="end">(m inlets)</text>
+
+  <!-- Tank body -->
+  <path d="M 125 65 L 295 65 L 295 220 Q 295 265, 250 265 L 170 265 Q 125 265, 125 220 Z"
+        fill="#eaf6e6" stroke="#4a8d3a" stroke-width="1.7"/>
+  <line x1="125" y1="105" x2="295" y2="105" stroke="#4a8d3a" stroke-dasharray="4 3" stroke-width="1"/>
+  <text class="heading" x="210" y="165" text-anchor="middle">V (fixed)</text>
+  <text class="mono"    x="210" y="190" text-anchor="middle">C, Q</text>
+  <text class="muted"   x="210" y="210" text-anchor="middle">tank contents</text>
+
+  <!-- Outflow arrow -->
+  <line x1="295" y1="150" x2="370" y2="150"
+        stroke="#2c6fb5" stroke-width="1.7" marker-end="url(#arr-blue)"/>
+  <text class="mono"  x="378" y="146">Q, C</text>
+  <text class="muted" x="378" y="162">(1 outlet)</text>
+
+  <!-- Governing equations -->
+  <text class="heading" x="475" y="85">Governing equations:</text>
+
+  <text class="eq"      x="475" y="118">Q       =  sum(Q_ins)</text>
+  <text class="eq"      x="475" y="145">dQ/dt   =  sum(dQ_ins)                  ← _dstate[-1]</text>
+
+  <text class="eq"      x="475" y="185">dC/dt   =  (Q_ins · C_ins − Q · C) / V    ← _dstate[:-1]</text>
+  <text class="muted"   x="475" y="204">component balance: inflow − outflow, divided by holdup V</text>
+
+  <!-- Code snippet -->
+  <text class="heading" x="475" y="240">In the _compile_ODE body:</text>
+  <text class="mono"    x="475" y="263">def dy_dt(t, y_ins, y, dy_ins):</text>
+  <text class="mono"    x="475" y="283">    Q_ins, C_ins = y_ins[:, -1], y_ins[:, :-1]</text>
+  <text class="mono"    x="475" y="303">    Q, C = sum(Q_ins), y[:-1]</text>
+  <text class="mono"    x="475" y="323">    _dstate[-1]  = sum(dy_ins[:, -1])</text>
+  <text class="mono"    x="475" y="343">    _dstate[:-1] = (Q_ins @ C_ins - Q*C) / V</text>
+</svg>

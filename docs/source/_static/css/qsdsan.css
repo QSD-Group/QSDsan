@@ -63,3 +63,43 @@ details:not([class]) > summary > p {
 details:not([class]) > summary:hover {
   background-color: var(--color-background-secondary);
 }
+
+/* pandas DataFrame tables in notebook output (nbsphinx). Pandas emits a
+   `table.dataframe` with light-mode colors baked in, which becomes
+   low-contrast (light text on light stripes) in furo's dark mode. Re-color
+   everything from furo's theme variables so it adapts to light/dark. */
+table.dataframe {
+  color: var(--color-foreground-primary);
+  border-color: var(--color-background-border);
+}
+table.dataframe th,
+table.dataframe td {
+  color: var(--color-foreground-primary);
+  border-color: var(--color-background-border);
+}
+/* column headers (thead) and the row-index column (tbody th) */
+table.dataframe thead th,
+table.dataframe tbody th {
+  background-color: var(--color-background-secondary);
+}
+/* data cells, with zebra striping that stays readable in both modes */
+table.dataframe tbody td {
+  background-color: var(--color-background-primary);
+}
+table.dataframe tbody tr:nth-child(odd) td {
+  background-color: var(--color-background-secondary);
+}
+table.dataframe tbody tr:hover td,
+table.dataframe tbody tr:hover th {
+  background-color: var(--color-background-hover);
+}
+
+/* nbsphinx renders stderr output (warnings, deprecation notices) with a
+   hardcoded light-pink background (#fdd), which is unreadable in furo's dark
+   mode (light text on light pink). Replace it with a semi-transparent red tint
+   that reads as a subtle warning on both light and dark backgrounds, and let the
+   text use the theme's foreground color. */
+div.nboutput.container div.output_area.stderr {
+  background: rgba(229, 83, 75, 0.13);
+  color: var(--color-foreground-primary);
+}

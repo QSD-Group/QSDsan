@@ -5,7 +5,7 @@ Unit Operations
 
 This page lists the unit operation modules available in ``QSDsan``. Unit operations are organized into three primary categories:
 
-- ``bst`` units inherit from BioSTEAM unit operations and add QSDsan behavior while remaining steady-state.
+- ``bst`` units inherit from BioSTEAM unit operations and add QSDsan behavior while remaining steady-state. They are used the same way as native QSDsan units; for parameters and behavior specific to the BioSTEAM parent class, see the `BioSTEAM documentation <https://biosteam.readthedocs.io/en/latest/>`_.
 - ``QSDsan static`` units are QSDsan-native unit operations without dynamic state equations.
 - ``QSDsan dynamic`` units are QSDsan-native unit operations with dynamic state, derivative state, ODE, or algebraic-equation behavior.
 

@@ -14,75 +14,124 @@ for license details.
 '''
 
 # Just making sure the systems can run is sufficient
-__all__ = ('test_exposan',)
+__all__ = ('test_exposan', 'test_all_exposan_modules_accounted_for')
 
+import pkgutil
 import pytest
 
 pytestmark = [pytest.mark.integration, pytest.mark.slow]
 
-def test_exposan():
-    ##### Systems without costs/impacts #####
-    from qsdsan import default
-    default()
-    
-    from exposan.adm import create_system as create_adm_system
-    adm_sys = create_adm_system()
-    adm_sys.simulate(state_reset_hook='reset_cache', t_span=(0, 200), method='BDF')
 
-    from exposan.asm import create_system as create_asm_system
+# --- per-system construction smoke checks ---------------------------------
+# This is the non-blocking integration *canary*: it confirms each EXPOsan system
+# still constructs/wires up against the current QSDsan. It deliberately does NOT
+# simulate the dynamic systems or static systems with a long simulation time (e.g. `hap`)# -- QSDsan's own dynamic machinery is covered by
+# test_dyn_sys.py and the example treatment systems, and full simulation is owned
+# by EXPOsan's CI (which runs the EXPOsan suite against QSDsan main). Hence
+# load(simulate=False) / create_system() without simulate(), keeping this lane fast.
+
+def _load(module_name, **load_kwargs):
+    """Import an EXPOsan module and call its load(): dynamic systems construct only
+    (load defaults to simulate=False); steady-state systems solve on load."""
+    import importlib
+    importlib.import_module(f'exposan.{module_name}').load(**load_kwargs)
+
+
+def _summarize(module_name, sys_attrs):
+    """load() (steady-state systems already solve on load) and print summaries."""
+    import importlib
+    mod = importlib.import_module(f'exposan.{module_name}')
+    mod.load()
+    mod.print_summaries(tuple(getattr(mod, a) for a in sys_attrs))
+
+
+def _run_asm():
+    from exposan import asm
     for process_model in ('ASM1', 'ASM2d'):
         for aerated in (False, True):
-            asm_sys = create_asm_system(process_model=process_model, aerated=aerated)
-            asm_sys.simulate(t_span=(0, 10), method='BDF')
+            asm.load(reload=True, process_model=process_model, aerated=aerated)
 
-    from qsdsan.utils import get_SRT
-    from exposan.bsm1 import create_system as create_bsm1_system, biomass_IDs
-    bsm1_sys = create_bsm1_system()
-    bsm1_sys.simulate(t_span=(0,10), method='BDF')
-    print(get_SRT(bsm1_sys, biomass_IDs=biomass_IDs['asm1'])) # to test the `get_SRT` function
 
-    from exposan.cas import create_system as create_cas_system
-    cas_sys = create_cas_system()
-    cas_sys.simulate()
+def _run_bsm2():
+    from exposan import bsm2
+    for kind in ('bsm2', 'bsm2p'):
+        bsm2.load(kind=kind)  # changing `kind` triggers reconstruction
 
-    ##### Systems with costs/impacts #####
-    from exposan import biogenic_refinery as br
-    br.load()
-    br.print_summaries((br.sysA, br.sysB, br.sysC, br.sysD))
 
-    from exposan import bwaise as bw
-    bw.load()
-    bw.print_summaries((bw.sysA, bw.sysB, bw.sysC))
-
-    from exposan import eco_san as es
-    es.load()
-    es.print_summaries((es.sysA, es.sysB, es.sysC))
-
-    from exposan import htl
-    htl.load()
-
+def _run_metab():
+    # metab has no single default config; construct (do not simulate) a few
+    # representative reactor / gas-extraction combinations via its central load().
     from exposan import metab
-    UASB_M = metab.create_system(n_stages=2, reactor_type='UASB', gas_extraction='M', tot_HRT=4)
-    # Might fail the first time it runs, re-running will usually fix the problem
-    try: UASB_M.simulate(state_reset_hook='reset_cache', method='BDF', t_span=(0, 400))
-    except: UASB_M.simulate(state_reset_hook='reset_cache', method='BDF', t_span=(0, 400))
-    FB_H = metab.create_system(n_stages=2, reactor_type='FB', gas_extraction='H', tot_HRT=4)
-    # # Just simulate one system to save testing time
-    # # (all configurations are included in EXPOsan test)
-    # FB_H.simulate(state_reset_hook='reset_cache', method='BDF', t_span=(0, 400))
-    PB_P = metab.create_system(n_stages=2, reactor_type='PB', gas_extraction='P', tot_HRT=4)
-    # Might fail the first time it runs, re-running will usually fix the problem
-    # try: PB_P.simulate(state_reset_hook='reset_cache', method='BDF', t_span=(0, 400))
-    # except: PB_P.simulate(state_reset_hook='reset_cache', method='BDF', t_span=(0, 400))
+    for reactor_type, gas_extraction in (('UASB', 'M'), ('FB', 'H'), ('PB', 'P')):
+        metab.load(reload=True, n_stages=2, reactor_type=reactor_type,
+                   gas_extraction=gas_extraction, tot_HRT=4)
 
-    from exposan import reclaimer as re
-    re.load()
-    re.print_summaries((re.sysA, re.sysB, re.sysC, re.sysD))
 
-    from exposan import pou_disinfection as pou
-    pou.load()
-    pou.print_summaries((pou.sysA, pou.sysB, pou.sysC, pou.sysD))
+def _run_werf():
+    # werf has 18 configs behind one central load(); construct one representative
+    # full plant (N1: mASM2d/ADM1p + AD + junctions) as the canary.
+    from exposan import werf
+    werf.load('N1')
+
+
+# Load-only for dynamic systems/static systems with long solve times; load+print for static systems with fast solve times. They all get exercised by the EXPOsan CI, but this ensures they at least construct against the current QSDsan and don't have any immediate import-time errors.
+SYSTEMS = {
+    'adm': lambda: _load('adm'),
+    'asm': _run_asm,
+    'bsm1': lambda: _load('bsm1'),
+    'bsm2': _run_bsm2,
+    'cas': lambda: _load('cas'),
+    'htl': lambda: _load('htl'),
+    'metab': _run_metab,
+    'biogenic_refinery': lambda: _summarize('biogenic_refinery', ('sysA', 'sysB', 'sysC', 'sysD')),
+    'bwaise': lambda: _summarize('bwaise', ('sysA', 'sysB', 'sysC')),
+    'eco_san': lambda: _summarize('eco_san', ('sysA', 'sysB', 'sysC')),
+    'reclaimer': lambda: _summarize('reclaimer', ('sysA', 'sysB', 'sysC', 'sysD')),
+    'pou_disinfection': lambda: _summarize('pou_disinfection', ('sysA', 'sysB', 'sysC', 'sysD')),
+    'hap': lambda: _load('hap'),
+    'werf': _run_werf,
+    'pm2_batch': lambda: _load('pm2_batch'),
+    'pm2_ecorecover': lambda: _load('pm2_ecorecover'),
+    'biobinder': lambda: _load('biobinder'),            # construct only; distillation sim is CI-fragile
+    'saf': lambda: _load('saf'),                        # construct only; distillation sim is CI-fragile
+}
+
+# Modules deliberately NOT exercised here, each with a reason. A new EXPOsan
+# module that is neither in SYSTEMS nor here will fail the completeness guard,
+# forcing a conscious decision instead of silent omission.
+# NOTE TO MAINTAINER: refine these reasons; this seeds the registry with the
+# modules currently uncovered by test_exposan.
+KNOWN_SKIP = {
+    'new_generator': 'NDA-protected system, no public entry point',
+}
+
+
+def _discover_exposan_modules():
+    import exposan
+    return {m.name for m in pkgutil.iter_modules(exposan.__path__)
+            if not m.name.startswith('_') and m.name != 'utils'}
+
+
+def test_all_exposan_modules_accounted_for():
+    """Every EXPOsan system module must be either tested or explicitly skipped."""
+    discovered = _discover_exposan_modules()
+    accounted = set(SYSTEMS) | set(KNOWN_SKIP)
+    unaccounted = discovered - accounted
+    assert not unaccounted, (
+        f"EXPOsan modules neither tested nor in KNOWN_SKIP: {sorted(unaccounted)}. "
+        f"Add run-logic to SYSTEMS or an entry (with reason) to KNOWN_SKIP."
+    )
+    stale = accounted - discovered
+    assert not stale, (
+        f"SYSTEMS/KNOWN_SKIP reference modules that no longer exist: {sorted(stale)}."
+    )
+
+
+def test_exposan():
+    for name, run in SYSTEMS.items():
+        run()
 
 
 if __name__ == '__main__':
+    test_all_exposan_modules_accounted_for()
     test_exposan()

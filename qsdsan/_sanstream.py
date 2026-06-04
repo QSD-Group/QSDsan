@@ -16,7 +16,7 @@ for license details.
 # %%
 
 import qsdsan as qs
-from warnings import warn
+from warnings import warn, catch_warnings, filterwarnings
 from biosteam.utils import MissingStream
 from . import Stream
 from .utils import auom
@@ -295,7 +295,13 @@ class SanStream(Stream):
         >>> ss1.price
         3.18
         '''
-        new = Stream.proxy(self, ID=ID)
+        # `Stream.proxy` copies `characterization_factors`, which qsdsan
+        # overrides to redirect users to `stream_impact_item`. That redirect
+        # warning is meant for direct user access, not this internal roundtrip,
+        # so suppress it just for the super() call.
+        with catch_warnings():
+            filterwarnings('ignore', message='The property `characterization_factors`')
+            new = Stream.proxy(self, ID=ID)
         new._stream_impact_item = None
         return new
 
@@ -382,8 +388,8 @@ class SanStream(Stream):
         For missing streams, but it's almost always for unit initialization,
         you don't really need to interact with this class
         
-        >>> import biosteam as bst, qsdsan as qs
-        >>> ms = bst.utils.MissingStream(source=None, sink=None)
+        >>> import qsdsan as qs
+        >>> ms = qs.MissingStream(source=None, sink=None)
         >>> mss = qs.SanStream.from_stream(ms)
         >>> mss
         <MissingSanStream>

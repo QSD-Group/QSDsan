@@ -104,6 +104,25 @@ class SludgePasteurization(SanUnit):
         (assume 1,000 users per sludge pasteurization unit,
         or 10 septic tanks serving a population of 100 users per septic tank).
 
+    Examples
+    --------
+    >>> from qsdsan.utils import create_example_sanitation_components
+    >>> cmps = create_example_sanitation_components()
+    >>> from qsdsan import System, WasteStream
+    >>> from qsdsan.unit_operations import SludgePasteurization
+    >>> sludge = WasteStream('sludge', H2O=1000, OtherSS=200, units='kg/hr')
+    >>> biogas = WasteStream('biogas', CH4=10, units='kg/hr')
+    >>> SP = SludgePasteurization('SP', ins=('air', 'lpg', sludge, biogas),
+    ...                           outs=('used', 'lost', 'treated', 'CH4'),
+    ...                           if_combustion=False, if_biogas=True)
+    >>> sys = System('sys', path=(SP,))
+    >>> sys.simulate()
+    >>> round(SP.design_results['Steel'], 1)  # kg
+    417.7
+
+    See the EXPOsan `reclaimer systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/reclaimer/systems.py>`_
+    for use in a complete system.
+
     References
     ----------
     [1] Shoener et al., Design of Anaerobic Membrane Bioreactors for the

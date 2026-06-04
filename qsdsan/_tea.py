@@ -83,8 +83,12 @@ class TEA(BSTTEA):
 
         .. note::
 
-            Only certain depreciation schedule lengths are currently supported,
-            so ``lifetime`` must be >= 6.
+            The depreciation schedule must fit within the lifetime (its length
+            must be <= ``lifetime``). The default ``'SL'`` (straight line) spans the
+            whole lifetime and always fits, so there is no minimum. MACRS schedules
+            run one year longer than their name (IRS half-year convention), e.g.
+            ``'MACRS5'`` is a 6-year schedule (needs ``lifetime >= 6``) and
+            ``'MACRS7'`` needs ``lifetime >= 8``. See ``depreciation``.
 
     uptime_ratio : float
         Fraction of time the system is operating, in [0, 1].
@@ -118,6 +122,13 @@ class TEA(BSTTEA):
         Additional annual operating expenditure at the system level, on top of
         the ``add_OPEX`` of individual units. A float is automatically converted
         to a dict keyed ``"System additional OPEX"``.
+    depreciation : str
+        Depreciation schedule: ``'SL'`` (straight line, default), ``'DDB'``
+        (double-declining balance), ``'SYD'`` (sum-of-years-digits), or a MACRS
+        schedule (``'MACRS3'``, ``'MACRS5'``, ``'MACRS7'``, ``'MACRS10'``, ...).
+        The schedule length must be <= ``lifetime``. Depreciation only affects
+        results when there is taxable income to shield (i.e. ``income_tax`` > 0
+        and positive net earnings).
     construction_schedule : tuple
         Fraction of total capital invested in each year prior to start-up; must
         sum to 1. Use the default ``(0, 1)`` if no staged construction is needed.
@@ -241,12 +252,18 @@ class TEA(BSTTEA):
 
     def _add_first_replacement_costs(self, nontaxable_cashflow):
         system = self.system
-        units = system.unit_capital_costs.values() if isinstance(system, bst.AgileSystem) else system.cost_units
+        is_agile = isinstance(system, bst.AgileSystem)
+        units = system.unit_capital_costs.values() if is_agile else system.cost_units
         lang_factor = self.lang_factor
         start = self._start
         end = start + self._years
         for unit in units:
-            lifetime = unit.lifetime
+            # ``equipment_lifetime`` is the underlying BioSTEAM attribute that
+            # ``SanUnit.lifetime`` aliases. Read it directly so one expression
+            # serves both iterables: ``cost_units`` (real units) and an
+            # ``AgileSystem``'s ``UnitDesignAndCapital`` capital records, which
+            # expose ``equipment_lifetime`` but not the ``lifetime`` alias.
+            lifetime = unit.equipment_lifetime
             if not lifetime:
                 continue
             if lang_factor:
@@ -572,15 +589,13 @@ class TEA(BSTTEA):
             if not isinstance(lifetime, dict):
                 cost += unit.installed_cost/get_A(lifetime)
             else:
-                lifetime_dct = dict.fromkeys(unit.purchase_costs.keys())
+                # individual equipment lifetimes; annualize each equipment's installed
+                # cost over its own lifetime (falling back to the unit/TEA lifetime)
+                lifetime_dct = dict.fromkeys(unit.installed_costs)
                 lifetime_dct.update(lifetime)
-                for equip, cost in unit.purchase_costs.items():
-                    factor = unit.F_BM[equip]*\
-                        unit.F_D.get(equip, 1.)*unit.F_P.get(equip, 1.)*unit.F_M.get(equip, 1.)
-                    # for equipment that does not have individual lifetime
-                    # use the unit lifetime or TEA lifetime
+                for equip, installed in unit.installed_costs.items():
                     equip_lifetime = lifetime_dct[equip] or self.lifetime
-                    cost += factor*cost/get_A(equip_lifetime)
+                    cost += installed/get_A(equip_lifetime)
         return cost
 
 

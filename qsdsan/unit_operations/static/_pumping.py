@@ -180,14 +180,14 @@ class WWTpump(SanUnit):
         self.include_building_cost = include_building_cost
         self.include_OM_cost = include_OM_cost
         self.F_BM.update(F_BM)
-        self._default_equipment_lifetime.update(lifetime)
+        self.equipment_lifetime.update(lifetime)
 
         self.prefix = prefix
         if prefix:
             self._units = {prefix+' '+[k][0].lower()+k[1:]:v for k, v in self._units.items()}
             self.F_BM = {prefix+' '+[k][0].lower()+k[1:]:v for k, v in self.F_BM.items()}
-            self._default_equipment_lifetime = \
-                {prefix+' '+[k][0].lower()+k[1:]:v for k, v in self._default_equipment_lifetime.items()}
+            self.equipment_lifetime = \
+                {prefix+' '+[k][0].lower()+k[1:]:v for k, v in self.equipment_lifetime.items()}
 
         for attr, val in kwargs.items(): setattr(self, attr, val)
 

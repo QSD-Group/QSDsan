@@ -3,6 +3,8 @@ Statistics
 
 ``QSDsan`` has many functions for uncertainty analysis visualization and sensitivity analysis/visualization (``qsdsan.stats``). You can find the complete script of following code snippets from `stats_demo.py <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/stats_demo.py>`_ in the ``bwaise`` module of Exposan.
 
+Each ``plot_*`` function returns the native :class:`matplotlib.figure.Figure` and :class:`matplotlib.axes.Axes` it drew on, so you can keep modifying them after the call (resize, rotate tick labels, change limits, save). To draw onto an existing axis, pass ``ax=`` (a ``plt.subplots`` axis works; the function will plot into it instead of creating its own). To forward styling kwargs to the underlying ``seaborn``/``matplotlib`` call, pass them through ``**plot_kws``. The examples below show both patterns.
+
 Uncertainties
 -------------
 .. automethod:: qsdsan.stats.plot_uncertainties

@@ -78,6 +78,13 @@ class SanFlowsheet(_BstFlowsheet):
         self.item.clear()
         self.construction.clear()
         self.transportation.clear()
+        # biosteam's Flowsheet.clear resets the native (class-level) ticket counters
+        # when reset_ticket_numbers is True; the qsdsan LCA classes' ticket_numbers
+        # are likewise class-level globals (not per-flowsheet), so reset them too.
+        if reset_ticket_numbers:
+            from . import ImpactIndicator, ImpactItem, Construction, Transportation
+            for i in (ImpactIndicator, ImpactItem, Construction, Transportation):
+                i.ticket_numbers.clear()
 
 
 class SanMainFlowsheet(SanFlowsheet, _BstMainFlowsheet):

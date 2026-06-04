@@ -50,7 +50,21 @@ class AnaerobicBaffledReactor(SanUnit, Decay):
 
     Examples
     --------
-    `bwaise systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/systems.py>`_
+    >>> from qsdsan.utils import create_example_sanitation_components
+    >>> cmps = create_example_sanitation_components()
+    >>> from qsdsan import System, WasteStream
+    >>> from qsdsan.unit_operations import AnaerobicBaffledReactor
+    >>> ws = WasteStream('ws', H2O=1000, OtherSS=100, NH3=5, units='kg/hr')
+    >>> ABR = AnaerobicBaffledReactor('ABR', ins=ws,
+    ...                               outs=('treated', 'biogas', 'CH4', 'N2O'),
+    ...                               decay_k_COD=3, decay_k_N=3, max_CH4_emission=0.25)
+    >>> sys = System('sys', path=(ABR,))
+    >>> sys.simulate()
+    >>> round(ABR.design_results['Single reactor volume'], 1)  # m3
+    212.5
+
+    See `bwaise systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/systems.py>`_
+    for use in a complete sanitation system.
 
     References
     ----------
@@ -236,7 +250,22 @@ class AnaerobicDigestion(SanUnit, Decay):
 
     Examples
     --------
-    `bwaise systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/systems.py>`_
+    >>> from qsdsan.utils import create_example_sanitation_components
+    >>> cmps = create_example_sanitation_components()
+    >>> from qsdsan import System, WasteStream
+    >>> from qsdsan.unit_operations import AnaerobicDigestion
+    >>> ws = WasteStream('ws', H2O=1000, OtherSS=100, NH3=5, units='kg/hr')
+    >>> AD = AnaerobicDigestion('AD', ins=ws,
+    ...                         outs=('treated', 'biogas', 'CH4', 'N2O'),
+    ...                         decay_k_COD=3, decay_k_N=3, max_CH4_emission=0.25,
+    ...                         flow_rate=1000)
+    >>> sys = System('sys', path=(AD,))
+    >>> sys.simulate()
+    >>> AD.design_results['Reactor number']
+    3.0
+
+    See `bwaise systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/systems.py>`_
+    for use in a complete sanitation system.
 
     References
     ----------
@@ -492,7 +521,7 @@ class SludgeDigester(SanUnit):
         self.slab_concrete_unit_cost = slab_concrete_unit_cost
         self.excavation_unit_cost = excavation_unit_cost
         self.F_BM.update(F_BM)
-        self._default_equipment_lifetime.update(lifetime)
+        self.equipment_lifetime.update(lifetime)
         self.sludge_pump = WWTpump(
             ID=f'{ID}_sludge', ins=self.ins[0].proxy(), pump_type='',
             Q_mgd=None, add_inputs=(1,), capacity_factor=1.,

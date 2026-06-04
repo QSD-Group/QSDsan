@@ -4,6 +4,55 @@ Change Log
 This document records notable changes to `QSDsan <https://github.com/QSD-Group/QSDsan>`_. We aim to follow `Semantic Versioning <https://semver.org/>`_.
 
 
+`1.5.3`_
+--------
+- :func:`qsdsan.default` now takes ``utilities``, ``CEPCI``, and ``flowsheet`` arguments (all default ``True``, mirroring ``biosteam.default``) so users can choose what to reset; ``flowsheet`` defaults to ``True`` (vs. BioSTEAM's ``False``) to preserve prior behavior.
+
+- Constructing a :class:`~.Component` by name/identifier now produces the same fully-initialized component as :meth:`~.Component.from_chemical`, including phase-overridden species (which previously kept an enthalpy model referenced to the wrong phase, giving a wrong reference enthalpy or a ``simulate()`` crash). ``search_ID`` now takes only a lookup name and ``chemical`` only a pre-built ``thermosteam.Chemical``; ``from_chemical`` is a thin wrapper. One behavior change: ``from_chemical(chemical='<name>', formula=<override>)`` now reports the override formula's molecular weight.
+
+- Added a ``formula_override`` argument (default ``False``) to :class:`~.Component`/:meth:`~.Component.from_chemical` that gates overriding a resolved chemical's formula with a different atomic composition (a re-spelling of the same atoms or a blank custom component is not gated). EXPOsan components that legitimately override now pass ``formula_override=True`` (``Struvite``, ``FilterBag``, ``Zeolite``).
+
+- Added runnable docstring ``Examples`` to many built-in unit operations (sanitation, static, and wastewater-treatment units), backed by new :func:`qsdsan.utils.create_example_sanitation_components` and :func:`qsdsan.utils.create_example_wwt_components` helpers; all run under ``pytest --doctest-modules``. Fixed the :class:`~.unit_operations.Incinerator` example and added BioSTEAM API ``See Also`` links to the ``bst``-namespace units.
+
+- Fixed equipment and construction lifetimes so they reach ``equipment_lifetime``, the attribute TEA and LCA actually read (they were previously written to ``_default_equipment_lifetime`` and silently dropped, so replacement costs/impacts were never charged). This shifts TEA/LCA results for systems with sub-project-lifetime equipment, within existing EXPOsan tolerances. ``lifetime`` is now the recommended name for a unit's equipment lifetime.
+
+- Fixed :class:`~.TEA` net present value and replacement-cost calculations for an ``AgileSystem`` (per-unit capital objects expose ``equipment_lifetime``, not ``lifetime``).
+
+- Fixed :meth:`~.TEA.get_unit_annualized_equipment_cost`: a shadowed loop variable mis-computed the annualized cost when a unit declared per-equipment lifetimes; each item is now annualized over its own lifetime.
+
+- Fixed :class:`~.unit_operations.DynamicInfluent` for non-cyclic input data: the padding branch used the removed ``DataFrame.append`` (a silent no-op before pandas 2.0, an ``AttributeError`` after); it now uses ``pd.concat``. Default cyclic input is unchanged.
+
+- Added a public :attr:`~.Process.dynamic_parameters` accessor on :class:`~.Process`/:class:`~.CompiledProcesses` (mirrors :attr:`~.Process.parameters`), so users no longer reach into the private ``_dyn_params``.
+
+- :meth:`~.Processes.load_from_file` now supports per-process conservation rules: ``conserved_for`` is keyword-only and required, accepting a uniform tuple, a per-process dict, or ``None`` to defer to a new ``conserved_for`` data-file column. Backward incompatibility: callers that omitted ``conserved_for`` must now pass it explicitly.
+
+- Fixed the SanUnit-mixin plumbing on eight ``bst``-namespace wrappers (distillation columns, ``Flash``, ``IsothermalCompressor``, ``ProcessWaterCenter``, ``HeatExchangerNetwork``) where ``SanUnit.__init__`` never ran, so LCA/add-on attributes and kwargs (``lifetime``, ``add_OPEX``, etc.) were silently dropped. The mixin-install logic was extracted into a shared ``self._init_sanunit_addons(...)``.
+
+- Harmonized the six ``qsdsan.stats`` plotting helpers: every ``plot_*`` now accepts ``ax=None`` and ``**plot_kws`` forwarded to the underlying plotting call. ``plot_correlations``'s ``**kwargs`` was renamed to ``**plot_kws`` (named callers unaffected), and a latent ``ax=``-dropping bug in ``plot_sobol_results`` was fixed.
+
+- Made ``qsdsan`` a more self-contained namespace so users rarely need to import biosteam/thermosteam directly. Newly re-exported: ``settings``, ``preferences``, ``stream_utility_prices``, ``Thermo``, ``UtilityAgent``, ``Facility``, ``AgileSystem``, ``get_OSBL``, ``MissingStream``, and ``report``; ``qsdsan.unit_operations.bst`` surfaces more un-customized BioSTEAM units; ``qsdsan.utils`` re-exports ``rho_to_V``, ``V_to_rho``, ``@cost``, ``var_columns``/``var_indices``. A new :ref:`BioSTEAM API <biosteam_api>` page lists the full surface.
+
+- ``qsdsan.utils`` now wraps BioSTEAM's ``@cost`` decorator to also accept ``CEPCI`` as an alias for ``CE`` (BioSTEAM's ``CE`` keyword still works).
+
+- Fixed ``qsdsan.utils.indices.ChemPPI_by_year``: the 2021/2022 entries had been mistakenly populated with CEPCI values and have been removed, so the series ends at 2020 until authentic values are added.
+
+- Fixed compatibility with newer Thermosteam (``>=0.53.4``) where ``Chemical.MW`` is read-only: the ``MW = 1.`` placeholder for formula-less components now goes through ``qsdsan._compat.set_chemical_MW``. This unblocked ``Components.load_default`` and nearly every system build.
+
+- Unified report generation across :class:`~.System`, :class:`~.TEA`, and :class:`~.LCA`: ``save_report`` on any of the three now produces the same workbook (with an ``LCA`` sheet when the system has an :class:`~.LCA`). :meth:`~.LCA.save_report` delegates to it and its default filename changed to ``{system.ID}_report.xlsx``; use :meth:`~.LCA.get_impact_table` for the LCA tables alone.
+
+- Added a ``time_frame`` argument (``'lifetime'``/``'all'`` default, ``'yr'``, ``'month'``, ``'week'``, ``'day'``, ``'hr'``) to the :class:`~.LCA` results methods. The existing ``annual`` flag is kept as a backward-compatible alias for ``time_frame='yr'``.
+
+- Added :meth:`~.LCA.get_normalized_impacts` (impacts per kg/m³/MJ of reference streams, the LCA counterpart to ``TEA.solve_price``) and :meth:`~.LCA.get_allocated_impact_table` (tabular counterpart of :meth:`~.LCA.get_allocated_impacts`, available as an opt-in report sheet).
+
+- Several :class:`~.LCA` fixes: :meth:`~.LCA.get_unit_impacts` no longer double-counts stream impacts; :meth:`~.LCA.get_allocated_impacts` accepts a function for ``allocate_by``; :meth:`~.LCA.get_impact_table` writes the ``Sum`` row via ``.loc`` (fixing blank totals under pandas ≥ 2.x) and handles empty ``'Stream'``/``'Other'`` categories under pandas 3.0; :meth:`~.LCA.add_other_item` now names the missing ID in its error.
+
+- Added :func:`qsdsan.utils.create_example_treatment_systems` (the aerobic/anaerobic wastewater systems shared by the TEA and LCA tutorials); the LCA tutorial now uses it instead of the ``bwaise`` EXPOsan system.
+
+- In EXPOsan, restored the documented ``exposan.bsm1.cmps``/``components``/``asm`` module attributes (their assignment in ``bsm1.load()`` was commented out, so they stayed ``None`` after a fresh ``load()``), and replaced deprecated per-test ``clear_lca_registries()`` calls with an autouse ``conftest.py`` fixture.
+
+- Substantially expanded and reorganized the tutorials and FAQ (new tutorials and sections on operational flexibility, recycle convergence, specifications, auxiliary units, cost/environmental trade-offs, and the dynamic process-modeling tutorials; a multi-page FAQ; dark-mode rendering fixes).
+
+
 `1.5.2`_
 --------
 - Fixed packaging: ``qsdsan/units_of_measure.txt`` (the pint unit-definition file loaded at import) was not declared in ``package-data``, so non-editable installs (wheels) omitted it and ``import qsdsan`` raised ``FileNotFoundError``. It is now included in the distributed package.
@@ -295,6 +344,7 @@ Official release of ``QSDsan`` v1.0.0!
 .. _Trimmer et al.: https://doi.org/10.1021/acs.est.0c03296
 
 .. Commit links
+.. _1.5.3: https://github.com/QSD-Group/QSDsan/releases/tag/v1.5.3
 .. _1.5.2: https://github.com/QSD-Group/QSDsan/releases/tag/v1.5.2
 .. _1.5.1: https://github.com/QSD-Group/QSDsan/releases/tag/v1.5.1
 .. _1.5.0: https://github.com/QSD-Group/QSDsan/releases/tag/v1.5.0

@@ -39,7 +39,18 @@ _Pa_to_psi = auom('Pa').conversion_factor('psi')
 class HeatExchangerNetwork(SanUnit, HXN):
     '''
     Similar to the :class:`biosteam.units.facilities.HeatExchangerNetwork`,
-    but also a subclass of :class:`qsdsan.SanUnit`
+    but also a subclass of :class:`qsdsan.SanUnit`.
+
+    .. note::
+
+       HEN internally reassigns ``__class__`` on its participating streams
+       to ``thermosteam.MultiStream``. The QSDsan stream subclasses
+       (:class:`~.WasteStream` and :class:`~.SanStream`) have a different
+       object layout, so that reassignment fails with a ``TypeError``. Feed
+       HEN-bound branches with plain ``qs.Stream`` (= ``thermosteam.Stream``)
+       -- either build those streams directly, or bridge from a
+       ``WasteStream``/``SanStream`` source via :class:`~.PhaseChanger` with
+       ``init_with='Stream'``.
 
     Examples
     --------
@@ -86,9 +97,18 @@ class HeatExchangerNetwork(SanUnit, HXN):
     _N_ins = HXN._N_ins
     _N_outs = HXN._N_outs
     _units= HXN._units
-    __init__ = HXN.__init__
     _init_ins = HXN._init_ins
     _init_outs = HXN._init_outs
+
+    _SANUNIT_ADDON_KEYS = (
+        'include_construction', 'construction', 'transportation', 'equipment',
+        'add_OPEX', 'lifetime', 'F_BM_default', 'isdynamic', 'exogenous_vars',
+    )
+
+    def __init__(self, *args, **kwargs):
+        addons = {k: kwargs.pop(k) for k in tuple(self._SANUNIT_ADDON_KEYS) if k in kwargs}
+        HXN.__init__(self, *args, **kwargs)
+        self._init_sanunit_addons(**addons)
 
 
 class HXprocess(SanUnit, HXP):

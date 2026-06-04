@@ -83,5 +83,146 @@ def test_component():
         assert IDs == get_IDs(attr)
 
 
+import pytest
+from qsdsan import Component
+from thermosteam import Chemical
+
+_kw = dict(particle_size='Soluble', degradability='Undegradable', organic=False)
+
+def test_search_ID_rejects_chemical_object():
+    obj = Chemical('Water')
+    with pytest.raises(TypeError):
+        Component('W', search_ID=obj, **_kw)
+
+def test_chemical_object_with_search_ID_raises():
+    obj = Chemical('Water')
+    with pytest.raises(ValueError):
+        Component('W', chemical=obj, search_ID='Water', **_kw)
+
+def test_chemical_string_conflicting_search_ID_raises():
+    with pytest.raises(ValueError):
+        Component('S_su', chemical='glucose', search_ID='fructose', **_kw)
+
+def test_chemical_string_aliases_to_search_ID():
+    a = Component('A', chemical='glucose', **_kw)
+    b = Component('B', search_ID='glucose', **_kw)
+    assert a.formula == b.formula
+    assert abs(a.MW - b.MW) < 1e-9
+
+def test_chemical_string_same_search_ID_ok():
+    c = Component('C', chemical='glucose', search_ID='glucose', **_kw)
+    assert c.formula == Chemical('glucose').formula
+
+
+from qsdsan import Components, set_thermo, WasteStream
+
+def _mix_H(comp_id, **kw):
+    """Build a forced-phase component, put it in a stream, return stream.H."""
+    H2O = Component.from_chemical('H2O', phase='l', **_kw)
+    X = Component(comp_id, **kw)
+    for c in (H2O, X):
+        c.copy_models_from(H2O, names=['V']); c.default()
+    set_thermo(Components((H2O, X)))
+    s = WasteStream('s'); s.set_flow_by_concentration(0.5, {comp_id: 1620}, units=('L/hr', 'mg/L'))
+    return s.H
+
+def test_potassium_forced_solid_does_not_crash():
+    assert _mix_H('K+', phase='s', **_kw) == 0
+
+def test_search_id_equivalent_to_from_chemical_phase_override():
+    a = Component('Na_s', search_ID='Na+', phase='s', **_kw)
+    b = Component.from_chemical('Na_f', chemical='Na+', phase='s', **_kw)
+    assert a.formula == b.formula
+    assert abs(a.MW - b.MW) < 1e-9
+    assert type(a.H).__name__ == type(b.H).__name__ == 'Enthalpy'
+
+def test_bare_id_miss_creates_blank_component():
+    c = Component('S_F', formula='C5H7O2N', particle_size='Particulate',
+                  degradability='Slowly', organic=True)
+    assert c.formula == 'C5H7O2N'
+    assert c.Hf is None
+
+def test_blank_custom_component_with_phase_is_locked():
+    c = Component('X_solid', formula='C5H7O2N', phase='s', particle_size='Particulate',
+                  degradability='Slowly', organic=True)
+    assert c.locked_state == 's'
+
+def test_explicit_search_id_miss_raises():
+    with pytest.raises(LookupError):
+        Component('Bad', search_ID='definitely_not_a_chemical_xyz', **_kw)
+
+from math import isclose
+
+def test_component_copy_matches_thermosteam_copy():
+    """Path A hardcodes a mimic of thermosteam Chemical.copy(); this guards against
+    upstream drift. Compare thermodynamic state, not bookkeeping slots."""
+    src = Chemical('Ethanol')
+    tmo_copy = src.copy('Eth_tmo')                       # thermosteam's own copy
+    qs_comp = Component('Eth_qs', chemical=src, **_kw)   # QSDsan Path A
+    assert qs_comp.formula == tmo_copy.formula
+    assert isclose(qs_comp.MW, tmo_copy.MW, rel_tol=1e-9)
+    P = 101325.
+    for phase in ('l', 'g'):
+        for T in (300., 350.):
+            assert isclose(qs_comp.H(phase, T, P), tmo_copy.H(phase, T, P), rel_tol=1e-6), \
+                f'enthalpy drift at phase={phase}, T={T}'
+            assert isclose(qs_comp.S(phase, T, P), tmo_copy.S(phase, T, P), rel_tol=1e-6), \
+                f'entropy drift at phase={phase}, T={T}'
+
+
+def test_component_copy_roundtrips():
+    # Component.copy() calls __new__ with search_db=False (via **chemical_properties);
+    # this must not collide with the constructor's internal search_db handling.
+    base = Component('Glu', search_ID='glucose', **_kw)
+    cp = base.copy('Glu2')
+    assert cp.ID == 'Glu2'
+    assert cp.formula == base.formula
+    assert abs(cp.MW - base.MW) < 1e-9
+
+
+# --- formula override gate (formula_override) ---
+_pkw = dict(particle_size='Particulate', degradability='Undegradable', organic=False)
+
+def test_formula_mismatch_raises_without_override():
+    # hexahydrate formula vs the anhydrous database chemical -> atoms differ -> raise
+    with pytest.raises(ValueError):
+        Component('Struvite', search_ID='MagnesiumAmmoniumPhosphate',
+                  formula='NH4MgPO4·H12O6', phase='s', **_pkw)
+
+def test_formula_override_allows_mismatch_and_recomputes_MW():
+    c = Component('Struvite', search_ID='MagnesiumAmmoniumPhosphate',
+                  formula='NH4MgPO4·H12O6', phase='s',
+                  formula_override=True, **_pkw)
+    assert c.formula == 'NH4MgPO4·H12O6'
+    # MW must reflect the override formula (hexahydrate ~245), not the DB value (~137)
+    assert c.MW > 240 and c.chem_MW > 240
+
+def test_formula_respelling_needs_no_override():
+    # same atoms, different string -> not a mismatch -> no exception
+    c = Component('Propane', search_ID='Propane', formula='CH3CH2CH3', phase='g', **_pkw)
+    assert get_atoms_equal(c.atoms, 'C3H8')
+
+def test_from_chemical_mismatch_raises_without_override():
+    with pytest.raises(ValueError):
+        Component.from_chemical('Struvite', chemical='MagnesiumAmmoniumPhosphate',
+                                formula='NH4MgPO4·H12O6', phase='s', **_pkw)
+
+def test_from_chemical_override_works():
+    c = Component.from_chemical('Struvite', chemical='MagnesiumAmmoniumPhosphate',
+                                formula='NH4MgPO4·H12O6', phase='s',
+                                formula_override=True, **_pkw)
+    assert c.MW > 240
+
+def test_blank_component_formula_not_gated():
+    # no database chemical -> no source formula to conflict with -> no override needed
+    c = Component('S_F', formula='C5H7O2N', particle_size='Particulate',
+                  degradability='Slowly', organic=True)
+    assert c.formula == 'C5H7O2N'
+
+def get_atoms_equal(atoms_dict, formula):
+    from chemicals.elements import get_atoms
+    return dict(atoms_dict) == get_atoms(formula)
+
+
 if __name__ == '__main__':
     test_component()

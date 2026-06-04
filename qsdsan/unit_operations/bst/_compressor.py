@@ -20,6 +20,12 @@ from math import ceil, floor
 
 __all__ = ('IsothermalCompressor',)
 
+_SANUNIT_ADDON_KEYS = (
+    'include_construction', 'construction', 'transportation', 'equipment',
+    'add_OPEX', 'lifetime', 'F_BM_default', 'isdynamic', 'exogenous_vars',
+)
+
+
 class IsothermalCompressor(bst.units.IsothermalCompressor, qs.SanUnit):
     '''
     Similar to biosteam.units.IsothermalCompressor, but can calculate number of units
@@ -31,6 +37,11 @@ class IsothermalCompressor(bst.units.IsothermalCompressor, qs.SanUnit):
     '''
 
     include_construction = False
+
+    def __init__(self, *args, **kwargs):
+        addons = {k: kwargs.pop(k) for k in tuple(_SANUNIT_ADDON_KEYS) if k in kwargs}
+        super().__init__(*args, **kwargs)
+        self._init_sanunit_addons(**addons)
 
     def _design(self):
         super()._design()
