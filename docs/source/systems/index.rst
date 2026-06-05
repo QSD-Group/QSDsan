@@ -5,16 +5,18 @@ Systems
 
 This page documents the systems that have been/is being developed using ``QSDsan`` with links to the source codes in GitHub and publications.
 
+Water Resource Recovery Facilities
+-----------------------------------
 
 Benchmark Simulation Models
----------------------------
+***************************
 The Modelling and Integrated Assessment (MIA) Specialist Group of the International Water Association has established benchmark simulation models (BSMs) to provide a consistent environment for wastewater treatment plant (WWTP)/water resource recovery facility (WRRF) evaluation (see `BSM webpage <https://iwa-mia.org/benchmarking>`_ and `MATLAB implementation and report <https://github.com/wwtmodels/Benchmark-Simulation-Models>`_).
 
 When publishing the paper that introduces QSDsan [1]_, we validated the process modeling and dynamic simulation capacities of QSDsan through BSM1 (`bsm1 EXPOsan module <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/bsm1>`_, `bsm1 archived codes <https://pypi.org/project/exposan/1.1.4>`_). BSM2 is also implemented in `EXPOsan <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/bsm2>`_.
 
 
-Water Resource Recovery Facilities
------------------------------------
+WERF Treatment Train Configurations
+***********************************
 In Zhang et al., 2026 [2]_, we developed 18 benchmark combinations of liquid and solid treatment trains, which cover over 70% of the total treatment capacity of publicly owned treatment works (POTWs) in the Contiguous United States. These configurations were based on the Water Environment Research Foundation (WERF, now a part of the Water Research Foundation, WRF), report on net-zero energy solutions for WRRFs [3]_.
 
 These simulation models have been implemented in the `werf EXPOsan module <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/werf>`_. More details can be found in :ref:`the interactive page <wrrf_interactive>`.
@@ -86,6 +88,7 @@ A variety of other sanitation and resource recovery systems have been developed 
 #. EcoRecover system: microalgae-based tertiary P recovery process
     
     * Publication: Kim et al., 2025 [10]_
+    * `pm2_batch EXPOsan module <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/pm2_batch>`_
     * `pm2_ecorecover EXPOsan module <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/pm2_ecorecover>`_
 
 
