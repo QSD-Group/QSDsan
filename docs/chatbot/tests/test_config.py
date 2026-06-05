@@ -10,6 +10,7 @@ def test_defaults_present():
     assert config.QSDSAN_DOCS_BASE.startswith("https://qsdsan.readthedocs.io")
     assert config.EXPOSAN_RAW_BASE.startswith("https://raw.githubusercontent.com/QSD-Group/EXPOsan")
     assert config.EXPOSAN_BLOB_BASE.startswith("https://github.com/QSD-Group/EXPOsan")
+    assert config.QSDSAN_BLOB_BASE.startswith("https://github.com/QSD-Group/QSDsan/blob/")
 
 
 def test_env_override(monkeypatch):

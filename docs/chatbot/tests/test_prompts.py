@@ -13,6 +13,14 @@ def test_system_prompt_states_grounding_and_citation_rules():
     assert "qsdsan" in text and "exposan" in text
 
 
+def test_system_prompt_prefers_docs_for_explanation_and_code_for_usage():
+    text = prompts.SYSTEM_PROMPT.lower()
+    # The index now mixes prose docs ((qsdsan)) with code excerpts ((code));
+    # the prompt should steer the model to prefer code for exact/runnable usage.
+    assert "code" in text
+    assert "exact" in text
+
+
 def test_user_prompt_numbers_excerpts_and_includes_urls():
     up = prompts.build_user_prompt("How do I make a WasteStream?", RETRIEVED)
     assert "[1]" in up
@@ -63,11 +71,20 @@ def test_greeting_message_is_a_welcome():
     assert "couldn't find" not in msg
 
 
-def test_is_exposan_question_detects_systems_and_exposan():
-    assert prompts.is_exposan_question("How do I run BSM1?")
+def test_is_exposan_question_detects_catalog_and_overview():
+    # Catalog/discovery and plain overview questions still get the pointer.
     assert prompts.is_exposan_question("Tell me about EXPOsan")
     assert prompts.is_exposan_question("what systems does QSDsan include?")
     assert prompts.is_exposan_question("what have you built?")
+    assert prompts.is_exposan_question("which systems are available?")
+
+
+def test_is_exposan_question_lets_code_howto_fall_through_to_retrieval():
+    # A specific system asked about in a build/run/code way should be answered
+    # from the indexed create_system wiring, not short-circuited to the pointer.
+    assert not prompts.is_exposan_question("How do I run BSM1?")
+    assert not prompts.is_exposan_question("how do I build the bsm2 system in code?")
+    assert not prompts.is_exposan_question("load and run the bwaise system")
 
 
 def test_is_exposan_question_ignores_plain_qsdsan_questions():

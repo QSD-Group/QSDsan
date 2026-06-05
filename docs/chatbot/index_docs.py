@@ -11,6 +11,7 @@ import os
 
 import config
 import chunking
+import code_adapter
 import embeddings
 
 
@@ -75,15 +76,37 @@ def build_qsdsan_chunks(html_dir: str, base_url: str | None = None) -> list[dict
     return chunks
 
 
+def build_all_chunks(
+    html_dir, base_url=None, code_chunks_fn=None, example_chunks_fn=None
+) -> list[dict]:
+    """Merge the HTML adapter's chunks with the code and example adapters'.
+
+    All write the same schema. ``code_chunks_fn`` (API + doctests from the
+    package) and ``example_chunks_fn`` (test snippets + EXPOsan systems) are
+    indirection points (like ``embed_fn``) so tests can supply deterministic
+    chunks instead of walking the installed packages.
+    """
+    code_chunks_fn = code_chunks_fn or code_adapter.build_code_chunks
+    example_chunks_fn = example_chunks_fn or code_adapter.build_example_chunks
+    chunks = build_qsdsan_chunks(html_dir, base_url)
+    chunks.extend(code_chunks_fn())
+    chunks.extend(example_chunks_fn())
+    return chunks
+
+
 def embed_documents(texts, input_type, client=None):
     """Indirection point so tests can monkeypatch embedding without network."""
     return embeddings.embed_texts(texts, input_type=input_type, client=client)
 
 
-def build_index(html_dir, embed_fn=None) -> list[dict]:
-    """Build QSDsan chunk records and attach embeddings."""
+def build_index(
+    html_dir, embed_fn=None, code_chunks_fn=None, example_chunks_fn=None
+) -> list[dict]:
+    """Build QSDsan HTML + code + example chunk records and attach embeddings."""
     embed_fn = embed_fn or embed_documents
-    records = build_qsdsan_chunks(html_dir)
+    records = build_all_chunks(
+        html_dir, code_chunks_fn=code_chunks_fn, example_chunks_fn=example_chunks_fn
+    )
     if records:
         vectors = embed_fn([r["text"] for r in records], input_type="document")
         if len(vectors) != len(records):
