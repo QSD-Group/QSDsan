@@ -4,6 +4,10 @@ input_type is "document" when embedding chunks, "query" when embedding a questio
 """
 import config
 
+# Voyage rejects batches over 1000 inputs per request; stay well under to also
+# keep each request's total token count comfortable for the whole corpus.
+_MAX_BATCH = 128
+
 
 def _default_client():
     import voyageai
@@ -12,9 +16,17 @@ def _default_client():
 
 
 def embed_texts(texts: list[str], input_type: str, client=None) -> list[list[float]]:
-    """Return one embedding vector per input string."""
+    """Return one embedding vector per input string.
+
+    Splits large corpora into capped requests so the provider's per-request batch
+    limit is never exceeded; vectors are returned in input order.
+    """
     if not texts:
         return []
     client = client or _default_client()
-    result = client.embed(texts, model=config.EMBED_MODEL, input_type=input_type)
-    return list(result.embeddings)
+    vectors: list[list[float]] = []
+    for start in range(0, len(texts), _MAX_BATCH):
+        batch = texts[start : start + _MAX_BATCH]
+        result = client.embed(batch, model=config.EMBED_MODEL, input_type=input_type)
+        vectors.extend(result.embeddings)
+    return list(vectors)
