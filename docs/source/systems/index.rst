@@ -1,7 +1,7 @@
 .. _systems:
 
-Systems
-=======
+Published Systems
+=================
 
 This page documents the systems that have been/is being developed using ``QSDsan`` with links to the source codes in GitHub and publications.
 
@@ -63,6 +63,7 @@ Other WRRFs
     * `pm2_ecorecover EXPOsan module <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/pm2_ecorecover>`_
 
 
+----------
 
 Non-sewered sanitation systems (NSSSs)
 --------------------------------------
@@ -99,6 +100,8 @@ SCG Zyclonic
     * `scg_zyclonic EXPOsan module <https://github.com/QSD-Group/EXPOsan-private/tree/main/exposan/scg_zyclonic>`_
 
 
+----------
+
 Other Systems
 -------------
 
@@ -131,6 +134,24 @@ Other Systems
     * Publication: Si et al., 2026 [16]_
     * `saf EXPOsan module <https://github.com/QSD-Group/EXPOsan/tree/main/exposan/saf>`_
 
+
+----------
+
+Other Publications
+------------------
+
+The following publications also used QSDsan for process modeling and/or sustainability assessment:
+
+#. `DMsan: A Multi-Criteria Decision Analysis Framework and Package to Characterize Contextualized Sustainability of Sanitation and Resource Recovery Technologies <https://doi.org/10.1021/acsenvironau.2c00067>`_
+
+#. `Defining Economic and Environmental Typologies across 77 Countries to Prioritize Opportunities for Nonsewered Sanitation <https://doi.org/10.1021/acs.est.5c02064>`_
+
+#. `Advancing the Economic and Environmental Sustainability of Rare Earth Element Recovery from Phosphogypsum <https://doi.org/10.1021/acs.est.5c04952>`_
+
+#. `N2O as reactant rather than pollutant at wastewater treatment plants: Life Cycle Assessment and Techno-Economic Analysis of N2O-to-phenol <https://chemrxiv.org/doi/10.26434/chemrxiv-2026-m4vwz>`_
+
+
+----------
 
 .. References
 .. [1] Li, Y.; Zhang, X.; Morgan, V. L.; Lohman, H. A. C.; Rowles, L. S.; Mittal, S.; Kogler, A.; Cusick, R. D.; Tarpeh, W. A.; Guest, J. S. QSDsan: An Integrated Platform for Quantitative Sustainable Design of Sanitation and Resource Recovery Systems. Environ. Sci.: Water Res. Technol. 2022, 8 (10), 2289–2303. https://doi.org/10.1039/D2EW00455K.
