@@ -25,6 +25,12 @@ EXPOSAN_BLOB_BASE = os.getenv(
     "CHATBOT_EXPOSAN_BLOB_BASE",
     "https://github.com/QSD-Group/EXPOsan/blob/main/exposan/",
 )
+# Base for GitHub blob citations into QSDsan source (code adapter). The code
+# adapter appends "/<repo-relative path>#L<start>-L<end>".
+QSDSAN_BLOB_BASE = os.getenv(
+    "CHATBOT_QSDSAN_BLOB_BASE",
+    "https://github.com/QSD-Group/QSDsan/blob/main",
+)
 
 # Where the published index lives; the server loads this on startup. Only the
 # docs-chatbot build publishes an index, so this points there even though the

@@ -135,10 +135,12 @@ def test_citations_are_bounded_and_subset_only():
     assert out["citations"][0]["url"] == RECORDS[1]["url"]
 
 
-def test_exposan_question_returns_pointer_without_calling_claude():
+def test_exposan_catalog_question_returns_pointer_without_calling_claude():
+    # Catalog/discovery questions are pointed to the Systems page + repo. (A code
+    # how-to like "how do I run BSM1?" instead falls through to retrieval now.)
     claude = FakeClaude("SHOULD NOT BE CALLED")
     out = engine.answer_question(
-        "How do I load and run BSM1?",
+        "What systems does QSDsan include?",
         records=RECORDS,
         embed_fn=embed_query_high,
         claude_client=claude,

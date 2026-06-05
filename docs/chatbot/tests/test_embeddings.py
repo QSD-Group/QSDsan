@@ -33,3 +33,15 @@ def test_embed_texts_passes_model_and_input_type():
 def test_embed_texts_empty_returns_empty():
     client = FakeClient()
     assert embeddings.embed_texts([], input_type="document", client=client) == []
+
+
+def test_embed_texts_batches_requests_under_provider_limit():
+    # Voyage rejects batches over 1000 inputs; the wrapper must split large
+    # corpora into capped requests and still return one vector per input in order.
+    client = FakeClient()
+    n = embeddings._MAX_BATCH * 2 + 1
+    texts = [f"t{i}" for i in range(n)]
+    vecs = embeddings.embed_texts(texts, input_type="document", client=client)
+    assert len(vecs) == n
+    assert all(len(call_texts) <= embeddings._MAX_BATCH for call_texts, *_ in client.calls)
+    assert len(client.calls) == 3  # 2 full batches + 1 remainder

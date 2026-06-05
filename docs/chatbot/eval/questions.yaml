@@ -8,8 +8,15 @@
 - question: "dynamic simulation pitfalls"
   expect: cite_substring
   value: "tutorials/14_Modeling_Notes_and_Pitfalls"
+# EXPOsan how-to questions now fall through the pointer to retrieval and are
+# answered from the indexed create_system wiring (the READMEs are not indexed).
 - question: "how do I load and run the BSM1 system?"
   expect: cite_substring
-  value: "exposan/bsm1/README.rst"
+  value: "exposan/bsm1/system.py"
 - question: "how do I set up SCADA/Modbus integration?"
   expect: refuse
+# Code-adapter regression guard: this usage lives in a docstring doctest, not the
+# prose tutorials, so only the code adapter can cite it (a GitHub blob URL).
+- question: "how do I create a Component from an existing chemical?"
+  expect: cite_substring
+  value: "github.com/QSD-Group/QSDsan/blob/main/qsdsan/_component.py"

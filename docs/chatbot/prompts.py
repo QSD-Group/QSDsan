@@ -13,6 +13,9 @@ SYSTEM_PROMPT = (
     "bar at the top of the page or to opening an issue on the QSDsan GitHub "
     "repository (https://github.com/QSD-Group/QSDsan). "
     "Refuse questions unrelated to QSDsan or EXPOsan. "
+    "Excerpts are tagged by source: prefer (qsdsan) prose excerpts to EXPLAIN "
+    "concepts, and prefer (code) excerpts (doctests and signatures from the "
+    "source) for the EXACT, runnable usage and API. "
     "When you include code, keep it minimal and faithful to the excerpts. "
     "Format answers in GitHub-flavored Markdown: use ## headings for sections, "
     "**bold** for key terms, hyphen bullet lists, and fenced ``` code blocks for code."
@@ -80,10 +83,24 @@ def greeting_message() -> str:
     )
 
 
-# Strong, low-ambiguity signals that a question is about EXPOsan or the catalog of
-# example systems. Generic model names that also exist inside QSDsan (adm, asm,
-# cas, hap, pm2) are deliberately excluded to avoid hijacking QSDsan questions.
-_EXPOSAN_KEYWORDS = (
+# Catalog / discovery phrases: "what systems exist", "what have you built". These
+# always get the pointer (the index is not a catalog of systems).
+_EXPOSAN_CATALOG = (
+    "what system",
+    "which system",
+    "list of system",
+    "available system",
+    "example system",
+    "what have you built",
+    "what did you build",
+    "what can you simulate",
+    "what models are available",
+)
+
+# Specific EXPOsan systems / the repo. Generic model names that also exist inside
+# QSDsan (adm, asm, cas, hap, pm2) are deliberately excluded to avoid hijacking
+# QSDsan questions.
+_EXPOSAN_NAMES = (
     "exposan",
     "bsm1",
     "bsm2",
@@ -96,26 +113,40 @@ _EXPOSAN_KEYWORDS = (
     "eco-san",
     "eco san",
     "pou disinfection",
-    "what system",
-    "which system",
-    "list of system",
-    "available system",
-    "example system",
-    "what have you built",
-    "what did you build",
-    "what can you simulate",
-    "what models are available",
+)
+
+# Build/run/code intent. A specific system asked about this way is answerable from
+# the indexed create_system wiring, so it should NOT be diverted to the pointer.
+_CODE_INTENT = (
+    "how",  # also catches "show me ..."
+    "run",
+    "load",
+    "create",
+    "build",
+    "set up",
+    "setup",
+    "simulate",
+    "import",
+    "code",
+    "example",
+    "assemble",
+    "construct",
 )
 
 
 def is_exposan_question(question: str) -> bool:
-    """True when a question is about EXPOsan or the catalog of example systems.
+    """True when a question should be routed to the EXPOsan pointer response.
 
-    These are routed to a pointer response (the Systems page + EXPOsan repo)
-    rather than answered from the QSDsan docs index.
+    Catalog/discovery questions always point to the Systems page + EXPOsan repo.
+    A specific system asked about in a build/run/code way instead falls through
+    to retrieval, so it can be answered from the indexed create_system wiring.
     """
     q = question.lower()
-    return any(keyword in q for keyword in _EXPOSAN_KEYWORDS)
+    if any(keyword in q for keyword in _EXPOSAN_CATALOG):
+        return True
+    if any(name in q for name in _EXPOSAN_NAMES):
+        return not any(intent in q for intent in _CODE_INTENT)
+    return False
 
 
 def exposan_pointer_message() -> str:
