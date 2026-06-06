@@ -33,6 +33,7 @@ default_kwargs = dict(
     finance_interest=0,
     finance_years=0,
     finance_fraction=0,
+    inflation_rate=0, # BioSTEAM >=2.53.11 reads `self.inflation_rate` during cashflow analysis
     )
 
 
@@ -231,7 +232,14 @@ class TEA(BSTTEA):
         self.system_add_OPEX = {}.copy() if not system_add_OPEX else system_add_OPEX
         self.depreciation = depreciation
         self.construction_schedule = construction_schedule
-        self.accumulate_interest_during_construction = accumulate_interest_during_construction 
+        # BioSTEAM's `start_year` means the cashflow year-0 offset (= number of
+        # construction years), which collides in name with QSDsan's calendar
+        # `start_year` (set above). Older BioSTEAM set `_start` as a side effect of
+        # the `construction_schedule` setter; newer BioSTEAM moved that assignment
+        # into its own `start_year` property, which QSDsan shadows. Set `_start`
+        # directly so cashflow indexing works on either BioSTEAM version.
+        self._start = len(self.construction_schedule)
+        self.accumulate_interest_during_construction = accumulate_interest_during_construction
         default_kwargs.update(tea_kwargs)
         for k, v in default_kwargs.items():
             setattr(self, k, v)
