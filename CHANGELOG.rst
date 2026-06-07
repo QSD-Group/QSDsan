@@ -6,6 +6,10 @@ This document records notable changes to `QSDsan <https://github.com/QSD-Group/Q
 
 `1.5.3`_
 --------
+- Raised the minimum BioSTEAM to ``2.53.11`` and Thermosteam to ``0.53.5``, and removed :class:`~.TEA`'s first-equipment-replacement compensation now that BioSTEAM books it itself (otherwise it is double-counted).
+
+- Fixed :class:`~.TEA` construction against newer BioSTEAM (set ``_start`` directly and default ``inflation_rate`` only when that slot exists).
+
 - :func:`qsdsan.default` now takes ``utilities``, ``CEPCI``, and ``flowsheet`` arguments (all default ``True``, mirroring ``biosteam.default``) so users can choose what to reset; ``flowsheet`` defaults to ``True`` (vs. BioSTEAM's ``False``) to preserve prior behavior.
 
 - Constructing a :class:`~.Component` by name/identifier now produces the same fully-initialized component as :meth:`~.Component.from_chemical`, including phase-overridden species (which previously kept an enthalpy model referenced to the wrong phase, giving a wrong reference enthalpy or a ``simulate()`` crash). ``search_ID`` now takes only a lookup name and ``chemical`` only a pre-built ``thermosteam.Chemical``; ``from_chemical`` is a thin wrapper. One behavior change: ``from_chemical(chemical='<name>', formula=<override>)`` now reports the override formula's molecular weight.
