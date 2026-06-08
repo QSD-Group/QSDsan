@@ -150,6 +150,8 @@ The following publications also used QSDsan for process modeling and/or sustaina
 
 #. `N2O as reactant rather than pollutant at wastewater treatment plants: Life Cycle Assessment and Techno-Economic Analysis of N2O-to-phenol <https://chemrxiv.org/doi/10.26434/chemrxiv-2026-m4vwz>`_
 
+#. `Cost and Carbon Implications of Industrial Organic Load Reduction across Water Resource Recovery Facility Typologies <https://doi.org/10.1021/acs.est.5c11447>`_
+
 
 ----------
 
