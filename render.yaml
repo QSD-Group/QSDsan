@@ -14,6 +14,6 @@ services:
         sync: false   # set in the Render dashboard; never committed
       - key: VOYAGE_API_KEY
         sync: false
-      # The index is published only by the docs-chatbot build, so load it there.
+      # The index is published only by the chatbot build, so load it there.
       - key: CHATBOT_INDEX_URL
-        value: https://qsdsan.readthedocs.io/en/docs-chatbot/_static/chatbot/index.json
+        value: https://qsdsan.readthedocs.io/en/chatbot/_static/chatbot/index.json

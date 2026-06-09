@@ -1,5 +1,6 @@
 **/*superseded*
 **/*tmp*
+docs/superpowers/
 **/figures/*
 **/results/*
 **/.DS_Store*
@@ -23,7 +24,6 @@ dist
 docs/build/*
 htmlcov
 
-# docs chatbot (feature: docs-chatbot)
-QSDsan-docs-chatbot.code-workspace
+# docs chatbot (feature: chatbot)
 .venv
 docs/source/_static/chatbot/index.json

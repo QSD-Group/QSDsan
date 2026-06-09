@@ -4,8 +4,7 @@ A self-hosted RAG assistant embedded on the QSDsan readthedocs site. It answers
 questions about QSDsan (API + tutorials) strictly from indexed docs, with citations
 and out-of-scope refusal. EXPOsan and "what systems" questions are routed to a
 pointer (the Systems page + the EXPOsan repo) rather than answered from the index.
-See `DESIGN.md` for the original spec and `../superpowers/plans/2026-05-30-docs-chatbot.md`
-for the build plan.
+See `DESIGN.md` for the original spec.
 
 ## Components
 

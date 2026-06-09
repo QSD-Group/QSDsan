@@ -11,37 +11,65 @@ What is ``QSDsan``?
       :text-align: center
       :link: tutorials
       :link-type: ref
+      :class-title: nav-card-title
 
-      .. figure:: images/tutorials_icon.svg
+      .. image:: images/icons/tutorials_icon_light.png
          :height: 100
          :align: center
+         :class: only-light
+
+      .. image:: images/icons/tutorials_icon_dark.png
+         :height: 100
+         :align: center
+         :class: only-dark
           
    .. grid-item-card::  API
       :text-align: center
       :link: api
       :link-type: ref
+      :class-title: nav-card-title
 
-      .. figure:: images/api_icon.svg
+      .. image:: images/icons/api_icon_light.png
          :height: 100
          :align: center
+         :class: only-light
 
-   .. grid-item-card::  Systems
+      .. image:: images/icons/api_icon_dark.png
+         :height: 100
+         :align: center
+         :class: only-dark
+
+   .. grid-item-card::  Systems & Publications
       :text-align: center
       :link: systems
       :link-type: ref
+      :class-title: nav-card-title
 
-      .. figure:: images/systems_icon.svg
+      .. image:: images/icons/systems_icon_light.png
          :height: 100
          :align: center
+         :class: only-light
 
-   .. grid-item-card::  FAQ
+      .. image:: images/icons/systems_icon_dark.png
+         :height: 100
+         :align: center
+         :class: only-dark
+
+   .. grid-item-card::  Learning
       :text-align: center
-      :link: faq
+      :link: learning
       :link-type: ref
+      :class-title: nav-card-title
 
-      .. figure:: images/faq_icon.svg
+      .. image:: images/icons/learning_icon_light.png
          :height: 100
          :align: center
+         :class: only-light
+
+      .. image:: images/icons/learning_icon_dark.png
+         :height: 100
+         :align: center
+         :class: only-dark
 
 
 Installation
@@ -85,6 +113,8 @@ Join the Community
 ------------------
 We would like to build an open and welcoming community, you can always post issues on our `GitHub homepage <https://github.com/QSD-Group/QSDsan/issues>`_ or contact any of the Quantitative Sustainable Design Group members. We are always excited to have new members in our team.
 
+You can receive updates by joining `QSDsan's Google Group <https://groups.google.com/g/qsdsan>`_. To be added, log in to your Google account and click the ``Ask to join group`` button. If you run into any problems or would like to use a non-Gmail account, please `contact us <mailto:quantitative.sustainable.design@gmail.com>`_.
+
 If you would like to contribute, please follow our `Contributing Guidelines`_ and the `Contributor Covenant <https://www.contributor-covenant.org/>`_, thank you for making ``QSDsan`` better!
 
 
@@ -114,10 +144,24 @@ If you would like to contribute, please follow our `Contributing Guidelines`_ an
 
 
 .. toctree::
+   :maxdepth: 1
+   :hidden:
+
+   learning/index
+
+
+.. toctree::
    :maxdepth: 2
    :hidden:
 
    faq/index
+
+
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+
+   app/index
 
 
 .. toctree::

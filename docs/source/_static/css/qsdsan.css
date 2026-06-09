@@ -34,11 +34,39 @@ code.literal{
 
 .unit-operation-filters select {
   max-width: 14rem;
+  /* Follow Furo's light/dark theme instead of the native (fixed) control style. */
+  background-color: var(--color-background-primary);
+  color: var(--color-foreground-primary);
+  border: 1px solid var(--color-background-border);
+  border-radius: 4px;
+  padding: 0.2rem 0.4rem;
+}
+
+/* The open option list is OS-rendered; set colors so it matches in both modes. */
+.unit-operation-filters select option {
+  background-color: var(--color-background-primary);
+  color: var(--color-foreground-primary);
 }
 
 .unit-operation-filter-count {
   color: var(--color-foreground-muted);
   font-size: 0.9rem;
+}
+
+/* App-card layout: vertically center the description against the screenshot
+   when they sit side by side (stacks on narrow screens). */
+.app-card-row {
+  align-items: center;
+}
+
+/* Landing-page nav cards: reserve a two-line title height so single-line and
+   two-line titles (e.g., "Systems & Publications") align their icons. */
+.nav-card-title {
+  min-height: 2.6em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
 /* Collapsible "aside" blocks (raw <details>) used in the tutorials.
@@ -102,4 +130,30 @@ table.dataframe tbody tr:hover th {
 div.nboutput.container div.output_area.stderr {
   background: rgba(229, 83, 75, 0.13);
   color: var(--color-foreground-primary);
+}
+
+/* sphinx-design card top images (the platform cards on the Systems &
+   Publications page, the workshop cards on the Learning page). By default an
+   `:img-top:` image stretches to the full card width, which is oversized in a
+   one-card-per-row layout. Cap the width and center it. Change max-width to
+   resize. */
+.sd-card-img-top {
+  max-width: 360px;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  margin: 1rem auto 0;
+  display: block;
+}
+
+/* sphinx-design card footers: each `button-link` after the `+++` separator is
+   wrapped in its own block <p>, so buttons stack vertically. Lay them out in a
+   horizontal row that wraps on narrow screens. */
+.sd-card-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.sd-card-footer > p {
+  margin: 0;
 }
