@@ -52,7 +52,7 @@ PrimaryClarifier,QSDsan dynamic,No,:class:`static/clarifier/PrimaryClarifier <qs
 Pump,BST,No,:class:`bst/pumping/Pump <qsdsan.unit_operations.bst._pumping.Pump>`
 Reactor,QSDsan static,No,:class:`static/Reactor <qsdsan.unit_operations.static._reactor.Reactor>`
 ReversedSplitter,BST,Yes,:class:`bst/abstract/ReversedSplitter <qsdsan.unit_operations.bst._abstract.ReversedSplitter>`
-Sampler,QSDsan dynamic,No,:class:`dynamic/abstract/Sampler <qsdsan.unit_operations.dynamic._abstract.Sampler>`
+Sampler,QSDsan dynamic,Yes,:class:`dynamic/abstract/Sampler <qsdsan.unit_operations.dynamic._abstract.Sampler>`
 Screening,QSDsan static,No,:class:`static/Screening <qsdsan.unit_operations.static._screening.Screening>`
 Sedimentation,QSDsan static,No,:class:`static/Sedimentation <qsdsan.unit_operations.static._sedimentation.Sedimentation>`
 SepticTank,QSDsan static,No,:class:`static/SepticTank <qsdsan.unit_operations.static._septic_tank.SepticTank>`
