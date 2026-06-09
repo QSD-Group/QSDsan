@@ -4,9 +4,9 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
-    
+
     Joy Zhang <joycheung1994@gmail.com>
-    
+
     Saumitra Rai <raisaumitra9@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
@@ -516,24 +516,24 @@ def get_GHG_emissions_sludge_disposal(sludge=None, DOC_f=0.38, MCF=0.8,
         Effluent sludge from the system for which GHG emissions are being 
         calculated. The default is None.
     DOC_f : float, optional
-        fraction of DOC that can decompose. The default value is 0.5.
+        fraction of DOC that can decompose. The default value is 0.38.
     MCF : float, optional
-        CH4 correction factor for aerobic decomposition in the year of 
+        CH4 correction factor for aerobic decomposition in the year of
         deposition. The default is 0.8.
     k : float, optional
-        Methane generation rate [yr^(-1)]. The default is 0.185. 
-        The decomposition of carbon is assumed to follow 1st-order kinetics 
-        (with rate constant k), and methane generation is dependent on the 
-        amount of remaining decomposable carbon in the waste. 
+        Methane generation rate [yr^(-1)]. The default is 0.06 (dry climate).
+        The decomposition of carbon is assumed to follow 1st-order kinetics
+        (with rate constant k), and methane generation is dependent on the
+        amount of remaining decomposable carbon in the waste.
         For North America (boreal and temperate climate) the default values are:
             k (dry climate) = 0.06
             k (wet climate) = 0.185
     F : float, optional
         Volume fraction of methane in generated landfill gas. The default is 0.5.
     pl : float, optional
-        The project lifetime [yr] over which methane emissions would be calculated. 
+        The project lifetime [yr] over which methane emissions would be calculated.
         The default is 30 years.
-        
+
     References
     ----------
     [1] IPCC, 2019. Chapter 3: Solid Waste Disposal, in 2019 Refinement to
@@ -686,24 +686,24 @@ def get_total_CO2_eq(
         Effluent sludge from the system for which GHG emissions are being 
         calculated. The default is None.
     DOC_f : float, optional
-        fraction of DOC that can decompose. The default value is 0.5.
+        fraction of DOC that can decompose. The default value is 0.38.
     MCF : float, optional
-        CH4 correction factor for aerobic decomposition in the year of 
+        CH4 correction factor for aerobic decomposition in the year of
         deposition. The default is 0.8.
     k : float, optional
-        Methane generation rate [yr^(-1)]. The default is 0.185. 
-        The decomposition of carbon is assumed to follow 1st-order kinetics 
-        (with rate constant k), and methane generation is dependent on the 
-        amount of remaining decomposable carbon in the waste. 
+        Methane generation rate [yr^(-1)]. The default is 0.06 (dry climate).
+        The decomposition of carbon is assumed to follow 1st-order kinetics
+        (with rate constant k), and methane generation is dependent on the
+        amount of remaining decomposable carbon in the waste.
         For North America (boreal and temperate climate) the default values are:
             k (dry climate) = 0.06
             k (wet climate) = 0.185
     F : float, optional
         Volume fraction of methane in generated landfill gas. The default is 0.5.
     pl : float, optional
-        The project lifetime [yr] over which methane emissions would be calculated. 
+        The project lifetime [yr] over which methane emissions would be calculated.
         The default is 30 years.
-        
+
     --------- Eq CO2 EFs --------- 
    
     CH4_CO2eq : float, optional

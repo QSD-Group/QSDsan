@@ -5,7 +5,7 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
-    
+
     Yalin Li <mailto.yalin.li@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
@@ -34,107 +34,126 @@ default_kwargs = dict(
     finance_years=0,
     finance_fraction=0,
     )
+# Newer BioSTEAM reads `self.inflation_rate` during cashflow analysis, but the
+# slot does not exist on older releases (e.g. 2.53.11 on PyPI). Default it only
+# when supported so QSDsan stays compatible with both; `setattr` to a missing
+# slot would otherwise raise during TEA construction.
+if 'inflation_rate' in BSTTEA.__slots__:
+    default_kwargs['inflation_rate'] = 0
 
 
 class TEA(BSTTEA):
     '''
-    Calculate an annualized cost for simple economic analysis that does not
-    include loan payment (i.e., 100% equity).
+    Techno-economic analysis (TEA) with a simplified
+    capital cost structure, unit-level operating cost components, and
+    annualized cost metrics. Discounted cash flow is also included for 
+    net present value (NPV) and internal rate of return (IRR) calculations.
+
+    Key design choices:
+
+    - Uses ``start_year`` + ``lifetime`` to indicate project duration.
+    - Uses ``uptime_ratio`` (fraction in [0, 1]) to indicate operating time.
+    - Collapses the capital cost hierarchy so DPI (direct permanent investment) 
+      = TDC (total depreciable capital) = FCI (fixed capital investment) = installed equipment
+      cost by default (no indirect cost adders applied unless ``_DPI``/``_TDC``/``_FCI``
+      are overridden in a subclass).
+    - Exposes ``CAPEX`` as a direct override for installed equipment cost, and
+      ``lang_factor`` as an alternative to bare-module factors.
+    - Decomposes fixed operating cost (FOC) into ``annual_maintenance`` (fraction of FCI),
+      ``annual_labor``, and additional operating expenditures from individual units
+      (``unit_add_OPEX``) and at the system level (``system_add_OPEX``).
+    - Adds annualized cost properties: ``annualized_NPV``, ``annualized_CAPEX``,
+      ``annualized_equipment_cost``, and ``EAC`` (equivalent annual cost).
+    - Defaults to 100% equity financing, though loan financing is still available
+      via ``finance_interest``, ``finance_years``, and ``finance_fraction``.
 
     Parameters
     ----------
-    system : :class:`biosteam.System`
+    system : obj
         The system this TEA is conducted for.
     discount_rate : float
-        Interest rate used in discounted cash flow analysis.
+        Discount rate used in the discounted cash flow analysis.
 
         .. note::
 
-            Herein `discount_rate` equals to `IRR` (internal rate of return).
-            Although theoretically, IRR is the discount rate only when the
-            net present value (NPV) is 0.
+            Herein ``discount_rate`` equals ``IRR`` (internal rate of return).
+            Technically, IRR equals the discount rate only when NPV is 0.
 
     income_tax : float
-        Combined tax (e.g., sum of national, state, local levels) for net earnings.
+        Combined tax rate (e.g., sum of national, state, and local levels)
+        applied to net earnings.
     start_year : int
-        Start year of the system.
+        Calendar year in which the system begins operation.
     lifetime : int
-        Total lifetime of the system, [yr]. Currently `biosteam` only supports int.
+        Total operating lifetime of the system, [yr].
 
         .. note::
 
-            As :class:`TEA` is a subclass of :class:`biosteam.TEA`,
-            and :class:`biosteam.TEA` currently only supports certain
-            depreciation schedules, lifetime must be larger than or equal to 6.
-
+            The depreciation schedule must fit within the lifetime (its length
+            must be <= ``lifetime``). The default ``'SL'`` (straight line) spans the
+            whole lifetime and always fits, so there is no minimum. MACRS schedules
+            run one year longer than their name (IRS half-year convention), e.g.
+            ``'MACRS5'`` is a 6-year schedule (needs ``lifetime >= 6``) and
+            ``'MACRS7'`` needs ``lifetime >= 8``. See ``depreciation``.
 
     uptime_ratio : float
-        Fraction of time that the system is operating, should be in [0,1]
-        (i.e., a system that is always operating has an uptime_ratio of 1).
+        Fraction of time the system is operating, in [0, 1].
+        A continuously operating system has ``uptime_ratio = 1``.
 
         .. note::
 
-            If a unit has an `uptime_ratio` that is different from the `uptime_ratio`
-            of the system, the `uptime_ratio` of the unit will be used in calculating
-            the additional operation expenses (provided in `unit.add_OPEX`).
+            If a unit has a different ``uptime_ratio`` than the system, the unit's
+            value is used only when scaling its ``add_OPEX``. Utility and material
+            costs are always scaled to the system's operating hours. Flows that
+            do not match the system ``uptime_ratio`` should be normalized before
+            being assigned to the unit (e.g., a pump that runs 50% of the time at
+            50 kW should have ``power_utility`` set to 25 kW).
 
-            However, `uptime_ratio` of the unit will not affect the utility
-            (heating, cooling, power) and material costs/environmental impacts.
-
-            For example, if the `uptime_ratio` of the system and the unit are
-            1 and 0.5, respectively, then in calculating operating expenses
-            associated with the unit:
-
-                - Utility and material costs/environmental impacts will be calculated for 1*24*365 hours per year.
-                - Additional operating expenses will be calculated for 0.5*24*365 hours per year.
-
-            If utility and material flows are not used at the same `uptime_ratio`
-            as the system, they should be normalized to be the same.
-            For example, if the system operates 100% of time but a pump only works
-            50% of the pump at 50 kW. Set the pump `power_utility` to be 50*50%=25 kW.
-
-    
-    CEPCI : float
-        Chemical Engineering Plant Cost Index, default to that of year 2017 (567.5).
-        Values for alternative years can be checked by `qsdsan.CEPCI_by_year`.
+    CEPCI : float, optional
+        Chemical Engineering Plant Cost Index used for equipment cost scaling.
+        If None (default), the current ``qsdsan.CEPCI`` (i.e., ``biosteam.CE``) is
+        left unchanged; pass a value (e.g., ``qsdsan.CEPCI_by_year[2023]``) to set it.
     CAPEX : float
-        Capital expenditure, if not provided, is set to be the same as `installed_equipment_cost`.
+        Total capital expenditure. When provided, overrides ``installed_equipment_cost``.
     lang_factor : float or None
-        A factor to estimate the total installation cost based on equipment purchase cost,
-        leave as `None` if providing `CAPEX`.
-        If neither ``CAPEX`` nor ``lang_factor`` is provided,
-        ``installed_equipment_cost`` will be calculated as the sum of purchase costs
-        of all units within the system.
+        Multiplier applied to total equipment purchase cost to estimate installed
+        cost. Mutually exclusive with ``CAPEX``; leave as ``None`` when ``CAPEX``
+        is provided. If neither is given, installed cost is summed from each unit's
+        bare-module factors.
     annual_maintenance : float
-        Annual maintenance cost as a fraction of fixed capital investment.
+        Annual maintenance cost as a fraction of fixed capital investment (FCI).
     annual_labor : float
-        Annual labor cost.
+        Annual labor cost [USD/yr].
     system_add_OPEX : float or dict
-        Annual additional system-wise operating expenditure (on top of the `add_OPEX` of each unit).
-        Float input will be automatically converted to a dict with the key being
-        "System additional OPEX".
+        Additional annual operating expenditure at the system level, on top of
+        the ``add_OPEX`` of individual units. A float is automatically converted
+        to a dict keyed ``"System additional OPEX"``.
+    depreciation : str
+        Depreciation schedule: ``'SL'`` (straight line, default), ``'DDB'``
+        (double-declining balance), ``'SYD'`` (sum-of-years-digits), or a MACRS
+        schedule (``'MACRS3'``, ``'MACRS5'``, ``'MACRS7'``, ``'MACRS10'``, ...).
+        The schedule length must be <= ``lifetime``. Depreciation only affects
+        results when there is taxable income to shield (i.e. ``income_tax`` > 0
+        and positive net earnings).
     construction_schedule : tuple
-        Construction progress prior to the start of the system
-        (fraction of the construction that can be finished each year),
-        must sum up to 1. Leave as the default (0,1) if no special construction progress is expected.
-    accumulate_interest_during_construction  : bool
-        Whether loan interest during the construction period will be accumulated
-        onto the loan principal.
-        If False (default), interest accumulated during the construction stage
-        will be paid using equity/cash (i.e., not added to the loan);
-        if True, the loan principal will include the interest accumulated during construction.
-        See BioSTEAM issue #180 for details:
-        https://github.com/BioSTEAMDevelopmentGroup/biosteam/issues/180
+        Fraction of total capital invested in each year prior to start-up; must
+        sum to 1. Use the default ``(0, 1)`` if no staged construction is needed.
+    accumulate_interest_during_construction : bool
+        If ``False`` (default), loan interest accrued during construction is paid
+        from equity and not rolled into the loan principal.
+        If ``True``, accrued interest is capitalized onto the loan principal.
+        See https://github.com/BioSTEAMDevelopmentGroup/biosteam/issues/180
+        for details.
     simulate_system : bool
-        Whether to simulate the system before creating the LCA object.
+        Whether to simulate the system before creating the TEA object.
     simulate_kwargs : dict
-        Keyword arguments for system simulation (used when `simulate_system` is True).
+        Keyword arguments passed to ``system.simulate()`` when ``simulate_system``
+        is ``True``.
     tea_kwargs
-        Additional values that will be passed to :class:`biosteam.TEA`,
-        including (default values in parentheses)
-        `startup_months` (0), `startup_FOCfrac` (1), `startup_VOCfrac` (1),
-        `startup_salesfrac` (1), `WC_over_FCI` (0), `finance_interest` (0),
-        `finance_years` (0), and `finance_fraction` (0).
+        Additional keyword arguments for the underlying cash flow model.
+        Defaults (in parentheses): ``startup_months`` (0), ``startup_FOCfrac`` (1),
+        ``startup_VOCfrac`` (1), ``startup_salesfrac`` (1), ``WC_over_FCI`` (0),
+        ``finance_interest`` (0), ``finance_years`` (0), ``finance_fraction`` (0).
 
     Examples
     --------
@@ -146,25 +165,25 @@ class TEA(BSTTEA):
     >>> # Uncomment the line below to see the system diagram
     >>> # sys.diagram()
     >>> sys.simulate()
-    >>> sys.show()
+    >>> sys.show() # doctest: +ELLIPSIS
     System: sys
     ins...
-    [0] salt_water
+    [0] salt_water...
         phase: 'l', T: 298.15 K, P: 101325 Pa
         flow (kmol/hr): H2O   111
                         NaCl  0.856
-    [1] methanol
+    [1] methanol...
         phase: 'l', T: 298.15 K, P: 101325 Pa
-        flow (kmol/hr): Methanol  0.624
-    [2] ethanol
+        flow...Methanol
+    [2] ethanol...
         phase: 'l', T: 298.15 K, P: 101325 Pa
-        flow (kmol/hr): Ethanol  0.217
+        flow...Ethanol
     outs...
-    [0] alcohols
+    [0] alcohols...
         phase: 'l', T: 298.15 K, P: 101325 Pa
         flow (kmol/hr): Methanol  0.624
                         Ethanol   0.217
-    [1] waste_brine
+    [1] waste_brine...
         phase: 'l', T: 350 K, P: 101325 Pa
         flow (kmol/hr): H2O   88.8
                         NaCl  0.684
@@ -189,7 +208,7 @@ class TEA(BSTTEA):
                  '_annual_maintenance', '_annual_labor', '_system_add_OPEX')
 
     def __init__(self, system, discount_rate=0.05, income_tax=0.,
-                 CEPCI=bst.CE, start_year=date.today().year,
+                 CEPCI=None, start_year=date.today().year,
                  lifetime=10, uptime_ratio=1.,
                  CAPEX=0., lang_factor=None,
                  annual_maintenance=0., annual_labor=0., system_add_OPEX={},
@@ -197,6 +216,10 @@ class TEA(BSTTEA):
                  construction_schedule=(0, 1), accumulate_interest_during_construction=False,
                  simulate_system=True, simulate_kwargs={},
                  **tea_kwargs):
+        # Set the cost index (CEPCI) before simulation so it applies to costing; if not
+        # provided, leave the current `qsdsan.CEPCI` (i.e., `biosteam.CE`) untouched
+        # rather than resetting it (previously the default froze `bst.CE` at import time).
+        if CEPCI is not None: self.CEPCI = CEPCI
         if simulate_system: system.simulate(**simulate_kwargs)
         self.system = system
         system._TEA = self
@@ -206,7 +229,6 @@ class TEA(BSTTEA):
         self.income_tax = income_tax
         self._sales = 0 # guess cost for solve_price method
         self._depreciation = None # initialize this attribute
-        self.CEPCI = CEPCI
         self.start_year = start_year
         self.lifetime = lifetime
         self.uptime_ratio = 1.
@@ -215,7 +237,14 @@ class TEA(BSTTEA):
         self.system_add_OPEX = {}.copy() if not system_add_OPEX else system_add_OPEX
         self.depreciation = depreciation
         self.construction_schedule = construction_schedule
-        self.accumulate_interest_during_construction = accumulate_interest_during_construction 
+        # BioSTEAM's `start_year` means the cashflow year-0 offset (= number of
+        # construction years), which collides in name with QSDsan's calendar
+        # `start_year` (set above). Older BioSTEAM set `_start` as a side effect of
+        # the `construction_schedule` setter; newer BioSTEAM moved that assignment
+        # into its own `start_year` property, which QSDsan shadows. Set `_start`
+        # directly so cashflow indexing works on either BioSTEAM version.
+        self._start = len(self.construction_schedule)
+        self.accumulate_interest_during_construction = accumulate_interest_during_construction
         default_kwargs.update(tea_kwargs)
         for k, v in default_kwargs.items():
             setattr(self, k, v)
@@ -299,9 +328,9 @@ class TEA(BSTTEA):
     def CEPCI_by_year(self):
         '''
         [dict] Chemical Engineering Plant Cost Index with key being the year
-        and values being the index.
+        and values being the index. Same as ``qsdsan.CEPCI_by_year``.
         '''
-        return bst.units.design_tools.CEPCI_by_year
+        return qs.CEPCI_by_year
 
     @property
     def start_year(self):
@@ -536,15 +565,13 @@ class TEA(BSTTEA):
             if not isinstance(lifetime, dict):
                 cost += unit.installed_cost/get_A(lifetime)
             else:
-                lifetime_dct = dict.fromkeys(unit.purchase_costs.keys())
+                # individual equipment lifetimes; annualize each equipment's installed
+                # cost over its own lifetime (falling back to the unit/TEA lifetime)
+                lifetime_dct = dict.fromkeys(unit.installed_costs)
                 lifetime_dct.update(lifetime)
-                for equip, cost in unit.purchase_costs.items():
-                    factor = unit.F_BM[equip]*\
-                        unit.F_D.get(equip, 1.)*unit.F_P.get(equip, 1.)*unit.F_M.get(equip, 1.)
-                    # for equipment that does not have individual lifetime
-                    # use the unit lifetime or TEA lifetime
+                for equip, installed in unit.installed_costs.items():
                     equip_lifetime = lifetime_dct[equip] or self.lifetime
-                    cost += factor*cost/get_A(equip_lifetime)
+                    cost += installed/get_A(equip_lifetime)
         return cost
 
 
@@ -570,5 +597,18 @@ class TEA(BSTTEA):
         return self.annualized_CAPEX+self.AOC
     
 
-# For backward compatibility    
-SimpleTEA = TEA
+class SimpleTEA(TEA):
+    '''
+    .. deprecated::
+        Use :class:`TEA` instead. ``SimpleTEA`` is an alias kept for backward
+        compatibility and will be removed in a future version.
+    '''
+    def __init__(self, *args, **kwargs):
+        import warnings
+        warnings.warn(
+            'SimpleTEA is deprecated and will be removed in a future version; '
+            'use TEA instead.',
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(*args, **kwargs)

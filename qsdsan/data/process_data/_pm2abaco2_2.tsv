@@ -1,0 +1,5 @@
+	X_CHL	X_ALG	X_PG	X_TAG	S_CO2	S_A	S_G	S_O2	S_NH	S_NO	S_P	X_N_ALG	X_P_ALG	X_NIT	X_HET
+nitri_growth								(-1)/Y_O2_NIT	(-1)/Y_NH_NIT	1/Y_NO_NIT	?			1	
+nitri_decay							1-f_BAC		?		?			-1	
+hetero_growth							(-1)/Y_G	(-1)/Y_O2_HET	(-1)/Y_NH_HET		?				1
+hetero_decay							1-f_BAC		?		?				-1

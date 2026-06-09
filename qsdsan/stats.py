@@ -5,10 +5,13 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
+
     Yalin Li <mailto.yalin.li@gmail.com>
 
-With contributions from:
+    With contributions from:
+
     Joy Zhang <joycheung1994@gmail.com>
+
     Yoel Cortés-Peña <yoelcortes@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
@@ -28,19 +31,9 @@ __all__ = ('get_correlations', 'define_inputs', 'generate_samples',
 
 import numpy as np
 import pandas as pd
-import seaborn as sns
 import biosteam as bst
 from collections.abc import Iterable
 from warnings import warn
-from matplotlib import pyplot as plt
-from SALib.sample import (
-    morris as morris_sampler,
-    fast_sampler,
-    latin as rbd_sampler,
-    saltelli as sobol_sampler)
-from SALib.analyze import morris, fast, rbd_fast, sobol
-from SALib.plotting import morris as sa_plt_morris
-from biosteam.plots import plot_spearman
 
 var_indices = bst.evaluation._model.var_indices
 indices_to_multiindex = bst.evaluation._model.indices_to_multiindex
@@ -101,6 +94,7 @@ def _save_fig_return(fig, ax, file, close_fig):
         fig.savefig(file, dpi=300)
 
     if close_fig:
+        from matplotlib import pyplot as plt
         plt.close()
 
     return fig, ax
@@ -294,14 +288,18 @@ def generate_samples(inputs, kind, N, seed=None, **kwargs):
 
     lower = kind.lower()
     if lower == 'morris':
+        from SALib.sample import morris as morris_sampler
         return morris_sampler.sample(inputs, N=N, seed=seed, **kwargs)
     elif lower in ('fast', 'efast'):
+        from SALib.sample import fast_sampler
         return fast_sampler.sample(inputs, N=N, seed=seed, **kwargs)
     elif lower == 'rbd':
+        from SALib.sample import latin as rbd_sampler
         return rbd_sampler.sample(inputs, N=N, seed=seed, **kwargs)
     elif lower == 'sobol':
         if seed:
             raise ValueError('Cannot set seed for Sobol analysis.')
+        from SALib.sample import saltelli as sobol_sampler
         return sobol_sampler.sample(inputs, N=N, **kwargs)
     else:
         raise ValueError('kind can only be "FAST", "RBD", "Morris", or "Sobol", ' \
@@ -381,6 +379,7 @@ def morris_analysis(model, inputs, metrics=None, nan_policy='propagate',
     param_val = table.iloc[:, :len(model.get_parameters())]
     metric_val = pd.concat([table[metric.index] for metric in metrics], axis=1)
 
+    from SALib.analyze import morris
     for metric in metrics:
         results = metric_val[metric.index]
         si = morris.analyze(inputs, param_val.to_numpy(), results.to_numpy(),
@@ -467,11 +466,11 @@ def morris_till_convergence(model, inputs, metrics=None,
     kwargs = {i:kwargs[i] for i in kwargs.keys() if i!='num_levels'}
     samples = generate_samples(inputs=inputs, kind='Morris', N=N_max,
                                seed=seed, num_levels=num_levels)
-    model.load_samples(samples)
+    model.load_samples(samples, sort=False)
 
     param_num = len(model.get_parameters())
     cum_model = model.copy()
-    cum_model.load_samples(samples[0: 2*(param_num+1)])
+    cum_model.load_samples(samples[0: 2*(param_num+1)], sort=False)
     cum_model.evaluate()
     cum_dct = dict(mu_star={}, mu_star_conf={})
     metrics = _update_input(metrics, model.metrics)
@@ -488,7 +487,7 @@ def morris_till_convergence(model, inputs, metrics=None,
 
     for n in range(2, N_max):
         temp_model = model.copy()
-        temp_model.load_samples(samples[n*(param_num+1): (n+1)*(param_num+1)])
+        temp_model.load_samples(samples[n*(param_num+1): (n+1)*(param_num+1)], sort=False)
         temp_model.evaluate()
         cum_model.table = pd.concat((cum_model.table, temp_model.table))
 
@@ -608,6 +607,7 @@ def fast_analysis(model, inputs, kind, metrics=None, nan_policy='propagate',
     metric_val = pd.concat([table[metric.index] for metric in metrics], axis=1)
 
     if kind.lower() in ('fast', 'efast'):
+        from SALib.analyze import fast
         for metric in metrics:
             results = metric_val[metric.index]
             si = fast.analyze(inputs, results.to_numpy(), conf_level=conf_level,
@@ -615,6 +615,7 @@ def fast_analysis(model, inputs, kind, metrics=None, nan_policy='propagate',
             fast_dct[metric.name] = si.to_df()
 
     elif kind.lower() == 'rbd':
+        from SALib.analyze import rbd_fast
         for metric in metrics:
             results = metric_val[metric.index]
             si = rbd_fast.analyze(inputs, param_val.to_numpy(), results.to_numpy(),
@@ -720,6 +721,7 @@ def sobol_analysis(model, inputs, metrics=None, nan_policy='propagate',
     if isinstance(results, str):
         results = df
 
+    from SALib.analyze import sobol
     for metric in metrics:
         result = results[metric.index]
         si = sobol.analyze(inputs, result.to_numpy(),
@@ -747,7 +749,8 @@ def sobol_analysis(model, inputs, metrics=None, nan_policy='propagate',
 # =============================================================================
 
 def plot_uncertainties(model, x_axis=(), y_axis=(), kind='box', adjust_hue=False,
-                       file='', close_fig=True, center_kws={}, margin_kws={}):
+                       ax=None, file='', close_fig=True,
+                       center_kws={}, margin_kws={}, **plot_kws):
     '''
     Visualize uncertainty analysis results as one of the following depending on inputs:
 
@@ -802,11 +805,17 @@ def plot_uncertainties(model, x_axis=(), y_axis=(), kind='box', adjust_hue=False
         if neither x nor y is provided.
     y_axis : :class:`biosteam.Parameter`, :class:`biosteam.Metric` or Iterable
         What to plot on the y-axis, can be parameters or metrics of the model,
-        default to None.
+        default to an empty tuple.
     kind : str
         What kind of plot to be returned, refer to the summary table for valid inputs.
     adjust_hue : bool
         Whether to adjust the hue of the colors based on the data.
+    ax : :class:`matplotlib.AxesSubplot`, optional
+        If provided, 1D plots are drawn on this axis. Ignored for 2D plots,
+        because ``seaborn.JointGrid`` (used for the box/hist/kde + margin
+        combination) builds its own figure and does not accept a pre-existing
+        axis. The parameter is accepted for signature consistency with the
+        other ``plot_*`` functions in this module.
     file : str
         If provided, the generated figure will be saved as a png file.
     close_fig : bool
@@ -816,6 +825,11 @@ def plot_uncertainties(model, x_axis=(), y_axis=(), kind='box', adjust_hue=False
         Will be passed to ``seaborn`` for the center plot.
     margin_kws : dict
         Will be passed to ``seaborn`` for the margin plots.
+    **plot_kws
+        Additional keyword arguments forwarded to the underlying ``seaborn``
+        plotting function for the center plot. ``center_kws`` takes precedence
+        when both supply the same key, so use ``plot_kws`` for shared styling
+        and ``center_kws`` to override per call.
 
     Returns
     -------
@@ -835,6 +849,8 @@ def plot_uncertainties(model, x_axis=(), y_axis=(), kind='box', adjust_hue=False
     :func:`seaborn.jointplot` `docs <https://seaborn.pydata.org/generated/seaborn.jointplot.html>`_
     '''
 
+    import seaborn as sns
+
     kind_lower = kind.lower()
     table = model.table.astype('float64')
     df = _update_df_names(table)
@@ -846,14 +862,14 @@ def plot_uncertainties(model, x_axis=(), y_axis=(), kind='box', adjust_hue=False
     if not y_axis: # no data provided or only x, 1D, horizontal
         x_axis = _update_input(x_axis, model.metrics)
         x_df = df[[i.name for i in x_axis]]
-        temp_df = x_df.stack(dropna=False).reset_index(name='x_data')
+        temp_df = x_df.stack().reset_index(name='x_data')
         sns_df['x_data'] = temp_df['x_data']
         sns_df['x_group'] = temp_df['level_1']
 
     elif not x_axis: # only y, 1D, vertical
         y_axis = (y_axis,) if not isinstance(y_axis, Iterable) else y_axis
         y_df = df[[i.name for i in y_axis]]
-        temp_df = y_df.stack(dropna=False).reset_index(name='y_data')
+        temp_df = y_df.stack().reset_index(name='y_data')
         sns_df['y_data'] = temp_df['y_data']
         sns_df['y_group'] = temp_df['level_1']
 
@@ -874,6 +890,11 @@ def plot_uncertainties(model, x_axis=(), y_axis=(), kind='box', adjust_hue=False
         sns_df = df[[x_name, y_name]]
 
     sns.set_theme(style='ticks')
+    # Merge plot_kws into center_kws; center_kws wins on conflict so users can
+    # override per call. center_kws is consumed locally and not mutated.
+    center_kws = {**plot_kws, **center_kws}
+    if not twoD and ax is not None:
+        center_kws.setdefault('ax', ax)
     if not twoD: # 1D plot
         try:
             center_kws.pop('hue')
@@ -955,6 +976,8 @@ def plot_uncertainties(model, x_axis=(), y_axis=(), kind='box', adjust_hue=False
 # =============================================================================
 
 def _plot_corr_tornado(corr_df, top, **kwargs):
+    from biosteam.plots import plot_spearman
+
     fig, ax = plot_spearman(corr_df.iloc[:,0], top=top, **kwargs)
 
     ax.set_xlabel(corr_df.columns[0])
@@ -968,6 +991,8 @@ def _plot_corr_tornado(corr_df, top, **kwargs):
 
 
 def _plot_corr_bubble(corr_df, ratio, **kwargs):
+    import seaborn as sns
+
     sns.set_theme(style="whitegrid")
 
     margin_x = kwargs['margin_x'] if 'margin_x' in kwargs.keys() else 0.1/ratio
@@ -1003,7 +1028,7 @@ def _plot_corr_bubble(corr_df, ratio, **kwargs):
 
 
 def plot_correlations(result_df, parameters=(), metrics=(), top=None,
-                      file='', close_fig=True, **kwargs):
+                      ax=None, file='', close_fig=True, **plot_kws):
     '''
     Visualize the correlations between model parameters and metric results
     as tornado (single metric) or bubble plots (multiple metrics).
@@ -1022,13 +1047,20 @@ def plot_correlations(result_df, parameters=(), metrics=(), top=None,
     top : int
         Plot the top X parameters with the highest absolute correlation indices,
         this is only applicable for the case of just one metric.
+    ax : :class:`matplotlib.AxesSubplot`, optional
+        Currently ignored: the tornado plot is drawn by ``biosteam.plot_spearman``
+        and the bubble plot by ``seaborn.relplot``; both build their own figure.
+        Accepted for signature consistency with the other ``plot_*`` functions
+        in this module.
     file : str
         If provided, the generated figure will be saved as a png file.
     close_fig : bool
         Whether to close the figure
         (if not close, new figure will be overlaid on the current figure).
-    **kwargs: dict
-        Other kwargs that will be passed to :func:`seaborn.relplot`.
+    **plot_kws
+        Additional keyword arguments forwarded to the underlying plotting
+        call: ``biosteam.plots.plot_spearman`` for the single-metric tornado
+        plot, or ``seaborn.relplot`` for the multi-metric bubble plot.
 
     Returns
     -------
@@ -1064,16 +1096,16 @@ def plot_correlations(result_df, parameters=(), metrics=(), top=None,
         raise ValueError('No correlation data for plotting.')
 
     elif len(metric_names) == 1: # one metric, tornado plot
-        fig, ax = _plot_corr_tornado(df, top, **kwargs)
+        fig, ax = _plot_corr_tornado(df, top, **plot_kws)
         return _save_fig_return(fig, ax, file, close_fig)
 
     else: # multiple metrics, bubble plot
-        corr_df = df.stack(dropna=False).reset_index()
+        corr_df = df.stack().reset_index()
         corr_df.rename(columns={'level_0': 'parameter', 'level_1': 'metric',
                                 0: 'correlation'}, inplace=True)
         corr_df['size'] = corr_df['correlation'].abs()
 
-        g = _plot_corr_bubble(corr_df, len(metric_names)/len(param_names), **kwargs)
+        g = _plot_corr_bubble(corr_df, len(metric_names)/len(param_names), **plot_kws)
 
         return _save_fig_return(g.fig, g.ax, file, close_fig)
 
@@ -1086,7 +1118,7 @@ def plot_correlations(result_df, parameters=(), metrics=(), top=None,
 def plot_morris_results(morris_dct, metric, kind='scatter', ax=None,
                         x_axis='mu_star', plot_lines=True,
                         k1=0.1, k2=0.5, k3=1, label_kind='number',
-                        color='k', file='', close_fig=True, **kwargs):
+                        color='k', file='', close_fig=True, **plot_kws):
     r'''
     Visualize the results from Morris One-at-A-Time analysis as either scatter
     or bar plots.
@@ -1126,8 +1158,14 @@ def plot_morris_results(morris_dct, metric, kind='scatter', ax=None,
     close_fig : bool
         Whether to close the figure
         (if not close, new figure will be overlaid on the current figure).
-    **kwargs : dict
-        Other kwargs that will be passed to :func:`morris.horizontal_bar_plot` in ``SALib.plotting``.
+    **plot_kws
+        Additional keyword arguments forwarded to the underlying plotting call.
+        For ``kind='scatter'`` they are passed to :meth:`matplotlib.axes.Axes.scatter`
+        (or :meth:`~matplotlib.axes.Axes.errorbar` when ``x_axis='mu_star'``);
+        for ``kind='bar'`` they are passed as ``opts=`` to
+        :func:`SALib.plotting.morris.horizontal_bar_plot`. The reserved key
+        ``line_color`` (scatter only) overrides the color of the slope reference
+        lines (defaults to ``color``).
 
     Returns
     -------
@@ -1143,6 +1181,8 @@ def plot_morris_results(morris_dct, metric, kind='scatter', ax=None,
     `qsdsan.stats <https://qsdsan.readthedocs.io/en/latest/stats.html>`_
     '''
 
+    import seaborn as sns
+
     df = morris_dct[metric.name]
     x_data = getattr(df, x_axis)
     x_error = df.mu_star_conf if x_axis=='mu_star' else None
@@ -1154,21 +1194,23 @@ def plot_morris_results(morris_dct, metric, kind='scatter', ax=None,
     else:
         labels = []
 
+    from matplotlib import pyplot as plt
     ax = ax if ax is not None else plt.subplot()
     sns.set_theme(style='ticks')
 
     if kind == 'scatter':
+        line_color = plot_kws.pop('line_color', None) or color
+        scatter_kws = {**plot_kws}
+        scatter_kws.setdefault('color', color)
         if x_error is not None:
-            ax.errorbar(x=x_data, y=y_data, xerr=x_error, fmt='.',
-                        color=color)
+            ax.errorbar(x=x_data, y=y_data, xerr=x_error, fmt='.', **scatter_kws)
         else:
-            ax.scatter(x_data, y_data, color=color)
+            ax.scatter(x_data, y_data, **scatter_kws)
         for x, y, label in zip(x_data, y_data, labels):
             ax.annotate(label, (x, y), xytext=(10, 10), textcoords='offset points',
                         ha='center')
 
         lines, legends = [], []
-        line_color = kwargs.get('line_color') or color
         if k3:
             line3 = ax.axline(xy1=(0,0), slope=k3, color=line_color, linestyle='-')
             lines.append(line3)
@@ -1195,12 +1237,13 @@ def plot_morris_results(morris_dct, metric, kind='scatter', ax=None,
         fig = ax.figure
 
     elif kind == 'bar':
-        kwargs['color'] = color
+        plot_kws['color'] = color
         if x_axis == 'mu':
             raise ValueError('Bar plot can only be made for mu_star, not mu.')
         df = morris_dct[metric.name]
         df['names'] = df.index
-        fig = sa_plt_morris.horizontal_bar_plot(ax, df, opts=kwargs)
+        from SALib.plotting import morris as sa_plt_morris
+        fig = sa_plt_morris.horizontal_bar_plot(ax, df, opts=plot_kws)
 
     for key in ax.spines.keys():
         ax.spines[key].set(color='k', linewidth=0.5, visible=True)
@@ -1211,7 +1254,7 @@ def plot_morris_results(morris_dct, metric, kind='scatter', ax=None,
 
 def plot_morris_convergence(result_dct, metric, parameters=(),
                             plot_rank=False, kind='line', ax=None, show_error=True,
-                            palette='pastel', file='', close_fig=True):
+                            palette='pastel', file='', close_fig=True, **plot_kws):
     r'''
     Plot the evolution of :math:`{\mu^*}` or its rank with the number of trajectories.
 
@@ -1244,6 +1287,10 @@ def plot_morris_convergence(result_dct, metric, parameters=(),
     close_fig : bool
         Whether to close the figure
         (if not close, new figure will be overlaid on the current figure).
+    **plot_kws
+        Additional keyword arguments forwarded to the per-parameter plotting
+        call: :meth:`matplotlib.axes.Axes.plot` when ``kind='line'`` or
+        :meth:`~matplotlib.axes.Axes.scatter` when ``kind='scatter'``.
 
     Returns
     -------
@@ -1258,6 +1305,9 @@ def plot_morris_convergence(result_dct, metric, parameters=(),
 
     `qsdsan.stats <https://qsdsan.readthedocs.io/en/latest/stats.html>`_
     '''
+
+    import seaborn as sns
+    from matplotlib import pyplot as plt
 
     ax = ax if ax is not None else plt.subplot()
     df = result_dct['mu_star'][metric.name].copy().astype('float64')
@@ -1278,14 +1328,16 @@ def plot_morris_convergence(result_dct, metric, parameters=(),
     palette = sns.color_palette('deep', n_colors=len(param_names))
     sns.set_theme(style='ticks', palette=palette)
 
+    line_kws = {'linewidth': 1.5, **plot_kws} if kind == 'line' else None
+    scatter_kws = {**plot_kws} if kind == 'scatter' else None
     for n, param in enumerate(param_names):
         if kind == 'line':
-            ax.plot(df.index, df[param], color=palette[n], linewidth=1.5, label=param)
+            ax.plot(df.index, df[param], color=palette[n], label=param, **line_kws)
             if not plot_rank and show_error:
                 ax.fill_between(df.index, df[param]-conf_df[param], df[param]+conf_df[param],
                                 color=palette[n], linewidth=0, alpha=0.2)
         elif kind == 'scatter':
-            ax.scatter(df.index, df[param], color=palette[n], label=param)
+            ax.scatter(df.index, df[param], color=palette[n], label=param, **scatter_kws)
             if not plot_rank and show_error:
                 ax.errorbar(df.index, df[param], conf_df[param],
                             color=palette[n], alpha=0.5)
@@ -1302,21 +1354,28 @@ def plot_morris_convergence(result_dct, metric, parameters=(),
 # Plot variance breakdown
 # =============================================================================
 
-def _plot_bar(kind, df, error, ax=None):
+def _plot_bar(kind, df, error, ax=None, **plot_kws):
+    import seaborn as sns
+    from matplotlib import pyplot as plt
+
     ax = ax if ax else plt.subplot()
 
     sns.set_theme(style='white')
+    # `color` is set per-bar-series below; let an explicit plot_kws['color']
+    # override it if supplied.
     if 'ST' in kind:
         sns.set_color_codes('pastel')
+        st_kws = {'color': 'b', **plot_kws}
         sns.barplot(x=df.ST, y=df.index, data=df,
-                    ax=ax, label='Total', color='b')
+                    ax=ax, label='Total', **st_kws)
         if error:
             ax.errorbar(df.ST, df.index, xerr=df.ST_conf, fmt='none', ecolor='b')
 
     if 'S1' in kind:
         sns.set_color_codes('muted')
+        s1_kws = {'color': 'b', **plot_kws}
         sns.barplot(x=df.S1, y=df.index, data=df,
-                    ax=ax, label='Main', color='b')
+                    ax=ax, label='Main', **s1_kws)
         if error:
             ax.errorbar(df.S1, df.index, xerr=df.S1_conf, fmt='none', ecolor='b')
 
@@ -1328,16 +1387,20 @@ def _plot_bar(kind, df, error, ax=None):
 
 def _plot_heatmap(hmap_df, ax=None, annot=False, diagonal='', sts1_df=None,
                   default_cbar=True):
+    import seaborn as sns
+    from matplotlib import pyplot as plt
+
     ax = ax if ax else plt.subplot()
     ax_cbar = ax.figure.add_axes([0.03, 0.3, 0.02, 0.4]) if not default_cbar else None
 
     if diagonal:
-        np.fill_diagonal(hmap_df.values, getattr(sts1_df, diagonal))
-        hmap_df = hmap_df.astype('float64')
+        hmap_arr = hmap_df.to_numpy(dtype=float, copy=True)
+        np.fill_diagonal(hmap_arr, getattr(sts1_df, diagonal))
+        hmap_df = pd.DataFrame(hmap_arr, index=hmap_df.index, columns=hmap_df.columns)
         k = -1
         title = 'Total/Interaction Effects' if diagonal=='ST' else 'Main/Interaction Effects'
     else:
-        hmap_df = hmap_df.fillna(0)
+        hmap_df = hmap_df.fillna(0).astype('float64')
         k = 0
         title = 'Interaction Effects'
 
@@ -1355,7 +1418,7 @@ def _plot_heatmap(hmap_df, ax=None, annot=False, diagonal='', sts1_df=None,
 
 
 def plot_fast_results(result_dct, metric, parameters=(),
-                      ax=None, error_bar=True, file='', close_fig=True):
+                      ax=None, error_bar=True, file='', close_fig=True, **plot_kws):
     r'''
     Visualize the results from FAST or RBD-FAST analysis as a bar plot.
 
@@ -1378,6 +1441,9 @@ def plot_fast_results(result_dct, metric, parameters=(),
     close_fig : bool
         Whether to close the figure
         (if not close, new figure will be overlaid on the current figure).
+    **plot_kws
+        Additional keyword arguments forwarded to the underlying
+        :func:`seaborn.barplot` call.
 
     Returns
     -------
@@ -1400,7 +1466,7 @@ def plot_fast_results(result_dct, metric, parameters=(),
     df = result_dct[metric.name]
     kind = 'STS1' if 'ST' in df.columns else 'S1'
 
-    ax = _plot_bar(kind, df, error_bar, ax=ax)
+    ax = _plot_bar(kind, df, error_bar, ax=ax, **plot_kws)
 
     return _save_fig_return(ax.figure, ax, file, close_fig)
 
@@ -1408,7 +1474,7 @@ def plot_fast_results(result_dct, metric, parameters=(),
 def plot_sobol_results(result_dct, metric, ax=None,
                        parameters=(), kind='all',
                        annotate_heatmap=False, plot_in_diagonal='',
-                       error_bar=True, file='', close_fig=True):
+                       error_bar=True, file='', close_fig=True, **plot_kws):
     r'''
     Visualize the results from Sobol analysis as a bar plot and/or heat map.
     Total (:math:`S_{Ti}`) and main (:math:`S_{1i}`) effects can be drawn in
@@ -1460,6 +1526,9 @@ def plot_sobol_results(result_dct, metric, ax=None,
     close_fig : bool
         Whether to close the figure
         (if not close, new figure will be overlaid on the current figure).
+    **plot_kws
+        Additional keyword arguments forwarded to the underlying
+        :func:`seaborn.barplot` call. Ignored for ``kind='S2'`` (heat-map only).
 
     Returns
     -------
@@ -1494,7 +1563,7 @@ def plot_sobol_results(result_dct, metric, ax=None,
     sts1_df = pd.concat((st_df, s1_df), axis=1).sort_values('ST', ascending=False)
 
     if kind_upper in ('ST', 'S1', 'STS1', 'S1ST'): # no S2, bar plot only
-        ax_sts1 = _plot_bar(kind_upper, sts1_df, error_bar)
+        ax_sts1 = _plot_bar(kind_upper, sts1_df, error_bar, ax=ax, **plot_kws)
         return _save_fig_return(ax_sts1.figure, ax_sts1, file, close_fig)
 
     else: # has S2, need heat map
@@ -1529,6 +1598,7 @@ def plot_sobol_results(result_dct, metric, ax=None,
                 raise ValueError('plot_in_diagonal must be "ST", "S1", or "", '\
                                  f'not "{plot_in_diagonal}".')
 
+            from matplotlib import pyplot as plt
             fig, (ax_s2, ax_sts1) = plt.subplots(1, 2, figsize=(8, 5))
             bar = not_s2.replace(plot_in_diagonal, '') # 'ST', 'S1', or 'STS1'
 

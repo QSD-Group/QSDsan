@@ -20,4 +20,140 @@ code.literal{
 	background: #343131;
   	color: #00A3C5 !important;
 }
+.unit-operation-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin: 0.75rem 0 1rem;
+}
 
+.unit-operation-filters label {
+  font-weight: 600;
+}
+
+.unit-operation-filters select {
+  max-width: 14rem;
+  /* Follow Furo's light/dark theme instead of the native (fixed) control style. */
+  background-color: var(--color-background-primary);
+  color: var(--color-foreground-primary);
+  border: 1px solid var(--color-background-border);
+  border-radius: 4px;
+  padding: 0.2rem 0.4rem;
+}
+
+/* The open option list is OS-rendered; set colors so it matches in both modes. */
+.unit-operation-filters select option {
+  background-color: var(--color-background-primary);
+  color: var(--color-foreground-primary);
+}
+
+.unit-operation-filter-count {
+  color: var(--color-foreground-muted);
+  font-size: 0.9rem;
+}
+
+/* App-card layout: vertically center the description against the screenshot
+   when they sit side by side (stacks on narrow screens). */
+.app-card-row {
+  align-items: center;
+}
+
+/* Landing-page nav cards: reserve a two-line title height so single-line and
+   two-line titles (e.g., "Systems & Publications") align their icons. */
+.nav-card-title {
+  min-height: 2.6em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+/* Collapsible "aside" blocks (raw <details>) used in the tutorials.
+   nbsphinx wraps the <summary> text in a block <p>, which drops the
+   disclosure triangle onto its own line; force it inline. */
+details:not([class]) {
+  margin: 1.25rem 0;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid var(--color-background-border);
+  border-radius: 6px;
+}
+details:not([class]) > summary {
+  cursor: pointer;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  transition: background-color 0.15s ease;
+}
+details:not([class]) > summary > p {
+  display: inline;
+  margin: 0;
+}
+details:not([class]) > summary:hover {
+  background-color: var(--color-background-secondary);
+}
+
+/* pandas DataFrame tables in notebook output (nbsphinx). Pandas emits a
+   `table.dataframe` with light-mode colors baked in, which becomes
+   low-contrast (light text on light stripes) in furo's dark mode. Re-color
+   everything from furo's theme variables so it adapts to light/dark. */
+table.dataframe {
+  color: var(--color-foreground-primary);
+  border-color: var(--color-background-border);
+}
+table.dataframe th,
+table.dataframe td {
+  color: var(--color-foreground-primary);
+  border-color: var(--color-background-border);
+}
+/* column headers (thead) and the row-index column (tbody th) */
+table.dataframe thead th,
+table.dataframe tbody th {
+  background-color: var(--color-background-secondary);
+}
+/* data cells, with zebra striping that stays readable in both modes */
+table.dataframe tbody td {
+  background-color: var(--color-background-primary);
+}
+table.dataframe tbody tr:nth-child(odd) td {
+  background-color: var(--color-background-secondary);
+}
+table.dataframe tbody tr:hover td,
+table.dataframe tbody tr:hover th {
+  background-color: var(--color-background-hover);
+}
+
+/* nbsphinx renders stderr output (warnings, deprecation notices) with a
+   hardcoded light-pink background (#fdd), which is unreadable in furo's dark
+   mode (light text on light pink). Replace it with a semi-transparent red tint
+   that reads as a subtle warning on both light and dark backgrounds, and let the
+   text use the theme's foreground color. */
+div.nboutput.container div.output_area.stderr {
+  background: rgba(229, 83, 75, 0.13);
+  color: var(--color-foreground-primary);
+}
+
+/* sphinx-design card top images (the platform cards on the Systems &
+   Publications page, the workshop cards on the Learning page). By default an
+   `:img-top:` image stretches to the full card width, which is oversized in a
+   one-card-per-row layout. Cap the width and center it. Change max-width to
+   resize. */
+.sd-card-img-top {
+  max-width: 360px;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  margin: 1rem auto 0;
+  display: block;
+}
+
+/* sphinx-design card footers: each `button-link` after the `+++` separator is
+   wrapped in its own block <p>, so buttons stack vertically. Lay them out in a
+   horizontal row that wraps on narrow screens. */
+.sd-card-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.sd-card-footer > p {
+  margin: 0;
+}

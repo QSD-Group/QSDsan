@@ -5,7 +5,9 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
+
     Joy Zhang <joycheung1994@gmail.com>
+
     Yalin Li <mailto.yalin.li@gmail.com>
 
 Part of this module is based on the Thermosteam package:
@@ -22,20 +24,26 @@ from thermo import TDependentProperty
 from chemicals.elements import (
     mass_fractions as get_mass_frac,
     molecular_weight,
-    charge_from_formula
+    charge_from_formula,
+    get_atoms,
     )
+from chemicals.reaction import Hfg as _Hfg, Hfl as _Hfl, Hfs as _Hfs
 from . import Chemical
-from .utils import auom, copy_attr, cod_test_stoichiometry, electron_acceptor_cod
+from ._compat import (
+    chemical_fields as _chemical_fields,
+    checked_properties as _checked_properties,
+    lock_phase,
+    display_asfunctor,
+    get_chemical_data as get_component_data,
+    set_chemical_MW,
+    )
+from .utils import copy_attr, cod_test_stoichiometry, electron_acceptor_cod
+from .units_of_measure import component_units_of_measure
 from warnings import warn
 
 __all__ = ('Component',)
 
-_chemical_fields = tmo._chemical._chemical_fields
-_checked_properties = tmo._chemical._checked_properties
-lock_phase = tmo._chemical.lock_phase
-display_asfunctor = tmo._chemical.display_asfunctor
 copy_maybe = tmo.utils.copy_maybe
-get_component_data = tmo._chemical.get_chemical_data
 
 
 # %%
@@ -49,6 +57,20 @@ def unpickle_component(cmp_data):
     for field, value in cmp_data.items():
         setfield(cmp, field, value)
     return cmp
+
+
+def _has_measured_Hf(CAS):
+    '''Whether the `chemicals` database carries a measured heat of formation
+    for this CAS (in any phase).'''
+    if not CAS:
+        return False
+    for fn in (_Hfg, _Hfl, _Hfs):
+        try:
+            if fn(CAS) is not None:
+                return True
+        except Exception:
+            pass
+    return False
 
 # =============================================================================
 # Representation
@@ -81,20 +103,6 @@ _component_slots = (*Chemical.__slots__,
 
 _checked_properties = (*_checked_properties, *_key_component_properties)
 
-component_units_of_measure = {
-    'i_C': auom('g'),
-    'i_N': auom('g'),
-    'i_P': auom('g'),
-    'i_K': auom('g'),
-    'i_Mg': auom('g'),
-    'i_Ca': auom('g'),
-    'i_mass': auom('g'),
-    'i_charge': auom('mol'),
-    'i_COD': auom('g'),
-    'i_NOD': auom('g'),
-    }
-
-
 # %%
 
 allowed_values = {
@@ -105,13 +113,16 @@ allowed_values = {
 
 def check_return_property(name, value):
     if name.startswith(('i_', 'f_')):
-        try: return float(value)
+        try: value = float(value)
         except:
             if not value: return None
             raise TypeError(f'{name} must be a number, not a {type(value).__name__}.')
         if name.startswith('f_') and (value>1 or value<0):
             raise ValueError(f'{name} must be within [0,1].')
+        return value
     elif name in allowed_values.keys():
+        if value is None:  # not specified yet (e.g., set later when loading from file)
+            return None
         if value not in allowed_values[name]:
             raise ValueError(f'{name} must be in {allowed_values[name]}.')
         return value
@@ -132,7 +143,15 @@ class Component(Chemical):
     ID : str
         ID for the component, must be unique.
     search_ID : str
-        ID that will be passed to :class:`thermosteam.Chemical` to search the database.
+        A name/identifier looked up in the database to build the component. An
+        explicit `search_ID` that is not found raises a `LookupError`; a bare
+        `ID` that is not found falls back to a blank component to fill in
+        manually. Passing a :class:`thermosteam.Chemical` object to `search_ID`
+        raises a `TypeError`.
+    chemical : :class:`thermosteam.Chemical`
+        A pre-built chemical object to build the component from. A name string
+        passed to `chemical` is accepted as an alias for `search_ID`. Giving
+        both a Chemical object and a `search_ID` raises a `ValueError`.
     formula : str
         Formula for the component, formula from the database will be used
         if the component is constructed from the database and it has a formula in the database.
@@ -215,33 +234,74 @@ class Component(Chemical):
     __slots__ = _component_slots
 
     # ID must be provided
-    def __new__(cls, ID, cache=False, search_ID=None, formula=None, phase=None, measured_as=None,
+    def __new__(cls, ID, cache=False, search_ID=None, chemical=None, formula=None, formula_override=False, phase=None, measured_as=None,
                 i_C=None, i_N=None, i_P=None, i_K=None, i_Mg=None, i_Ca=None,
                 i_mass=None, i_charge=None, i_COD=None, i_NOD=None,
                 f_BOD5_COD=None, f_uBOD_COD=None, f_Vmass_Totmass=None,
                 description=None, particle_size=None,
                 degradability=None, organic=None, **chemical_properties):
-        if search_ID:
-            self = super().__new__(cls, ID=ID, cache=cache, search_ID=search_ID,
-                                   search_db=True, **chemical_properties)
-        else: # still try to search nonetheless
-            try: self = super().__new__(cls, ID=ID, cache=cache, **chemical_properties)
-            except LookupError:
-                self = super().__new__(cls, ID=ID, cache=cache, search_db=False, **chemical_properties)
-
-        self._ID = ID
-        self._chem_MW = 1
-        if formula:
-            self._formula = None
-            self.formula = formula
+        # --- Normalize the `search_ID` / `chemical` keywords (see design contract) ---
+        # `search_ID` is a name to look up; `chemical` is a pre-built Chemical object.
+        if isinstance(search_ID, Chemical):
+            raise TypeError(
+                '`search_ID` must be a string identifier; pass a Chemical object '
+                'via the `chemical` keyword instead.')
+        if isinstance(chemical, Chemical):
+            if search_ID is not None:
+                raise ValueError(
+                    'Specify the chemical source once: a Chemical object via '
+                    '`chemical` or a name via `search_ID`, not both.')
+        elif chemical is not None:                      # a name string
+            if search_ID is not None and search_ID != chemical:
+                raise ValueError(
+                    f'Conflicting lookup names: chemical={chemical!r} and '
+                    f'search_ID={search_ID!r}.')
+            search_ID = search_ID or chemical
+            chemical = None
+        # `search_db` may arrive via **chemical_properties (e.g. Component.copy
+        # passes search_db=False to make a blank shell); pull it out so it does
+        # not collide with the explicit value passed to super().__new__ below.
+        search_db = chemical_properties.pop('search_db', True)
+        # If the user explicitly provides combustion energetics, never clear
+        # them in the inorganic guard applied at the end of construction.
+        _user_energetics = any(k in chemical_properties
+                               for k in ('Hf', 'HHV', 'LHV', 'combustion'))
+        if chemical is not None:
+            # Path A: build from an existing Chemical object by copying its data.
+            # thermosteam's constructor cannot ingest a Chemical instance, so we
+            # mimic Chemical.copy() (guarded by test_component_copy_matches_thermosteam).
+            self = super().__new__(cls, ID=ID, cache=cache, search_db=False)
+            for field in chemical.__slots__:
+                setattr(self, field, copy_maybe(getattr(chemical, field, None)))
+            self._ID = ID
+            self._apply_formula(formula, formula_override)
+            if phase: self.at_state(phase)
+            TDependentProperty.RAISE_PROPERTY_CALCULATION_ERROR = False
+            self._init_energies(self.Cn, self.Hvap, self.Psat, self.Hfus, self.Sfus,
+                                self.Tm, self.Tb, self.eos, self.phase_ref, self.S0)
+            TDependentProperty.RAISE_PROPERTY_CALCULATION_ERROR = True
         else:
-            if self.formula:
-                self._chem_MW = molecular_weight(self.atoms)
-        if phase: lock_phase(self, phase)
+            # Path B: look up `search_ID or ID` and let thermosteam build natively,
+            # passing `phase` so it locks-then-inits in the canonical order. An
+            # explicit `search_ID` miss raises; a bare `ID` miss falls back to a
+            # blank custom component (phase-locked via lock_phase, unchanged).
+            try:
+                self = super().__new__(cls, ID=ID, cache=cache, search_ID=search_ID,
+                                       phase=phase, search_db=search_db, **chemical_properties)
+            except LookupError:
+                if search_ID is not None:
+                    raise
+                self = super().__new__(cls, ID=ID, cache=cache, search_db=False,
+                                       **chemical_properties)
+                if phase: lock_phase(self, phase)
+            self._ID = ID
+            self._apply_formula(formula, formula_override)
 
-        self._particle_size = particle_size
-        self._degradability = degradability
-        self._organic = organic
+        # Assign through the property setters so invalid values are caught at
+        # creation (setters validate via `check_return_property`)
+        self.particle_size = particle_size
+        self.degradability = degradability
+        self.organic = organic
         self.description = description
         self.measured_as = measured_as
         self.i_mass = i_mass
@@ -256,10 +316,59 @@ class Component(Chemical):
         self.f_uBOD_COD = f_uBOD_COD
         self.f_Vmass_Totmass = f_Vmass_Totmass
 
-        if not self.MW and not self.formula: self.MW = 1.
+        if not self.MW and not self.formula: set_chemical_MW(self, 1.)
         self.i_COD = i_COD
         self.i_NOD = i_NOD
+        self._clear_estimated_energetics(_user_energetics)
         return self
+
+
+    def _apply_formula(self, formula, formula_override):
+        '''
+        Apply a ``formula`` to a freshly built component and recompute the
+        dependent properties (``chem_MW`` and the element-content fractions).
+        Used by both construction paths so the re-init is consistent.
+
+        When the component was built from a database/source chemical that
+        already has a formula and the provided ``formula`` has a *different*
+        atomic composition, this is treated as an override and raises unless
+        ``formula_override=True`` is passed (a different spelling of the same
+        atoms, e.g. ``CH3CH2CH3`` for ``C3H8``, is not an override). A blank
+        custom component (no source formula) is never gated.
+        '''
+        if formula and self.formula and not formula_override \
+                and get_atoms(formula) != self.atoms:
+            raise ValueError(
+                f'the given formula {formula!r} does not match the formula '
+                f'{self.formula!r} of the source/database chemical for component '
+                f'{self.ID!r}; pass formula_override=True to override it.')
+        self._chem_MW = 1
+        if formula:
+            self._formula = None
+            self.formula = formula
+        elif self.formula:
+            self._chem_MW = molecular_weight(self.atoms)
+
+
+    def _clear_estimated_energetics(self, user_supplied):
+        '''
+        Drop combustion energetics that thermosteam (>=0.53.5) estimates from an
+        empirical fuel correlation (Dulong/Boie) for any formula-bearing
+        chemical. Those correlations are defined for organic fuels; for an
+        inorganic component with no measured heat of formation (and none
+        supplied by the user) the estimate has no basis, so restore
+        ``Hf``/``HHV``/``LHV``/``combustion`` to ``None`` (the behavior of
+        thermosteam <=0.53.4).
+
+        Organic components, components with a measured ``Hf`` in the database
+        (e.g. H2, NH3, CO, H2S), and components given an explicit ``Hf`` are
+        left untouched.
+        '''
+        if self.organic or user_supplied:
+            return
+        if _has_measured_Hf(self.CAS):
+            return
+        self._Hf = self._HHV = self._LHV = self._combustion = None
 
 
     def __reduce__(self):
@@ -611,10 +720,11 @@ class Component(Chemical):
                     units = component_units_of_measure.get(field, '')
                     if units:
                         if field.startswith('i_'):
-                            if self._measured_as: denom = self._measured_as
-                            else: denom = ''
-                            if field == 'i_charge': line += f' {units} +/g {denom}'
-                            else: line += f' {units} {field[2:]}/g {denom}'
+                            numer = '+' if field == 'i_charge' else field[2:]
+                            line += f' {units} {numer}/g'
+                            # Append the measured-as basis only when set, so an
+                            # unmeasured component does not leave a trailing space.
+                            if self._measured_as: line += f' {self._measured_as}'
                         else: line += f' {units}'
                 else:
                     value = str(value)
@@ -676,16 +786,8 @@ class Component(Chemical):
     __copy__ = copy
 
 
-    # # This won't work if a customized chemical is used
-    # @classmethod
-    # def from_chemical(cls, ID, chemical=None, **data):
-    #     '''Return a new :class:`Component` from a :class:`thermosteam.Chemical` object.'''
-    #     chemical_ID = chemical if isinstance(chemical, str) else chemical.ID
-    #     new = Component(ID=ID, search_ID=chemical_ID, **data)
-    #     return new
-
     @classmethod
-    def from_chemical(cls, ID, chemical=None, formula=None, phase=None, measured_as=None,
+    def from_chemical(cls, ID, chemical=None, formula=None, formula_override=False, phase=None, measured_as=None,
                       i_C=None, i_N=None, i_P=None, i_K=None, i_Mg=None, i_Ca=None,
                       i_mass=None, i_charge=None, i_COD=None, i_NOD=None,
                       f_BOD5_COD=None, f_uBOD_COD=None, f_Vmass_Totmass=None,
@@ -694,11 +796,18 @@ class Component(Chemical):
         '''
         Return a new :class:`Component` from a :class:`thermosteam.Chemical` object.
 
+        This is a thin wrapper around the :class:`Component` constructor, which accepts
+        the same ``chemical`` keyword directly. That is,
+        ``Component.from_chemical(ID, chemical, ...)`` is equivalent to
+        ``Component(ID, chemical=chemical, ...)``; both validate the
+        ``particle_size``/``degradability``/``organic`` inputs at creation.
+
         .. note::
 
-            If you don't have a pre-constructed chemical, you are recommend to use
-            the kwargs `ID`, or `search_ID` in :class:`Component` to search the database
-            instead of using this :func:`Component.from_chemical`.
+            This method is retained for backward compatibility. For a database
+            name lookup, prefer ``Component(ID, search_ID='name', ...)``; and
+            ``Component.from_chemical(ID, chemical=obj_or_name, ...)`` is
+            equivalent to ``Component(ID, chemical=obj_or_name, ...)``.
 
             E.g., do
 
@@ -713,42 +822,15 @@ class Component(Chemical):
         >>> from qsdsan import Component
         >>> Struvite = Component.from_chemical('Struvite',
         ...                                    chemical='MagnesiumAmmoniumPhosphate',
-        ...                                    formula='NH4MgPO4·H12O6',
+        ...                                    formula='NH4MgPO4·H12O6', formula_override=True,
         ...                                    phase='l', particle_size='Particulate',
         ...                                    degradability='Undegradable', organic=False)
-        >>> Struvite.show(chemical_info=True)
+        >>> # `show(chemical_info=True)` also prints the underlying Chemical's
+        >>> # thermo data, but that block varies across thermosteam versions, so
+        >>> # here we show only the Component-specific properties. `chem_MW`
+        >>> # confirms the hexahydrate `formula_override` (MW ~245, not ~137).
+        >>> Struvite.show()
         Component: Struvite (phase_ref='l') at phase='l'
-        [Names]  CAS: 7785-21-9
-                 InChI: Mg.H3N.H3O4P/c;;1-5(...
-                 InChI_key: MXZRMHIULZDAKC-U...
-                 common_name: 7785-21-9
-                 iupac_name: ('azanium;magne...
-                 pubchemid: 1.7873e+05
-                 smiles: [NH4+].[O-]P(=O)([O...
-                 formula: NH4MgPO4·H12O6
-        [Groups] Dortmund: <Empty>
-                 UNIFAC: <Empty>
-                 PSRK: <Empty>
-                 NIST: <Empty>
-        [Data]   MW: 137.31 g/mol
-                 Tm: None
-                 Tb: None
-                 Tt: None
-                 Tc: None
-                 Pt: None
-                 Pc: None
-                 Vc: None
-                 Hf: None
-                 S0: 0 J/K/mol
-                 LHV: None
-                 HHV: None
-                 Hfus: 0 J/mol
-                 Sfus: None
-                 omega: None
-                 dipole: None
-                 similarity_variable: 0.080108
-                 iscyclic_aliphatic: 0
-                 combustion: None
         Component-specific properties:
         [Others] measured_as: None
                  description: None
@@ -770,50 +852,12 @@ class Component(Chemical):
                  f_Vmass_Totmass: 0
                  chem_MW: 245.41
         '''
-        new = cls.__new__(cls, ID=ID, phase=phase)
-
+        # Thin wrapper around the constructor's `chemical=` path (see `__new__`).
+        # `from_chemical`'s historical default is to use `ID` as the chemical.
         if chemical is None: chemical = ID
-
-        if isinstance(chemical, str):
-            chemical = Chemical(chemical, **data)
-
-        for field in chemical.__slots__:
-            value = getattr(chemical, field, None)
-            setattr(new, field, copy_maybe(value))
-
-        new._ID = ID
-        if formula and formula != chemical.formula:
-            new._formula = formula
-            if new._Hf is None:
-                new._chem_MW = molecular_weight(new.atoms)
-            else:
-                new.reset_combustion_data()
-        else:
-            new._chem_MW = molecular_weight(new.atoms)
-        if phase: new.at_state(phase)
-
-        TDependentProperty.RAISE_PROPERTY_CALCULATION_ERROR = False
-        new._init_energies(new.Cn, new.Hvap, new.Psat, new.Hfus, new.Sfus,
-                           new.Tm, new.Tb, new.eos, new.phase_ref, new.S0)
-        TDependentProperty.RAISE_PROPERTY_CALCULATION_ERROR = True
-
-        new.description = description
-        new._particle_size = particle_size
-        new._degradability = degradability
-        new._organic = organic
-        new._measured_as = measured_as
-        new.i_mass = i_mass
-        new.i_C = i_C
-        new.i_N = i_N
-        new.i_P = i_P
-        new.i_K = i_K
-        new.i_Mg = i_Mg
-        new.i_Ca = i_Ca
-        new.i_charge = i_charge
-        new.f_BOD5_COD = f_BOD5_COD
-        new.f_uBOD_COD = f_uBOD_COD
-        new.f_Vmass_Totmass = f_Vmass_Totmass
-
-        new.i_COD = i_COD
-        new.i_NOD = i_NOD
-        return new
+        return cls(ID, chemical=chemical, formula=formula, formula_override=formula_override, phase=phase, measured_as=measured_as,
+                   i_C=i_C, i_N=i_N, i_P=i_P, i_K=i_K, i_Mg=i_Mg, i_Ca=i_Ca,
+                   i_mass=i_mass, i_charge=i_charge, i_COD=i_COD, i_NOD=i_NOD,
+                   f_BOD5_COD=f_BOD5_COD, f_uBOD_COD=f_uBOD_COD, f_Vmass_Totmass=f_Vmass_Totmass,
+                   description=description, particle_size=particle_size,
+                   degradability=degradability, organic=organic, **data)

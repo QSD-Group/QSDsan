@@ -5,7 +5,9 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
+
     Yalin Li <mailto.yalin.li@gmail.com>
+
     Joy Zhang <joycheung1994@gmail.com>
 
 Part of this module is based on the Thermosteam package:
@@ -20,6 +22,7 @@ import numpy as np
 import pandas as pd
 import thermosteam as tmo
 from . import _component, Chemical, Chemicals, CompiledChemicals, Component
+from ._compat import chemical_data_array, prepare_chemicals
 from .utils import add_V_from_rho, load_data
 
 __all__ = ('Components', 'CompiledComponents')
@@ -153,9 +156,31 @@ class Components(Chemicals):
 
     def compile(self, skip_checks=False, ignore_inaccurate_molar_weight=True, 
                 adjust_MW_to_measured_as=False):
-        '''Cast as a :class:`CompiledComponents` object.'''
+        '''
+        Cast as a :class:`CompiledComponents` object.
+
+        Parameters
+        ----------
+        skip_checks : bool
+            Whether to skip checks for missing component properties.
+        ignore_inaccurate_molar_weight : bool
+            Components defined with a ``measured_as`` basis (e.g. as COD or an
+            element) do not have a molecular weight consistent with that basis,
+            so molar and volumetric calculations with them are inaccurate.
+            Compilation raises an error in that case unless this is set to True.
+            Set to True when you only need mass-based quantities.
+        adjust_MW_to_measured_as : bool
+            For ``measured_as`` components that have a chemical formula, set to
+            True to adjust their MW (to ``chem_MW / i_mass``) so molar and
+            volumetric calculations are correct. Components without a formula
+            keep MW = 1 and still require ``ignore_inaccurate_molar_weight=True``.
+
+        See Also
+        --------
+        :func:`Components.default_compile` for a fuller explanation and examples.
+        '''
         components = tuple(self)
-        tmo._chemicals.prepare(components, skip_checks)
+        prepare_chemicals(components, skip_checks)
         setattr(self, '__class__', CompiledComponents)
         
         try: self._compile(components, ignore_inaccurate_molar_weight, adjust_MW_to_measured_as)
@@ -595,8 +620,6 @@ class Components(Chemicals):
 # =============================================================================
 # Define the CompiledComponents class
 # =============================================================================
-
-chemical_data_array = tmo._chemicals.chemical_data_array
 
 def component_data_array(components, attr):
     data = chemical_data_array(components, attr)

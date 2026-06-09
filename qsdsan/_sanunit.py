@@ -5,7 +5,9 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
+
     Yalin Li <mailto.yalin.li@gmail.com>
+
     Joy Zhang <joycheung1994@gmail.com>
 
 Part of this module is based on the BioSTEAM package:
@@ -23,7 +25,6 @@ import numpy as np, biosteam as bst
 from collections import defaultdict
 from collections.abc import Iterable
 from warnings import warn
-from biosteam._unit import ProcessSpecification
 from biosteam.utils import (
     AbstractMethod,
     Inlets,
@@ -44,6 +45,7 @@ from . import (
     Unit,
     WasteStream,
     )
+from ._compat import ProcessSpecification
 from .utils import SanUnitScope, ExogenousDynamicVariable as EDV
 
 __all__ = ('SanUnit',)
@@ -146,6 +148,8 @@ class SanUnit(Unit, isabstract=True):
         It will be used to adjust cost and emission calculation in TEA and LCA.
         Equipment without provided lifetime will be assumed to have the same
         lifetime as the TEA/LCA.
+        This is the recommended name for a unit's equipment lifetime; it is an
+        alias for the BioSTEAM-native ``equipment_lifetime`` attribute.
     F_BM_default : float
         If not None, all bare module factors will be default to the set value.
 
@@ -169,6 +173,7 @@ class SanUnit(Unit, isabstract=True):
     `thermosteam.Stream <https://thermosteam.readthedocs.io/en/latest/Stream.html>`_
     '''
     _init_lca = AbstractMethod
+    _construction_specs = ()
 
     def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
                  include_construction=True, construction=[],
@@ -220,23 +225,47 @@ class SanUnit(Unit, isabstract=True):
         self._recycle_system = None
 
         ##### qsdsan-specific #####
+        self._init_sanunit_addons(
+            include_construction=include_construction,
+            construction=construction, transportation=transportation,
+            equipment=equipment, add_OPEX=add_OPEX, lifetime=lifetime,
+            F_BM_default=F_BM_default, isdynamic=isdynamic,
+            exogenous_vars=exogenous_vars, **kwargs,
+        )
+
+
+    def _init_sanunit_addons(self, include_construction=True, construction=[],
+                             transportation=[], equipment=[],
+                             add_OPEX={}, lifetime=None, F_BM_default=None,
+                             isdynamic=False, exogenous_vars=(), **kwargs):
+        '''
+        Install ``SanUnit``'s add-on attribute surface (LCA flow, ``add_OPEX``,
+        ``lifetime``, ``uptime_ratio``, dynamic-simulation flag, ...).
+
+        Called from ``SanUnit.__init__``; ``bst``-namespace wrappers whose
+        MRO puts the BioSTEAM parent before ``SanUnit`` call this from their
+        own ``__init__`` after the BioSTEAM init completes, so the add-on
+        surface is installed regardless of MRO order.
+        '''
         for i in (*construction, *transportation, *equipment):
             i._linked_unit = self
-        # Make fresh ones for each unit
         self.include_construction = include_construction
         self.construction = [] if not construction else construction
         self.transportation = [] if not transportation else transportation
         self._init_lca()
         self.equipment = [] if not equipment else equipment
-        self.add_OPEX = add_OPEX.copy()
+        self.add_OPEX = add_OPEX.copy() if isinstance(add_OPEX, dict) else add_OPEX
         self.uptime_ratio = 1.
-        self.lifetime = lifetime
+        # BioSTEAM's ``Unit.__init__`` already copied the class-level
+        # ``_default_equipment_lifetime`` into ``equipment_lifetime``; only
+        # override it when the user passes an explicit ``lifetime`` so that
+        # class-declared and equipment-supplied lifetimes are not discarded.
+        if lifetime is not None:
+            self.lifetime = lifetime
         if F_BM_default:
             F_BM = self.F_BM
             self.F_BM = defaultdict(lambda: F_BM_default)
             self.F_BM.update(F_BM)
-
-        # For units with different state headers, should update it in the unit's ``__init__``
         self.isdynamic = isdynamic
         self._exovars = exogenous_vars
         for attr, val in kwargs.items():
@@ -426,8 +455,10 @@ class SanUnit(Unit, isabstract=True):
     def add_equipment_design(self):
         unit_design = self.design_results
         unit_units = self._units
-        F_BM, F_D, F_P, F_M, lifetime = \
-            self.F_BM, self.F_D, self.F_P, self.F_M, self._default_equipment_lifetime
+        F_BM, F_D, F_P, F_M = self.F_BM, self.F_D, self.F_P, self.F_M
+        # Equipment lifetimes go into ``equipment_lifetime`` (the attribute TEA and
+        # LCA read). A whole-unit integer override is respected by leaving it alone.
+        lifetime = self.equipment_lifetime if isinstance(self.equipment_lifetime, dict) else None
         isa = isinstance
         get = getattr
         def update_unit_attr(unit_attr, equip_ID, equip_attr):
@@ -445,10 +476,13 @@ class SanUnit(Unit, isabstract=True):
             equip_units = {} if not equip.units else equip.units
             unit_units.update(add_prefix(equip_units, prefix))
             for unit_attr, equip_attr in zip(
-                    (F_BM, F_D, F_P, F_M, lifetime),
-                    ('F_BM', 'F_D', 'F_P', 'F_M', 'lifetime'),
+                    (F_BM, F_D, F_P, F_M),
+                    ('F_BM', 'F_D', 'F_P', 'F_M'),
                     ):
                 update_unit_attr(unit_attr, equip_ID, get(equip, equip_attr))
+            equip_lifetime = get(equip, 'lifetime')
+            if lifetime is not None and equip_lifetime is not None:
+                update_unit_attr(lifetime, equip_ID, equip_lifetime)
 
     def add_equipment_cost(self):
         unit_cost = self.baseline_purchase_costs
@@ -470,8 +504,8 @@ class SanUnit(Unit, isabstract=True):
                 self.design_results[i.item.ID] = i.quantity
             if add_cost:
                 self.baseline_purchase_costs[i.item.ID] = i.cost
-            if add_lifetime and i.lifetime:
-                self._default_equipment_lifetime[i.item.ID] = i.lifetime
+            if add_lifetime and i.lifetime and isinstance(self.equipment_lifetime, dict):
+                self.equipment_lifetime[i.item.ID] = i.lifetime
 
 
     @property
@@ -675,6 +709,11 @@ class SanUnit(Unit, isabstract=True):
         It will be used to adjust cost and emission calculation in TEA and LCA.
         Equipment without provided lifetime will be assumed to have the same
         lifetime as the TEA/LCA.
+
+        This is the recommended way to read or set a unit's equipment lifetime;
+        it is an alias for the BioSTEAM-native ``equipment_lifetime`` attribute
+        (the two are equivalent for a :class:`SanUnit`). Do not confuse it with
+        the project ``lifetime`` passed to :class:`~.TEA`/:class:`~.LCA`.
         '''
         return self.equipment_lifetime
     @lifetime.setter

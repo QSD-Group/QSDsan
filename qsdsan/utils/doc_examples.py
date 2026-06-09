@@ -5,6 +5,7 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
+
     Yalin Li <mailto.yalin.li@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
@@ -15,19 +16,20 @@ for license details.
 from .. import (
     Component,
     Components,
-    get_thermo,
+    get_components,
     Model,
     SanStream,
-    sanunits as su,
     set_thermo as qs_set_thermo,
-    SimpleTEA,
+    TEA,
     System,
     )
-from chaospy import distributions as shape
 
 __all__ = (
     'create_example_components',
+    'create_example_sanitation_components',
+    'create_example_wwt_components',
     'create_example_system',
+    'create_example_treatment_systems',
     'create_example_model',
     )
 
@@ -51,8 +53,11 @@ def create_example_components(set_thermo=True):
     --------
     >>> from qsdsan.utils import create_example_components
     >>> cmps = create_example_components()
-    >>> cmps.show()
-    CompiledComponents([H2O, CO2, N2O, NaCl, H2SO4, CH4, Methanol, Ethanol])
+    >>> cmps.show() # doctest: +ELLIPSIS
+    CompiledComponents([
+        H2O,   CO2, N2O,      NaCl,...
+        H2SO4, CH4, Methanol, Ethanol,
+    ])
     '''
 
     H2O = Component('H2O', search_ID='H2O', particle_size='Soluble',
@@ -94,6 +99,161 @@ def create_example_components(set_thermo=True):
     return cmps
 
 
+def create_example_sanitation_components(set_thermo=True):
+    '''
+    Load a set of pre-constructed components for sanitation-unit documentation.
+
+    These are the excreta/nutrient components used by the sanitation
+    :class:`~.SanUnit` examples (e.g.,
+    :class:`~.unit_operations.Excretion`,
+    :class:`~.unit_operations.PitLatrine`,
+    :class:`~.unit_operations.Trucking`); they are not part of the default
+    set returned by :func:`qsdsan.Components.load_default`.
+
+    Parameters
+    ----------
+    set_thermo : bool
+        Whether to set the returned components as the thermodynamic property
+        package (i.e., call :func:`qsdsan.set_thermo`).
+
+    Returns
+    -------
+    A :class:`qsdsan.CompiledComponents` object with the components
+    NH3 (measured as N), NonNH3, P, K, Mg, Ca, H2O, OtherSS, N2O, CH4,
+    Tissue, WoodAsh, Struvite, HAP, MagnesiumHydroxide, and LPG. The last four
+    are needed by some units (e.g., struvite recovery in
+    :class:`~.unit_operations.UDDT`/:class:`~.unit_operations.SepticTank`,
+    LPG combustion in :class:`~.unit_operations.SludgePasteurization`).
+
+    Examples
+    --------
+    >>> from qsdsan.utils import create_example_sanitation_components
+    >>> cmps = create_example_sanitation_components()
+    >>> cmps.IDs
+    ('NH3', 'NonNH3', 'P', 'K', 'Mg', 'Ca', 'H2O', 'OtherSS', 'N2O', 'CH4', 'Tissue', 'WoodAsh', 'Struvite', 'HAP', 'MagnesiumHydroxide', 'LPG')
+
+    See Also
+    --------
+    :func:`create_example_components`
+
+    :func:`create_example_wwt_components`
+    '''
+    from .components import add_V_from_rho
+
+    def mk(ID, **kwargs):
+        kwargs.setdefault('phase', 'l')
+        kwargs.setdefault('particle_size', 'Soluble')
+        kwargs.setdefault('degradability', 'Undegradable')
+        kwargs.setdefault('organic', False)
+        return Component(ID, **kwargs)
+
+    NH3 = mk('NH3', measured_as='N')
+    NonNH3 = mk('NonNH3', formula='N', measured_as='N', description='Non-NH3 nitrogen')
+    P = mk('P')
+    K = mk('K')
+    Mg = mk('Mg')
+    Ca = mk('Ca')
+    H2O = mk('H2O')
+    OtherSS = mk('OtherSS', description='Unspecified soluble solids')
+    N2O = mk('N2O', phase='g', particle_size='Dissolved gas')
+    CH4 = mk('CH4', phase='g', particle_size='Dissolved gas',
+             degradability='Slowly', organic=True)
+    Tissue = mk('Tissue', MW=1, phase='s', particle_size='Particulate',
+                description='Toilet paper')
+    WoodAsh = mk('WoodAsh', MW=1, phase='s', particle_size='Particulate',
+                 description='Wood ash desiccant')
+    # Anhydrous formula (not the MgNH4PO4*6H2O mineral): the toilet/septic units
+    # assign struvite recovery in mol without sourcing crystal water, so the
+    # anhydrous MW keeps the recovered mass balanced. The hexahydrate is used only
+    # to demonstrate formula_override (Component.from_chemical / test_component.py).
+    Struvite = mk('Struvite', search_ID='MagnesiumAmmoniumPhosphate',
+                  formula='NH4MgPO4', phase='s', particle_size='Particulate')
+    HAP = mk('HAP', search_ID='Hydroxyapatite', phase='s',
+             particle_size='Particulate', description='Hydroxyapatite')
+    MgOH2 = mk('MagnesiumHydroxide', search_ID='MagnesiumHydroxide', phase='s',
+               particle_size='Particulate')
+    LPG = mk('LPG', search_ID='Propane', phase='g', particle_size='Dissolved gas',
+             degradability='Slowly', organic=True, description='Liquefied petroleum gas')
+
+    cmps = Components((NH3, NonNH3, P, K, Mg, Ca, H2O, OtherSS,
+                       N2O, CH4, Tissue, WoodAsh, Struvite, HAP, MgOH2, LPG))
+    for cmp in cmps:
+        cmp.default()
+        cmp.copy_models_from(H2O, ('sigma', 'epsilon', 'kappa', 'Cn', 'mu'))
+    # Particulate solids need a volume model before the set can be compiled
+    for cmp, rho in ((Tissue, 375), (WoodAsh, 760), (Struvite, 1711),
+                     (HAP, 3150), (MgOH2, 2340)):
+        add_V_from_rho(cmp, rho)
+
+    cmps.compile(ignore_inaccurate_molar_weight=True)
+    for cmp in cmps:
+        for attr in ('HHV', 'LHV', 'Hf'):
+            if getattr(cmp, attr) is None:
+                setattr(cmp, attr, 0)
+
+    if set_thermo: qs_set_thermo(cmps)
+    return cmps
+
+
+def create_example_wwt_components(set_thermo=True):
+    '''
+    Load a minimal set of pre-constructed components for wastewater-treatment
+    unit documentation.
+
+    These are the lumped COD-based components used by the wastewater-treatment
+    :class:`~.SanUnit` examples (e.g.,
+    :class:`~.unit_operations.ActivatedSludgeProcess`,
+    :class:`~.unit_operations.BeltThickener`,
+    :class:`~.unit_operations.CombinedHeatPower`). The ``active_biomass``,
+    ``inert_biomass``, and ``substrates`` component groups expected by several of
+    those units are defined here.
+
+    Parameters
+    ----------
+    set_thermo : bool
+        Whether to set the returned components as the thermodynamic property
+        package (i.e., call :func:`qsdsan.set_thermo`).
+
+    Returns
+    -------
+    A :class:`qsdsan.CompiledComponents` object with X (biomass), X_inert
+    (inert biomass), Substrate, and CH4, plus the default combustion components
+    (O2, CO2, H2O, N2, P4O10, SO2).
+
+    Examples
+    --------
+    >>> from qsdsan.utils import create_example_wwt_components
+    >>> cmps = create_example_wwt_components()
+    >>> cmps.IDs
+    ('X', 'X_inert', 'Substrate', 'CH4', 'O2', 'CO2', 'H2O', 'N2', 'P4O10', 'SO2')
+    >>> [c.ID for c in cmps.substrates]
+    ['Substrate']
+
+    See Also
+    --------
+    :func:`create_example_sanitation_components`
+    '''
+    X = Component('X', phase='s', measured_as='COD', i_COD=1, description='Biomass',
+                  organic=True, particle_size='Particulate', degradability='Readily')
+    X_inert = Component('X_inert', phase='s', measured_as='COD', i_COD=1,
+                        description='Inert biomass', organic=True,
+                        particle_size='Particulate', degradability='Undegradable')
+    Substrate = Component('Substrate', phase='l', measured_as='COD', i_COD=1,
+                          organic=True, particle_size='Soluble',
+                          degradability='Readily')
+    CH4 = Component('CH4', phase='g', organic=True, particle_size='Dissolved gas',
+                    degradability='Readily')
+
+    cmps = Components([X, X_inert, Substrate, CH4])
+    cmps = Components.append_combustion_components(cmps, lock_state_at='')
+    cmps.define_group('active_biomass', IDs=('X',))
+    cmps.define_group('inert_biomass', IDs=('X_inert',))
+    cmps.define_group('substrates', IDs=('Substrate',))
+
+    if set_thermo: qs_set_thermo(cmps)
+    return cmps
+
+
 # %%
 
 # =============================================================================
@@ -131,11 +291,13 @@ def create_example_system(components=None):
      <Splitter: S2>)
     >>> sys.diagram() # doctest: +SKIP
     '''
+    from .. import unit_operations as su
+
     if components: qs_set_thermo(components)
     else:
         try:
-            thermo = get_thermo()
-            if not ('H2O', 'Methanol', 'Ethanol', 'NaCl') in thermo.components.names:
+            cmps = get_components()
+            if not ('H2O', 'Methanol', 'Ethanol', 'NaCl') in cmps.names:
                 qs_set_thermo(create_example_components())
         except: qs_set_thermo(create_example_components())
 
@@ -152,6 +314,169 @@ def create_example_system(components=None):
     sys = System('sys', path=(M1, P1, H1, S1, M2, S2))
 
     return sys
+
+
+# %%
+
+# =============================================================================
+# Example wastewater treatment systems (shared by the TEA and LCA tutorials)
+# =============================================================================
+
+def create_example_treatment_systems(components=None, set_thermo=True):
+    '''
+    Build the aerobic and anaerobic wastewater treatment systems used in the
+    TEA and LCA tutorials, for documentation purpose.
+
+    Two single-unit systems treat the same municipal wastewater
+    (4,000 m3/d, COD ~430 mg/L):
+
+    - ``aer_sys``: an aerobic activated-sludge plant (spends electricity on
+      aeration, produces waste sludge); and
+    - ``ana_sys``: an anaerobic plant (recovers biogas, but needs heating and a
+      little alkalinity).
+
+    Both plants share an installed capital and a sludge-disposal cost (declared
+    on a common abstract base class), so they are a compact but realistic
+    substrate for techno-economic and life cycle analyses. The sizing, energy,
+    and cost figures follow Metcalf & Eddy, *Wastewater Engineering* (5th ed.);
+    they are order-of-magnitude teaching values, not a design basis.
+
+    Parameters
+    ----------
+    components : obj
+        If given, will call :func:`qsdsan.set_thermo(components)`; otherwise a
+        small set of components is created. Must include "H2O", "O2", "CO2",
+        "NH3", "CH4", "NaHCO3", "Substrate", and "Biomass".
+    set_thermo : bool
+        Whether to set the thermo property package to the components used here
+        (ignored when `components` is None, in which case it is always set).
+
+    Returns
+    -------
+    aer_sys : :class:`qsdsan.System`
+        The aerobic treatment system (unit ``aer``).
+    ana_sys : :class:`qsdsan.System`
+        The anaerobic treatment system (unit ``ana``).
+
+    Examples
+    --------
+    >>> from qsdsan.utils import create_example_treatment_systems
+    >>> aer_sys, ana_sys = create_example_treatment_systems()
+    >>> aer_sys.simulate()
+    >>> ana_sys.simulate()
+    >>> ([u.ID for u in aer_sys.units], [u.ID for u in ana_sys.units])
+    (['aer'], ['ana'])
+    >>> aer_sys.diagram() # doctest: +SKIP
+    '''
+    from .. import SanUnit, WasteStream, Component, Components, PowerUtility
+    from . import get_digestion_rxns
+
+    if components is not None:
+        if set_thermo: qs_set_thermo(components)
+        cmps = components
+    else:
+        def make_cmp(ID, formula=None, search_ID=None, phase='l', size='Soluble',
+                     deg='Undegradable', org=False):
+            return Component(ID, formula=formula, search_ID=search_ID, phase=phase,
+                             particle_size=size, degradability=deg, organic=org)
+        H2O = make_cmp('H2O', search_ID='H2O')
+        O2  = make_cmp('O2',  search_ID='O2',  phase='g', size='Dissolved gas')
+        CO2 = make_cmp('CO2', search_ID='CO2', phase='g', size='Dissolved gas')
+        NH3 = make_cmp('NH3', search_ID='NH3', phase='g', size='Dissolved gas')
+        CH4 = make_cmp('CH4', search_ID='CH4', phase='g', size='Dissolved gas',
+                       deg='Readily', org=True)
+        NaHCO3 = make_cmp('NaHCO3', search_ID='NaHCO3')
+        Substrate = make_cmp('Substrate', formula='C10H19O3N', deg='Readily', org=True)
+        Biomass = make_cmp('Biomass', formula='C5H7O2N', phase='s', size='Particulate',
+                           deg='Slowly', org=True)
+        cmps = Components([H2O, O2, CO2, NH3, CH4, NaHCO3, Substrate, Biomass])
+        for c in (NaHCO3, Substrate, Biomass):
+            c.copy_models_from(H2O, ('V', 'sigma', 'epsilon', 'kappa', 'Cn', 'mu'))
+        cmps.compile(ignore_inaccurate_molar_weight=True)
+        qs_set_thermo(cmps)
+
+    Substrate = cmps.Substrate
+
+    class TreatmentPlant(SanUnit, isabstract=True):
+        '''Base plant: carries the installed and sludge-disposal costs.'''
+        plant_capital = 5e6          # USD installed (M&E Ch. 4)
+        sludge_disposal_cost = 0.10  # USD/kg dry solids (M&E Ch. 4)
+        _F_BM_default = {'Plant': 1.}
+        def _cost(self):
+            self.baseline_purchase_costs['Plant'] = self.plant_capital
+
+    class AerobicPlant(TreatmentPlant):
+        '''Activated sludge: grows biomass and oxidizes the rest (aeration O2 = COD oxidized).'''
+        _N_ins = 1; _N_outs = 2
+        X_growth = 0.40; X_oxid = 0.95; O2_per_kWh = 1.2
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.growth_rxns = get_digestion_rxns(self.components, 0., self.X_growth, 'Biomass', 1.)
+            self._mixed = WasteStream(f'{self.ID}_mixed')
+        def _run(self):
+            eff, sludge = self.outs
+            m = self._mixed; m.copy_like(self.ins[0])
+            self.growth_rxns(m.mol)
+            oxidized = m.imass['Substrate']*self.X_oxid
+            self._O2_demand = oxidized*self.components.Substrate.i_COD*24
+            m.imass['Substrate'] -= oxidized
+            sludge.empty(); sludge.phase = 's'; sludge.imass['Biomass'] = m.imass['Biomass']
+            m.imass['Biomass'] = 0
+            eff.copy_like(m)
+        def _cost(self):
+            super()._cost()
+            self.power_utility(self._O2_demand/self.O2_per_kWh/24)
+            self.add_OPEX = {'Sludge disposal': self.outs[1].F_mass*self.sludge_disposal_cost}
+
+    class AnaerobicPlant(TreatmentPlant):
+        '''Anaerobic digestion: recovers biogas, but needs heating and alkalinity.'''
+        _N_ins = 2; _N_outs = 3
+        X_biogas = 0.86; X_growth = 0.05
+        CH4_LHV = 50000.; energy_price = 5/1e6
+        T_op = 273.15 + 35; HX_eff = 0.80; NaHCO3_dose = 0.10
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.rxns = get_digestion_rxns(self.components, self.X_biogas, self.X_growth, 'Biomass', 1.)
+            self._mixed = WasteStream(f'{self.ID}_mixed')
+        def _run(self):
+            ww, chem = self.ins
+            eff, sludge, biogas = self.outs
+            chem.empty(); chem.imass['NaHCO3'] = self.NaHCO3_dose*ww.F_vol
+            m = self._mixed; m.copy_like(ww)
+            self.rxns(m.mol)
+            biogas.empty(); biogas.phase = 'g'
+            biogas.imass['CH4'] = m.imass['CH4']; biogas.imass['CO2'] = m.imass['CO2']
+            biogas.price = (biogas.imass['CH4']*self.CH4_LHV*self.energy_price)/biogas.F_mass \
+                           if biogas.F_mass else 0.
+            sludge.empty(); sludge.phase = 's'; sludge.imass['Biomass'] = m.imass['Biomass']
+            m.imass['CH4'] = m.imass['CO2'] = m.imass['Biomass'] = m.imass['NH3'] = 0
+            eff.copy_like(m)
+        def _design(self):
+            inf = self.ins[0]
+            duty = inf.F_mass * inf.Cp * (self.T_op - inf.T)
+            if duty > 0:
+                self.add_heat_utility(duty, inf.T, T_out=self.T_op,
+                                      heat_transfer_efficiency=self.HX_eff)
+        def _cost(self):
+            super()._cost()
+            self.add_OPEX = {'Sludge disposal': self.outs[1].F_mass*self.sludge_disposal_cost}
+
+    def make_influent(ID, COD=430.):
+        ww = WasteStream(ID, T=273.15+20); ww.ivol['H2O'] = 4000/24   # 4,000 m3/d at 20 C
+        ww.imass['Substrate'] = (COD/1000 * 4000/24)/Substrate.i_COD  # set the COD
+        return ww
+
+    aer = AerobicPlant('aer', ins=make_influent('ww_aer'),
+                       outs=('aer_effluent', 'aer_sludge'))
+    aer_sys = System('aer_sys', path=(aer,))
+
+    NaHCO3_feed = WasteStream('NaHCO3_feed', price=0.90)   # USD/kg (M&E Ch. 10)
+    ana = AnaerobicPlant('ana', ins=(make_influent('ww_ana'), NaHCO3_feed),
+                         outs=('ana_effluent', 'ana_sludge', 'biogas'))
+    ana_sys = System('ana_sys', path=(ana,))
+
+    PowerUtility.price = 0.08   # USD/kWh electricity (M&E Ch. 4)
+    return aer_sys, ana_sys
 
 
 # %%
@@ -206,13 +531,15 @@ def create_example_model(evaluate=False, N=100, rule='L', seed=554, **sample_kwa
     >>> model.metrics # doctest: +SKIP
     (<Metric: [System] Total heating duty (kJ/yr)>,
      <Metric: [System] Total electricity consumption (kWh/yr)>,
-     <Metric: [Simple TEA] Total capital expenditure (USD)>,
-     <Metric: [Simple TEA] Net present value (USD)>)
+     <Metric: [TEA] Total capital expenditure (USD)>,
+     <Metric: [TEA] Net present value (USD)>)
     '''
+    from chaospy import distributions as shape
+
     sys = create_example_system()
     M1, P1, H1, S1, M2, S2 = sys.path
     sys.simulate()
-    tea = SimpleTEA(sys)
+    tea = TEA(sys)
     model = Model(sys)
 
     # Add parameters

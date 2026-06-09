@@ -5,7 +5,9 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
+
     Joy Zhang <joycheung1994@gmail.com>
+
     Yalin Li <mailto.yalin.li@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
@@ -450,7 +452,7 @@ def get_digestion_rxns(components, X_biogas, X_growth, biomass_ID, biodegradabil
                              check_atomic_balance=False)
             growth_rxns.append(growth_rxn)
 
-    if len(biogas_rxns)+len(growth_rxns)>1:
+    if biogas_rxns or growth_rxns:
         return PRxn(biogas_rxns+growth_rxns)
 
     return []

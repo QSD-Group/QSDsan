@@ -5,11 +5,12 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
+
     Yalin Li <mailto.yalin.li@gmail.com>
 
-Part of the code is based on modules in BioSTEAM,
-https://github.com/BioSTEAMDevelopmentGroup/biosteam
+    Part of the code is based on modules in BioSTEAM,
 
+    https://github.com/BioSTEAMDevelopmentGroup/biosteam
 
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
@@ -95,7 +96,7 @@ def correct_param_with_T(k0, T0, T, theta):
 
 
 
-def default_component_dict(dct={}, *, cmps, gas=None, soluble=None, solid=None):
+def default_component_dict(dct={}, *, cmps, gases=None, solubles=None, solids=None):
     '''
     Fill out a dict with default values of components based on its property
     (values already in the dict will NOT be updated).
@@ -104,11 +105,11 @@ def default_component_dict(dct={}, *, cmps, gas=None, soluble=None, solid=None):
     ----------
     dct : dict
         Dict to be updated with the default values.
-    g : value
+    gases : value
         Default value for gas components (components in `cmps.gases`).
-    s : value
+    solubles : value
         Default value for soluble components (components NOT in `cmps.gases` nor `cmps.solids`).
-    x : value
+    solids : value
         Default value for solid components (components in `cmps.solids`).
 
     Examples
@@ -116,7 +117,7 @@ def default_component_dict(dct={}, *, cmps, gas=None, soluble=None, solid=None):
     >>> from qsdsan import Components
     >>> from qsdsan.utils import default_component_dict
     >>> cmps = Components.load_default()
-    >>> split_dct = default_component_dict(dct={}, cmps=cmps, gas=1, soluble=0.95, solid=0)
+    >>> split_dct = default_component_dict(dct={}, cmps=cmps, gases=1, solubles=0.95, solids=0)
     >>> split_dct
     {'S_H2': 1,
      'S_CH4': 1,
@@ -175,15 +176,15 @@ def default_component_dict(dct={}, *, cmps, gas=None, soluble=None, solid=None):
      'S_AN': 0.95,
      'H2O': 0.95}
     '''
-    gases = cmps.gases
-    solids = cmps.solids
+    gas_cmps = cmps.gases
+    solid_cmps = cmps.solids
     for cmp in cmps:
         ID = cmp.ID
         if ID not in dct:
-            if cmp in gases:
-                dct[ID] = gas
-            elif cmp in solids:
-                dct[ID] = solid
+            if cmp in gas_cmps:
+                dct[ID] = gases
+            elif cmp in solid_cmps:
+                dct[ID] = solids
             else:
-                dct[ID] = soluble
+                dct[ID] = solubles
     return dct

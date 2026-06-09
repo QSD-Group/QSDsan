@@ -4,7 +4,9 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
+
     Joy Zhang <joycheung1994@gmail.com>
+
     Yalin Li <mailto.yalin.li@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
@@ -13,9 +15,7 @@ for license details.
 '''
 
 import numpy as np
-from sympy import symbols, sympify, simplify, Matrix, solve
-from sympy.parsing.sympy_parser import parse_expr
-from . import auom
+from ..units_of_measure import parse_lca_unit
 
 __all__ = (
     'dct_from_str',
@@ -25,6 +25,12 @@ __all__ = (
 
 
 # %%
+
+def _load_sympy():
+    from sympy import symbols, sympify, simplify, Matrix, solve
+    from sympy.parsing.sympy_parser import parse_expr
+    return symbols, sympify, simplify, Matrix, solve, parse_expr
+
 
 def dct_from_str(dct_str, sep=',', dtype='float'):
     '''
@@ -83,11 +89,12 @@ def str2dct(reaction) -> dict:
     return dct
 
 def dct2arr(dct, components):
-    arr = np.zeros(components.size)
-    cmp_index = components._index
-    for ID, coefficient in dct.items():
-        arr[cmp_index[ID]] = coefficient
-    return arr
+    # arr = np.zeros(components.size)
+    # cmp_index = components._index
+    # for ID, coefficient in dct.items():
+    #     arr[cmp_index[ID]] = coefficient
+    # return arr
+    return components.kwarray(dct)
 
 def dct2list(dct, components):
     lst = [0] * components.size
@@ -101,6 +108,7 @@ def get_ic(cmps, conservation_for):
     Return conversion factors as a sympy matrix to solve for unknown stoichiometric coefficients.
     '''
     if conservation_for:
+        from sympy import Matrix
         arr = getattr(cmps, 'i_'+conservation_for[0])
         for c in conservation_for[1:]:
             arr = np.vstack((arr, getattr(cmps, 'i_'+c)))
@@ -108,6 +116,7 @@ def get_ic(cmps, conservation_for):
     else: return None
 
 def symbolize(coeff_dct, components, conserved_for, parameters):
+    symbols, sympify, simplify, Matrix, solve, parse_expr = _load_sympy()
     n = sum([v in ('?', '-(?)') for v in coeff_dct.values()])
     if n > 0:
         unknowns = symbols('unknown0:%s' % n)
@@ -171,22 +180,4 @@ def get_stoichiometric_coeff(reaction, ref_component, components, conserved_for,
 
 def parse_unit(value):
     '''Parse user' input units to those that can be recognized by `pint`.'''
-    str_list = value.split(' ') # for something like 'kg CO2-eq'
-    if len(str_list) > 1:
-        unit = str_list[0]
-        others = ' '.join(str_list.pop(0))
-        try: return auom(unit), others
-        except: pass
-    str_list = value.split('-') # for something like 'MJ-eq'
-    if len(str_list) > 1:
-        unit = str_list[0]
-        others = '-'.join(str_list.pop(0))
-        try: return auom(unit), others
-        except: pass
-
-    # For something like 'MJ' or 'tonne*km',
-    # not doing this earlier as something like 'kg N' will be misinterpreted
-    try: return auom(value), ''
-    except: pass
-
-    return None, value
+    return parse_lca_unit(value)

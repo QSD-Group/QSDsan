@@ -1,0 +1,340 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+'''
+QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
+
+This module is developed by:
+
+    Yalin Li <mailto.yalin.li@gmail.com>
+
+    Shion Watabe <shionwatabe@gmail.com>
+
+    Hannah Lohman <hlohman94@gmail.com>
+
+    Tori Morgan <vlmorgan@illinois.edu>
+
+This module is under the University of Illinois/NCSA Open Source License.
+Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
+for license details.
+'''
+
+from math import ceil
+from thermosteam.reaction import ParallelReaction
+from ... import SanUnit, Construction
+from ...utils import ospath, load_data, data_path, price_ratio
+
+__all__ = ('SludgePasteurization',)
+
+pasteurization_path = ospath.join(data_path, 'sanunit_data/_sludge_pasteurization.tsv')
+
+br_su_data_path = ospath.join(data_path, 'sanunit_data/br')
+br_hhx_path = ospath.join(br_su_data_path, '_br_hhx.tsv')
+br_hhx_dryer_path = ospath.join(br_su_data_path, '_br_hhx_dryer.tsv')
+
+
+@price_ratio()
+class SludgePasteurization(SanUnit):
+    '''
+    Unit operation for the pasteurization of sludge using liquid petroleum gas (LPG)
+    or biogas.
+
+    Cost and environmental impacts of this unit are based on the 
+    hydronic heat exchanger and dryer in the biogenic refinery.
+
+    The following impact items should be pre-constructed for life cycle assessment:
+    StainlessSteel, Steel, HydronicHeatExchanger, Pump.
+
+    .. note::
+
+        Cost and environmental impacts of this unit are fixed
+        (i.e., they DO NOT scale with mass or energy flows).
+
+    Parameters
+    ----------
+    ins : Iterable(stream)
+        biogas: biogas input from the AnMBR and used for pasteurization (biogas combusted).
+        air: used for combustion, from atmosphere.
+        sludge: sludge produced from the AnMBR in the NEWgenerator.
+        LPG: purchased LPG to supplement heat requirement for pasteurization.
+    outs : Iterable(stream)
+        used: biogas used in combustion.
+        lost: biogas lost in combustion (e.g., leaked as fugitive biogas).
+        wasted: biogas wasted in combustion.
+        treated sludge: sludge treated from pasteurization.
+    if_combustion : bool
+        If include combustion reaction during simulation.
+    biogas_loss : float
+        Fraction of biogas loss is 0.1 (e.g., leaked).
+    biogas_eff : float
+        Combustion efficiency of biogas as a fraction of CH4.
+    temp_pasteurization : float
+        Pasteurization temperature is 70°C or 343.15 K.
+    sludge_temp : float
+        Temperature of sludge is 10°C or 283.15 K.
+    target_MC : float
+        Target moisture content is 10%
+    heat_loss : float
+        Heat loss during pasteurization process is assumed to be 10%
+    if_biogas : bool
+        If biogas is used for sludge pasteurization, otherwise LPG is used
+        and biogas combusted.
+    lhv_lpg : float
+        Lower heating value of LPG at 298.15K is 46-51 MJ/kg
+        based on World Nuclear Organization.
+    lhv_methane : float
+        Lower heating value of methane at 298.15K is 50-55 MJ/kg
+        based on World Nuclear Organization.
+    hhx_heat_recovery : float
+        Heat recovery efficiency of the heat exchanger.
+    ppl: int
+        Total number of users for scaling of costs.
+    baseline_ppl : int
+        Baseline capacity of the unit for scaling of costs.
+    user_scale_up : float
+        Scaling factor (calculated based on the number of users as in `ppl` compared
+        to the capacity as in `baseline_ppl`)
+        for consumables, electricity demand, capital parts, and replacement parts.
+        If not given (or set to None), will be calculated based on the user number
+        and the capacity of this unit (i.e., the `baseline_ppl` attr).
+    exponent_scale : float
+        Exponential factor for the scaling up of capital costs.
+    if_sludge_service: bool
+        If share sludge pasteurization unit among multiple septic tanks
+        (assume 1,000 users per sludge pasteurization unit,
+        or 10 septic tanks serving a population of 100 users per septic tank).
+
+    Examples
+    --------
+    >>> from qsdsan.utils import create_example_sanitation_components
+    >>> cmps = create_example_sanitation_components()
+    >>> from qsdsan import System, WasteStream
+    >>> from qsdsan.unit_operations import SludgePasteurization
+    >>> sludge = WasteStream('sludge', H2O=1000, OtherSS=200, units='kg/hr')
+    >>> biogas = WasteStream('biogas', CH4=10, units='kg/hr')
+    >>> SP = SludgePasteurization('SP', ins=('air', 'lpg', sludge, biogas),
+    ...                           outs=('used', 'lost', 'treated', 'CH4'),
+    ...                           if_combustion=False, if_biogas=True)
+    >>> sys = System('sys', path=(SP,))
+    >>> sys.simulate()
+    >>> round(SP.design_results['Steel'], 1)  # kg
+    417.7
+
+    See the EXPOsan `reclaimer systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/reclaimer/systems.py>`_
+    for use in a complete system.
+
+    References
+    ----------
+    [1] Shoener et al., Design of Anaerobic Membrane Bioreactors for the
+    Valorization of Dilute Organic Carbon Waste Streams.
+    Energy Environ. Sci. 2016, 9 (3), 1102–1112.
+    https://doi.org/10.1039/C5EE03715H.
+
+    [2] Turek et al., Proposed EU Legislation to Force Changes in Sewage
+    Sludge Disposal: A Case Study.
+    Front. Chem. Sci. Eng. 2018, 12 (4), 660–669.
+    https://doi.org/10.1007/s11705-018-1773-0.
+    
+    [3] Rowles et al., Financial viability and environmental sustainability of
+    fecal sludge treatment with Omni Processors, ACS Environ. Au, 2022,
+    https://doi.org/10.1021/acsenvironau.2c00022
+
+    See Also
+    --------
+    :class:`~.sanunits.BiogenicRefineryHHX`
+
+    :class:`~.sanunits.BiogenicRefineryHHXdryer`
+    '''
+    _N_ins = 4
+    _N_outs = 4
+    
+    # Specific Heat capacity of water
+    Cp_w = 4.184 # kJ kg^-1 K^-1
+    # Specific Heat capacity of dry matter (sludge)
+    Cp_dm = 1.231 # kJ kg^-1 K^-1
+    # Specific latent heat of vaporization of water
+    l_w = 2260 # kJ kg^-1
+
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
+                 include_construction=True,
+                 if_biogas=True, heat_loss=0.1, target_MC=0.1, sludge_temp=283.15,
+                 temp_pasteurization=343.15, if_combustion=False, biogas_loss=0.1,
+                 biogas_eff=0.55,lhv_lpg = 48.5, lhv_methane=52.5,
+                 ppl=100, baseline_ppl=100, user_scale_up=1, exponent_scale=1,
+                 if_sludge_service=True, **kwargs):
+
+        SanUnit.__init__(self, ID, ins, outs, thermo=thermo, init_with=init_with,
+                          F_BM_default=1, include_construction=include_construction)
+        self.if_combustion = if_combustion
+        self.biogas_loss = biogas_loss
+        self.biogas_eff = biogas_eff
+        self.if_biogas = if_biogas
+        self.heat_loss = heat_loss
+        self.target_MC = target_MC
+        self.sludge_temp = sludge_temp
+        self.temp_pasteurization = temp_pasteurization
+        self.lhv_methane = lhv_methane
+        self.lhv_lpg = lhv_lpg
+        self.ppl = ppl
+        self.baseline_ppl = baseline_ppl
+        self.user_scale_up = user_scale_up
+        self.exponent_scale = exponent_scale
+        self.if_sludge_service = if_sludge_service
+
+        paths = (pasteurization_path, br_hhx_path, br_hhx_dryer_path)
+        for path in paths:
+            data = load_data(path=path)
+            for para in data.index:
+                value = float(data.loc[para]['expected'])
+                setattr(self, para, value)
+        del data
+
+        for attr, value in kwargs.items():
+            setattr(self, attr, value)
+
+
+    def _init_lca(self):
+        self.construction = [
+            Construction('stainless_steel', linked_unit=self, item='StainlessSteel', quantity_unit='kg'),
+            Construction('steel', linked_unit=self, item='Steel', quantity_unit='kg'),
+            Construction('hydronic_heat_exchanger', linked_unit=self, item='HydronicHeatExchanger', quantity_unit='ea'),
+            Construction('pump', linked_unit=self, item='Pump', quantity_unit='ea'),
+            ]
+
+    def _run(self):
+        biogas, air, sludge, lpg = self.ins
+        biogas.phase = air.phase = 'g'
+        lpg.phase = 'l'
+        used, lost, wasted, treated_sludge = self.outs
+        used.copy_like(biogas)
+        lost.copy_like(biogas)
+        wasted.copy_like(biogas)
+        treated_sludge.copy_like(sludge)
+        lost.mass *= self.biogas_loss
+        used.mass -= lost.mass
+        wasted.mass = used.mass * (1-self.biogas_eff)
+        used.mass -= wasted.mass
+
+        if self.if_combustion:
+            rxns = []
+            for component in self.components:
+                try:
+                    rxn = component.get_combustion_reaction()
+                    if rxn is not None: rxns.append(rxn)
+                except:
+                    continue
+            rxns = ParallelReaction(rxns)
+            rxns.force_reaction(used.mol)
+            air.imol['O2'] = -used.imol['O2']
+            used.imol['O2'] = 0.
+            air.imol['N2'] = 0.79/0.21 * air.imol['O2']
+        else:
+            air.empty()
+
+        # Mass calculations
+        # total amount of water in sludge
+        M_w = sludge.imass['H2O']  # kg/hr
+        # total amount of dry matter in sludge
+        M_dm = sludge.F_mass - M_w  # kg/hr
+        # total amount of water to be evaporated to reach target dry matter content
+        target_mc = self.target_MC
+        treated_sludge.imass['H2O'] = M_w_sludge = M_dm / (1 - target_mc) - M_dm
+        M_we = M_w - M_w_sludge  # kg/hr
+
+        # Overall heat required for pasteurization
+        temp_diff = self.temp_pasteurization - self.sludge_temp
+        Q_d = (M_w * self.Cp_w + M_dm * self.Cp_dm) * temp_diff + M_we * self.l_w  # kJ/hr
+        Q_tot = Q_d/(1-self.heat_loss)/1e3 # MJ/hr, 10% of the total generated is lost
+        Q_tot *= (1 - self.hhx_heat_recovery) # some of the heat can be recovered
+
+        lhv_methane = self.lhv_methane
+        lhv_lpg = self.lhv_lpg
+        if self.if_biogas:
+            methane_kg_reqd = Q_tot / lhv_methane # kg-CH4/hr = (MJ/hr)/(MJ/kg-CH4)
+            if biogas.imass['CH4'] >= methane_kg_reqd:
+                lpg.empty()
+            else: # extra biogas, converted to LPG-equivalent
+                lpg_Q_d = (methane_kg_reqd-biogas.imass['CH4'])*lhv_methane #MJ/hr = (kg-CH4/hr)*(MJ/kg-CH4)
+                lpg.imass['LPG'] = lpg_Q_d / lhv_lpg # kg-LPG/hr = (MJ/hr)/(MJ/kg-LPG)
+        else:
+            lpg.imass['LPG'] = Q_tot / lhv_lpg # kg-LPG/hr = (MJ/hr)/(MJ/kg-LPG)
+            for biogas_stream in (used, lost, wasted): biogas_stream.empty()
+
+
+    def _design(self):
+        design = self.design_results
+        if self.include_construction:
+            constr = self.construction
+            design['StainlessSteel'] = constr[0].quantity = self.heat_exchanger_hydronic_stainless
+            design['Steel'] = constr[1].quantity  = self.heat_exchanger_hydronic_steel
+            design['HydronicHeatExchanger'] = constr[2].quantity = 1
+            design['Pump'] = constr[3].quantity = 17.2/2.72
+
+            factor = (self.user_scale_up ** self.exponent_scale)
+            service_factor = 0.1 if self.if_sludge_service else 1
+            lumped_factor = factor * service_factor
+            for key, val in design.items():
+                design[key] = val * lumped_factor
+            self.add_construction(add_cost=False)
+        else: design.clear()
+        
+        
+    def _cost(self):
+        C = self.baseline_purchase_costs
+        D = self.design_results
+        C['Stainless steel'] = self.stainless_steel_cost * D['StainlessSteel']
+        C['Steel'] = self.steel_cost * D['Steel']
+        C['Misc. parts'] = (
+            self.hhx_stack +
+            self.hhx_stack_thermocouple +
+            self.hhx_oxygen_sensor +
+            self.hhx_inducer_fan +
+            self.hhx_flow_meter +
+            self.hhx_pump +
+            self.hhx_water_in_thermistor +
+            self.hhx_water_out_thermistor +
+            self.hhx_load_tank +
+            self.hhx_expansion_tank +
+            self.hhx_heat_exchanger +
+            self.hhx_values +
+            self.hhx_thermal_well +
+            self.hhx_hot_water_tank +
+            self.hhx_overflow_tank
+            )
+
+        #!!! Exponential scaling isn't use in other systems
+        factor = (self.user_scale_up ** self.exponent_scale)
+        service_factor = 0.1 if self.if_sludge_service else 1
+        lumped_factor = factor * service_factor
+
+        ratio = self.price_ratio
+        for equipment, cost in C.items():
+           C[equipment] = cost * ratio * lumped_factor #TODO: service factor counted twice for 'Stainless steel' and 'Steel'
+
+        # O&M cost converted to annual basis, labor included,
+        # USD/yr only accounts for time running
+        num = 1 / self.frequency_corrective_maintenance
+        annual_maintenance = (
+            self.service_team_adjustdoor_hhx*12 +
+            num * (self.service_team_replacewaterpump_hhx+self.service_team_purgewaterloop_hhx)
+            )
+
+        self.add_OPEX =  annual_maintenance * self.service_team_wages / 60 / (365 * 24) * lumped_factor # USD/hr (all items are per hour)
+
+        self.power_utility(self.water_pump_power+self.hhx_inducer_fan_power*lumped_factor) # kWh/hr
+
+
+    @property
+    def user_scale_up(self):
+        '''
+        [float] Scaling factor (calculated based on the number of users
+        as in `ppl` compared to the capacity as in `baseline_ppl`)
+        for consumables, electricity demand, capital parts, and replacement parts.
+        If not given (or set to None), will be calculated based on the user number
+        and the capacity of this unit (i.e., the `baseline_ppl` attr).
+        '''
+        if self._user_scale_up: return self._user_scale_up
+        return ceil(self.ppl / self.baseline_ppl)
+    @user_scale_up.setter
+    def user_scale_up(self, i):
+        self._user_scale_up = i

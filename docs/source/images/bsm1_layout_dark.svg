@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="360" viewBox="0 0 1000 360"
+     role="img" aria-label="BSM1-style activated sludge plant layout">
+  <title>BSM1-style activated sludge layout</title>
+  <desc>Influent enters two anoxic tanks (A1, A2), then three aerated tanks
+        (O1, O2, O3), a split node (S1), and a clarifier (S2). An internal
+        recycle from S1 and a sludge recycle from S2 both return to A1;
+        treated effluent (liquid_eff) leaves the clarifier.</desc>
+  <style>
+    .tank-anoxic  { fill: #2a3f55; stroke: #7fa8d2; }
+    .tank-aerated { fill: #3a5230; stroke: #a4c66a; }
+    .settler      { fill: #33414f; stroke: #7fa8d2; }
+    .node         { fill: #2b2b2b; stroke: #bbb; }
+    .edge         { stroke: #bbb; fill: none; }
+    .recycle      { stroke: #999; fill: none; stroke-dasharray: 6 4; }
+    .label        { fill: #f0f0f0; font-family: Arial, Helvetica, sans-serif; font-weight: bold; font-size: 15px; }
+    .unit-id      { fill: #c4c4c4; font-family: Arial, Helvetica, sans-serif; font-size: 13px; }
+    .flow-label   { fill: #cfcfcf; font-family: Arial, Helvetica, sans-serif; font-size: 13px; }
+  </style>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse"
+            markerUnits="userSpaceOnUse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke"
+            stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <!-- influent -->
+  <line class="edge" stroke-width="1.5" x1="15" y1="191" x2="58" y2="191" marker-end="url(#arrow)"/>
+  <text class="flow-label" x="14" y="183">influent</text>
+  <rect class="tank-anoxic" stroke-width="1.5" x="60" y="150" width="100" height="82" rx="6"/>
+  <text class="label" x="110" y="186" text-anchor="middle">Anoxic</text>
+  <text class="unit-id" x="110" y="205" text-anchor="middle">(A1)</text>
+  <rect class="tank-anoxic" stroke-width="1.5" x="184" y="150" width="100" height="82" rx="6"/>
+  <text class="label" x="234" y="186" text-anchor="middle">Anoxic</text>
+  <text class="unit-id" x="234" y="205" text-anchor="middle">(A2)</text>
+  <rect class="tank-aerated" stroke-width="1.5" x="308" y="150" width="100" height="82" rx="6"/>
+  <text class="label" x="358" y="186" text-anchor="middle">Aerated</text>
+  <text class="unit-id" x="358" y="205" text-anchor="middle">(O1)</text>
+  <rect class="tank-aerated" stroke-width="1.5" x="432" y="150" width="100" height="82" rx="6"/>
+  <text class="label" x="482" y="186" text-anchor="middle">Aerated</text>
+  <text class="unit-id" x="482" y="205" text-anchor="middle">(O2)</text>
+  <rect class="tank-aerated" stroke-width="1.5" x="556" y="150" width="100" height="82" rx="6"/>
+  <text class="label" x="606" y="186" text-anchor="middle">Aerated</text>
+  <text class="unit-id" x="606" y="205" text-anchor="middle">(O3)</text>
+  <line class="edge" stroke-width="1.5" x1="161" y1="191" x2="183" y2="191" marker-end="url(#arrow)"/>
+  <line class="edge" stroke-width="1.5" x1="285" y1="191" x2="307" y2="191" marker-end="url(#arrow)"/>
+  <line class="edge" stroke-width="1.5" x1="409" y1="191" x2="431" y2="191" marker-end="url(#arrow)"/>
+  <line class="edge" stroke-width="1.5" x1="533" y1="191" x2="555" y2="191" marker-end="url(#arrow)"/>
+  <line class="edge" stroke-width="1.5" x1="657" y1="191" x2="683" y2="191" marker-end="url(#arrow)"/>
+  <rect class="node" stroke-width="1.5" x="684" y="171" width="40" height="40" rx="4"/>
+  <text class="unit-id" x="704" y="195" text-anchor="middle">S1</text>
+  <line class="edge" stroke-width="1.5" x1="724" y1="191" x2="754" y2="191" marker-end="url(#arrow)"/>
+  <polygon class="settler" stroke-width="1.5" points="756,150 900,150 900,205 828,248 756,205"/>
+  <text class="label" x="828" y="180" text-anchor="middle">Clarifier</text>
+  <text class="unit-id" x="828" y="198" text-anchor="middle">(S2)</text>
+  <line class="edge" stroke-width="1.5" x1="900" y1="170" x2="982" y2="170" marker-end="url(#arrow)"/>
+  <text class="flow-label" x="900" y="162">liquid_eff</text>
+  <line class="edge" stroke-width="1.5" x1="358" y1="300" x2="358" y2="234" marker-end="url(#arrow)"/>
+  <text class="flow-label" x="358" y="316" text-anchor="middle">air</text>
+  <line class="edge" stroke-width="1.5" x1="482" y1="300" x2="482" y2="234" marker-end="url(#arrow)"/>
+  <text class="flow-label" x="482" y="316" text-anchor="middle">air</text>
+  <line class="edge" stroke-width="1.5" x1="606" y1="300" x2="606" y2="234" marker-end="url(#arrow)"/>
+  <text class="flow-label" x="606" y="316" text-anchor="middle">air</text>
+  <path class="recycle" stroke-width="1.5" d="M704 171 L704 80 L110 80 L110 148" marker-end="url(#arrow)"/>
+  <text class="flow-label" x="407" y="72" text-anchor="middle">internal recycle (S1)</text>
+  <path class="recycle" stroke-width="1.5" d="M828 248 L828 332 L110 332 L110 234" marker-end="url(#arrow)"/>
+  <text class="flow-label" x="450" y="346" text-anchor="middle">sludge recycle (S2)</text>
+</svg>
