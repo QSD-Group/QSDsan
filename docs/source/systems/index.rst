@@ -249,7 +249,7 @@ Non-sewered sanitation systems (NSSSs)
 .. grid:: 1
    :gutter: 3
 
-   .. grid-item-card:: NSS typologies across 77 countries
+   .. grid-item-card:: NSS Typologies across 77 Countries
 
       *Lohman, H. A. C.; Li, Y.; Zhang, X.; Morgan, V. L.; Watabe, S.; Rowles, L. S.; Cusick, R. D.; Guest, J. S. Defining Economic and Environmental Typologies across 77 Countries to Prioritize Opportunities for Nonsewered Sanitation. Environ. Sci. Technol. 2025, 59 (29), 15101–15114.*
 
@@ -280,7 +280,7 @@ Non-sewered sanitation systems (NSSSs)
          Source Code
 
 
-   .. grid-item-card:: Bwaise
+   .. grid-item-card:: Sanitation Alternatives in Bwaise, Uganda
 
       *Trimmer, J. T.; Lohman, H. A. C.; Byrne, D. M.; Houser, S. A.; Jjuuko, F.; Katende,
       D.; Banadda, N.; Zerai, A.; Miller, D. C.; Guest, J. S. Navigating Multidimensional
@@ -323,7 +323,7 @@ Non-sewered sanitation systems (NSSSs)
       Advancing the Economic and Environmental Sustainability of the NEWgenerator
       Nonsewered Sanitation System. ACS Environ. Au 2023, 3 (4), 209–222.*
 
-      Note: the NEWgenerator system is under non-disclosure agreement (NDA), thus unit design is not publicly available, but the system design is implemented in ``EXPOsan``.
+      **Note:** the NEWgenerator system is under non-disclosure agreement (NDA), thus unit design is not publicly available, but the system design is implemented in ``EXPOsan``.
 
       +++
 
@@ -336,6 +336,17 @@ Non-sewered sanitation systems (NSSSs)
          :color: secondary
 
          Source Code
+
+   .. grid-item-card:: Pasteurization Mechanical Dewatering (PMD) & Supercritical Water Oxidation (SCWO)
+
+      *Wang, Z.; Feng, J.; Shi, B.; Mendoza, J. A.; Zhang, X.; Trousdale, N.; Cusick, R. D.; Yee, S.; Guest, J. S. The Potential of Thermomechanical and Thermochemical Processes to Enable Sustainable Household Sanitation. Environ. Sci. Technol. 2026, 60 (8), 6227–6238.*
+
+      +++
+
+      .. button-link:: https://doi.org/10.1021/acs.est.5c15639
+         :color: primary
+
+         Read Paper
 
 
    .. grid-item-card:: Reclaimer
