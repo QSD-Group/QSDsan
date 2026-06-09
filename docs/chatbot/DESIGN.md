@@ -18,7 +18,7 @@ it supersedes the earlier separate design and "next steps" notes.
 - The bot covers QSDsan (API + tutorials) and the EXPOsan example systems
   (bsm1, bsm2, adm, metab, htl, the sanitation systems, etc.), the latter via
   code-extracted system wiring (see the indexer below).
-- Code lives in the QSD-Group/QSDsan repo, on the `docs-chatbot` worktree
+- Code lives in the QSD-Group/QSDsan repo, on the `chatbot` worktree
   branched off `beta`. All chatbot code lives under `docs/chatbot/` and
   `docs/source/_static/`. Keep ALL commits scoped to those paths; do NOT touch
   the parallel `beta` work (`qsdsan/_tea.py`, `tests/test_tea.py`).

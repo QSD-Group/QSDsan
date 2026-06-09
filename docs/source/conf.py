@@ -106,10 +106,10 @@ html_js_files = [
 ]
 
 # Docs chatbot widget (internal-first): register the assets only on the dedicated
-# 'docs-chatbot' Read the Docs version, and on local builds for development. Set
+# 'chatbot' Read the Docs version, and on local builds for development. Set
 # CHATBOT_WIDGET_VERSIONS (comma-separated) to override which RTD versions show it.
 import os as _os
-_chatbot_versions = _os.environ.get("CHATBOT_WIDGET_VERSIONS", "docs-chatbot").split(",")
+_chatbot_versions = _os.environ.get("CHATBOT_WIDGET_VERSIONS", "chatbot").split(",")
 _rtd_version = _os.environ.get("READTHEDOCS_VERSION")
 if _rtd_version is None or _rtd_version in _chatbot_versions:
     html_css_files.append('css/chatbot.css')
