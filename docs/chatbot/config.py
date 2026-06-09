@@ -33,11 +33,11 @@ QSDSAN_BLOB_BASE = os.getenv(
 )
 
 # Where the published index lives; the server loads this on startup. Only the
-# docs-chatbot build publishes an index, so this points there even though the
+# chatbot build publishes an index, so this points there even though the
 # citations inside it link to /en/latest/ pages (via QSDSAN_DOCS_BASE).
 INDEX_URL = os.getenv(
     "CHATBOT_INDEX_URL",
-    "https://qsdsan.readthedocs.io/en/docs-chatbot/_static/chatbot/index.json",
+    "https://qsdsan.readthedocs.io/en/chatbot/_static/chatbot/index.json",
 )
 
 # Pointers used when a question is about EXPOsan / the catalog of example systems.
