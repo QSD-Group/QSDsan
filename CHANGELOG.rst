@@ -6,7 +6,9 @@ This document records notable changes to `QSDsan <https://github.com/QSD-Group/Q
 
 `1.6.0`_
 --------
-- Consolidated the standalone Jekyll website (formerly served at ``qsdsan.com``) into the Sphinx documentation, which now serves as the single canonical site. Restyled the :ref:`Systems <systems>` page with a platform-and-methodology introduction (QSD, QSDsan, DMsan) and full citations plus Read Paper / Source Code buttons for every entry, added a :ref:`Learning <learning>` page (workshops) and an :ref:`App <app>` page, and enhanced the landing page with a hero image and feature highlights.
+- Consolidated the standalone Jekyll website (formerly served at ``qsdsan.com``) into the Sphinx documentation, which now serves as the single canonical site.
+- Restyled the :ref:`Systems & Publications <systems>` page with a platform-and-methodology introduction (QSD, QSDsan, DMsan) and, for every entry, the full citation plus Read Paper / Source Code buttons; added a :ref:`Learning <learning>` page (workshops) and an :ref:`App <app>` page (web-app gallery).
+- Added theme-adaptive (light/dark) navigation-card icons, a "Home" entry in the sidebar, footer links (GitHub, PyPI, YouTube, email, and the QSDsan Google Group), and a note on joining the Google Group for updates.
 
 
 `1.5.3`_

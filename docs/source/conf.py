@@ -159,6 +159,9 @@ html_theme_options = {
 }
 
 
+# Canonical site URL (docs are served at qsdsan.com); sets <link rel="canonical">.
+html_baseurl = 'https://qsdsan.com'
+
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'QSDsan_documentation'
 
