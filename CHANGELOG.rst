@@ -4,6 +4,11 @@ Change Log
 This document records notable changes to `QSDsan <https://github.com/QSD-Group/QSDsan>`_. We aim to follow `Semantic Versioning <https://semver.org/>`_.
 
 
+`1.6.0`_
+--------
+- Consolidated the standalone Jekyll website (formerly served at ``qsdsan.com``) into the Sphinx documentation, which now serves as the single canonical site. Restyled the :ref:`Systems <systems>` page with a platform-and-methodology introduction (QSD, QSDsan, DMsan) and full citations plus Read Paper / Source Code buttons for every entry, added a :ref:`Learning <learning>` page (workshops) and an :ref:`App <app>` page, and enhanced the landing page with a hero image and feature highlights.
+
+
 `1.5.3`_
 --------
 - Raised the minimum BioSTEAM to ``2.53.11`` and Thermosteam to ``0.53.5``, and removed :class:`~.TEA`'s first-equipment-replacement compensation now that BioSTEAM books it itself (otherwise it is double-counted).
@@ -348,6 +353,7 @@ Official release of ``QSDsan`` v1.0.0!
 .. _Trimmer et al.: https://doi.org/10.1021/acs.est.0c03296
 
 .. Commit links
+.. _1.6.0: https://github.com/QSD-Group/QSDsan/releases/tag/v1.6.0
 .. _1.5.3: https://github.com/QSD-Group/QSDsan/releases/tag/v1.5.3
 .. _1.5.2: https://github.com/QSD-Group/QSDsan/releases/tag/v1.5.2
 .. _1.5.1: https://github.com/QSD-Group/QSDsan/releases/tag/v1.5.1
