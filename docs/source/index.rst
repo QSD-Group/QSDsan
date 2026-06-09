@@ -113,7 +113,7 @@ Join the Community
 ------------------
 We would like to build an open and welcoming community, you can always post issues on our `GitHub homepage <https://github.com/QSD-Group/QSDsan/issues>`_ or contact any of the Quantitative Sustainable Design Group members. We are always excited to have new members in our team.
 
-You can receive updates by joining `QSDsan's Google Group <https://groups.google.com/g/qsdsan>`_. To be added, log in to your Google account and click the **Ask to join group** button. If you run into any problems or would like to use a non-Gmail account, please contact the QSD Group at quantitative.sustainable.design@gmail.com.
+You can receive updates by joining `QSDsan's Google Group <https://groups.google.com/g/qsdsan>`_. To be added, log in to your Google account and click the ``Ask to join group`` button. If you run into any problems or would like to use a non-Gmail account, please `contact us <mailto:quantitative.sustainable.design@gmail.com>`_.
 
 If you would like to contribute, please follow our `Contributing Guidelines`_ and the `Contributor Covenant <https://www.contributor-covenant.org/>`_, thank you for making ``QSDsan`` better!
 
