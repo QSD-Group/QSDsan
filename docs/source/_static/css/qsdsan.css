@@ -157,3 +157,14 @@ div.nboutput.container div.output_area.stderr {
 .sd-card-footer > p {
   margin: 0;
 }
+
+/* Google Group subscribe announcement bar (furo's top banner). Use QSDsan's
+   brand cyan with white text so the link stays legible in both light/dark. */
+.announcement {
+  background: #00A3C5;
+  color: #ffffff;
+}
+.announcement a {
+  color: #ffffff;
+  text-decoration: underline;
+}
