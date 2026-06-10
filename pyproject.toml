@@ -78,7 +78,6 @@ dev = [
 
 [project.urls]
 Homepage = "https://qsdsan.com"
-Documentation = "https://qsdsan.readthedocs.io"
 Repository = "https://github.com/QSD-Group/QSDsan"
 
 [tool.setuptools.packages.find]
