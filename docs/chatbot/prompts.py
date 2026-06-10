@@ -77,9 +77,11 @@ def is_smalltalk(question: str) -> bool:
 def greeting_message() -> str:
     """Friendly welcome for greetings and capability/meta questions."""
     return (
-        "Hi! I'm the QSDsan documentation assistant. Ask me about the QSDsan API or "
-        "tutorials, such as how to create a WasteStream, set up a dynamic simulation, "
-        "or build a custom unit operation. What would you like to know?"
+        "Hi! I'm the QSDsan documentation assistant. Ask me about the QSDsan API and "
+        "tutorials (e.g., how to create a WasteStream, set up a dynamic simulation, or "
+        "build a custom unit operation), or about the published systems/publications and "
+        "other QSDsan-related resources. What would "
+        "you like to know?"
     )
 
 
