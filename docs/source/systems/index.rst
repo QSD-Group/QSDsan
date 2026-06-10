@@ -97,11 +97,6 @@ When publishing the paper that introduces QSDsan, we validated the process model
 
       +++
 
-      .. button-link:: https://doi.org/10.1039/D2EW00455K
-         :color: primary
-
-         Read Paper
-
       .. button-link:: https://github.com/QSD-Group/EXPOsan/tree/main/exposan/bsm1
          :color: secondary
 
@@ -112,11 +107,6 @@ When publishing the paper that introduces QSDsan, we validated the process model
       Validated Python implementation of the IWA `BSM2 system <https://iwa-mia.org/benchmarking/#BSM2>`_.
 
       +++
-
-      .. button-link:: https://doi.org/10.1039/D2EW00455K
-         :color: primary
-
-         Read Paper
 
       .. button-link:: https://github.com/QSD-Group/EXPOsan/tree/main/exposan/bsm2
          :color: secondary

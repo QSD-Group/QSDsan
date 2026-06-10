@@ -124,6 +124,11 @@ html_theme_options = {
     'light_logo': 'logo_light_mode_m.png',
 	'sidebar_hide_name': True,
 	'top_of_page_button': 'edit', # only edit or None is supported
+    'announcement': (
+        '📣 Stay in the loop: join the '
+        '<a href="https://groups.google.com/g/qsdsan" target="_blank" rel="noopener">'
+        'QSDsan Google Group</a> for updates.'
+    ),
     'footer_icons': [
         {
             'name': 'GitHub',
