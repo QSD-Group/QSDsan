@@ -22,9 +22,9 @@ QSDsan: Quantitative Sustainable Design for Sanitation and Resource Recovery Sys
 .. image:: https://img.shields.io/badge/qsdsan--paper-10.1039%2Fd2ew00455k-blue?style=flat
    :target: https://doi.org/10.1039/d2ew00455k
 
-.. Documentation build
+.. Website build
 .. image:: https://readthedocs.org/projects/qsdsan/badge/?version=latest
-   :target: https://qsdsan.readthedocs.io/en/latest
+   :target: https://qsdsan.com
 
 .. GitHub test and coverage of the main branch
 .. image:: https://github.com/QSD-Group/QSDsan/actions/workflows/build-coverage.yml/badge.svg?branch=main
@@ -38,12 +38,12 @@ QSDsan: Quantitative Sustainable Design for Sanitation and Resource Recovery Sys
 .. image:: https://img.shields.io/badge/launch-binder%20%7C%20tutorial-579ACA.svg?logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFkAAABZCAMAAABi1XidAAAB8lBMVEX///9XmsrmZYH1olJXmsr1olJXmsrmZYH1olJXmsr1olJXmsrmZYH1olL1olJXmsr1olJXmsrmZYH1olL1olJXmsrmZYH1olJXmsr1olL1olJXmsrmZYH1olL1olJXmsrmZYH1olL1olL0nFf1olJXmsrmZYH1olJXmsq8dZb1olJXmsrmZYH1olJXmspXmspXmsr1olL1olJXmsrmZYH1olJXmsr1olL1olJXmsrmZYH1olL1olLeaIVXmsrmZYH1olL1olL1olJXmsrmZYH1olLna31Xmsr1olJXmsr1olJXmsrmZYH1olLqoVr1olJXmsr1olJXmsrmZYH1olL1olKkfaPobXvviGabgadXmsqThKuofKHmZ4Dobnr1olJXmsr1olJXmspXmsr1olJXmsrfZ4TuhWn1olL1olJXmsqBi7X1olJXmspZmslbmMhbmsdemsVfl8ZgmsNim8Jpk8F0m7R4m7F5nLB6jbh7jbiDirOEibOGnKaMhq+PnaCVg6qWg6qegKaff6WhnpKofKGtnomxeZy3noG6dZi+n3vCcpPDcpPGn3bLb4/Mb47UbIrVa4rYoGjdaIbeaIXhoWHmZYHobXvpcHjqdHXreHLroVrsfG/uhGnuh2bwj2Hxk17yl1vzmljzm1j0nlX1olL3AJXWAAAAbXRSTlMAEBAQHx8gICAuLjAwMDw9PUBAQEpQUFBXV1hgYGBkcHBwcXl8gICAgoiIkJCQlJicnJ2goKCmqK+wsLC4usDAwMjP0NDQ1NbW3Nzg4ODi5+3v8PDw8/T09PX29vb39/f5+fr7+/z8/Pz9/v7+zczCxgAABC5JREFUeAHN1ul3k0UUBvCb1CTVpmpaitAGSLSpSuKCLWpbTKNJFGlcSMAFF63iUmRccNG6gLbuxkXU66JAUef/9LSpmXnyLr3T5AO/rzl5zj137p136BISy44fKJXuGN/d19PUfYeO67Znqtf2KH33Id1psXoFdW30sPZ1sMvs2D060AHqws4FHeJojLZqnw53cmfvg+XR8mC0OEjuxrXEkX5ydeVJLVIlV0e10PXk5k7dYeHu7Cj1j+49uKg7uLU61tGLw1lq27ugQYlclHC4bgv7VQ+TAyj5Zc/UjsPvs1sd5cWryWObtvWT2EPa4rtnWW3JkpjggEpbOsPr7F7EyNewtpBIslA7p43HCsnwooXTEc3UmPmCNn5lrqTJxy6nRmcavGZVt/3Da2pD5NHvsOHJCrdc1G2r3DITpU7yic7w/7Rxnjc0kt5GC4djiv2Sz3Fb2iEZg41/ddsFDoyuYrIkmFehz0HR2thPgQqMyQYb2OtB0WxsZ3BeG3+wpRb1vzl2UYBog8FfGhttFKjtAclnZYrRo9ryG9uG/FZQU4AEg8ZE9LjGMzTmqKXPLnlWVnIlQQTvxJf8ip7VgjZjyVPrjw1te5otM7RmP7xm+sK2Gv9I8Gi++BRbEkR9EBw8zRUcKxwp73xkaLiqQb+kGduJTNHG72zcW9LoJgqQxpP3/Tj//c3yB0tqzaml05/+orHLksVO+95kX7/7qgJvnjlrfr2Ggsyx0eoy9uPzN5SPd86aXggOsEKW2Prz7du3VID3/tzs/sSRs2w7ovVHKtjrX2pd7ZMlTxAYfBAL9jiDwfLkq55Tm7ifhMlTGPyCAs7RFRhn47JnlcB9RM5T97ASuZXIcVNuUDIndpDbdsfrqsOppeXl5Y+XVKdjFCTh+zGaVuj0d9zy05PPK3QzBamxdwtTCrzyg/2Rvf2EstUjordGwa/kx9mSJLr8mLLtCW8HHGJc2R5hS219IiF6PnTusOqcMl57gm0Z8kanKMAQg0qSyuZfn7zItsbGyO9QlnxY0eCuD1XL2ys/MsrQhltE7Ug0uFOzufJFE2PxBo/YAx8XPPdDwWN0MrDRYIZF0mSMKCNHgaIVFoBbNoLJ7tEQDKxGF0kcLQimojCZopv0OkNOyWCCg9XMVAi7ARJzQdM2QUh0gmBozjc3Skg6dSBRqDGYSUOu66Zg+I2fNZs/M3/f/Grl/XnyF1Gw3VKCez0PN5IUfFLqvgUN4C0qNqYs5YhPL+aVZYDE4IpUk57oSFnJm4FyCqqOE0jhY2SMyLFoo56zyo6becOS5UVDdj7Vih0zp+tcMhwRpBeLyqtIjlJKAIZSbI8SGSF3k0pA3mR5tHuwPFoa7N7reoq2bqCsAk1HqCu5uvI1n6JuRXI+S1Mco54YmYTwcn6Aeic+kssXi8XpXC4V3t7/ADuTNKaQJdScAAAAAElFTkSuQmCC
    :target: https://mybinder.org/v2/gh/QSD-Group/QSDsan-env/main?urlpath=git-pull%3Frepo%3Dhttps%253A%252F%252Fgithub.com%252FQSD-group%252FQSDsan%26urlpath%3Dlab%252Ftree%252FQSDsan%252Fdocs%252Fsource%252Ftutorials%26branch%3Dmain
 
-.. .. Email subscription form
-.. .. image:: https://img.shields.io/badge/news-subscribe-F3A93C?style=flat&logo=rss
-..    :target: https://groups.webservices.illinois.edu/subscribe/154591
+.. Google Group
+.. image:: https://img.shields.io/badge/news-Google%20Group-4285F4?style=flat&logo=google&logoColor=white
+   :target: https://groups.google.com/g/qsdsan
 
 .. YouTube video
-.. image:: https://img.shields.io/endpoint?color=%23ff0000&label=YouTube%20 @qsd-group&url=https%3A%2F%2Fyoutube-channel-badge-blond.vercel.app%2Fapi%2Fvideos
+.. image:: https://img.shields.io/endpoint?color=%23ff0000&label=YouTube%20@qsd-group&url=https%3A%2F%2Fyoutube-channel-badge-blond.vercel.app%2Fapi%2Fvideos
    :target: https://www.youtube.com/@qsd-group
 
 |
@@ -54,7 +54,7 @@ QSDsan: Quantitative Sustainable Design for Sanitation and Resource Recovery Sys
 
 What is ``QSDsan``?
 -------------------
-``QSDsan`` is an open-source, community-led platform for the quantitative sustainable design (QSD) [1]_ of sanitation and resource recovery systems [2]_. Built in Python, it integrates process modeling, system simulation, techno-economic analysis (TEA), and life cycle assessment (LCA) to support transparent, reproducible, and comprehensive evaluation of emerging technologies. Leveraging BioSTEAM [3]_, the platform provides modular and extensible tools to compare treatment configurations, evaluate resource recovery opportunities, and assess energy, cost, and sustainability tradeoffs. These capabilities support the research, development, and deployment (RD&D) of early-stage technologies for advancing sustainable water management and circular resource recovery.
+``QSDsan`` is an open-source, community-led platform for the quantitative sustainable design (QSD) [1]_ of sanitation and resource recovery systems [2]_. Built in Python, it integrates process modeling, system simulation, techno-economic analysis (TEA), and life cycle assessment (LCA) to support transparent, reproducible, and comprehensive evaluation of emerging technologies. Leveraging BioSTEAM [3]_, the platform provides modular and extensible tools to compare treatment configurations, evaluate resource recovery opportunities, and assess energy, cost, and sustainability tradeoffs. The platform has a range of built-in unit operations and systems, including commonly used treatment processes and biokinetic models. These capabilities support the research, development, and deployment (RD&D) of early-stage technologies for advancing sustainable water management and circular resource recovery.
 
 All systems developed with ``QSDsan`` are included in the package `EXPOsan <https://github.com/QSD-Group/EXPOsan>`_ - exposition of sanitation and resource recovery systems.
 
@@ -118,22 +118,27 @@ Then navigate into the repository (``cd QSDsan``) and install in editable mode w
 For diagram generation, ``QSDsan`` uses Graphviz. If diagrams fail to render, install Graphviz following the `official Graphviz download instructions <https://graphviz.org/download/>`_ and see the `FAQ <docs/source/FAQ.rst#graphviz-installation>`_ for a quick check.
 
 
-Documentation
--------------
-You can find tutorials and documents at:
+Homepage and Documentation
+--------------------------
+The ``QSDsan`` homepage and full documentation are at:
 
-   https://qsdsan.readthedocs.io
+   https://qsdsan.com
 
-All tutorials are written using Jupyter Notebook, you can run your own Jupyter environment, or you can click the ``launch binder`` badge on the top to launch the environment in your browser.
+It hosts the tutorials, API reference, published systems and publications, and learning materials. All tutorials are written using Jupyter Notebook; you can run your own Jupyter environment, or click the ``launch binder`` badge at the top to launch the environment in your browser.
 
 Many tutorials have companion video walkthroughs on our `YouTube channel <https://www.youtube.com/channel/UC8fyVeo9xf10KeuZ_4vC_GA>`_. The videos were recorded against earlier versions of ``QSDsan`` and remain useful for the concepts and the big picture, but some APIs may be outdated. Refer to the notebooks for the authoritative reference for syntax and API.
 
 
+News and Updates
+----------------
+To receive updates, join `QSDsan's Google Group <https://groups.google.com/g/qsdsan>`_. Log in to your Google account and click the ``Ask to join group`` button. If you run into any problems or would like to use a non-Gmail account, please `contact us <quantitative.sustainable.design@gmail.com>`_.
+
+
 Authors and Contributing
 ------------------------
-``QSDsan`` and its related packages are developed by the Quantitative Sustainable Design Group and the broader community. `Yalin Li <https://github.com/yalinli2>`_ is the currently maintainer.  See `commit history <https://github.com/QSD-Group/QSDsan/graphs/contributors>`_ for contributors who have contributed to the repository. 
+``QSDsan`` and its related packages are developed by the Quantitative Sustainable Design Group and the broader community. `Yalin Li <https://github.com/yalinli2>`_ is the current maintainer.  See `commit history <https://github.com/QSD-Group/QSDsan/graphs/contributors>`_ for contributors who have contributed to the repository. 
 
-If you want to contribute to ``QSDsan``, please refer to the `Contributing Guidelines <https://qsdsan.readthedocs.io/en/latest/CONTRIBUTING.html>`_ section of the documentation for instructions and guidelines.
+If you want to contribute to ``QSDsan``, please refer to the `Contributing Guidelines <https://qsdsan.com/en/latest/CONTRIBUTING.html>`_ section of the documentation for instructions and guidelines.
 
 
 License Information

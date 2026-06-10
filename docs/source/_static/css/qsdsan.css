@@ -157,3 +157,33 @@ div.nboutput.container div.output_area.stderr {
 .sd-card-footer > p {
   margin: 0;
 }
+
+/* Google Group subscribe announcement bar (furo's top banner). Use QSDsan's
+   brand cyan with white text so the link stays legible in both light/dark. */
+.announcement {
+  background: #00A3C5;
+  color: #ffffff;
+}
+.announcement a {
+  color: #ffffff;
+  text-decoration: underline;
+}
+
+/* FAQ landing-page card icons. The source PNGs are large black line-art on a
+   transparent background, so constrain their size and center them. In dark
+   mode invert the black strokes to near-white so they stay visible. */
+.faq-card-icon {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  margin: 1rem auto 0.5rem;
+  display: block;
+}
+body[data-theme="dark"] .faq-card-icon {
+  filter: invert(1) brightness(0.92);
+}
+@media (prefers-color-scheme: dark) {
+  body:not([data-theme="light"]) .faq-card-icon {
+    filter: invert(1) brightness(0.92);
+  }
+}
