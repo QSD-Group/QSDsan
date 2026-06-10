@@ -40,6 +40,35 @@ Valid configuration codes are: B1, B2, B3, C1, C2, C3, E2, E2P, F1, G1, G2, G3, 
    }
    .wrrf-diagram svg { width: 100%; height: auto; display: block; }
 
+   /* Diagram SVG classes. Scoped to .wrrf-diagram so generic names
+      (.title, .note, .section, ...) do not leak to the page or footer. */
+   .wrrf-diagram .bg { fill: #fbfbf8; }
+   .wrrf-diagram .title { font: 700 32px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #1a1a1a; }
+   .wrrf-diagram .subtitle { font: 400 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #555; }
+   .wrrf-diagram .smalllabel { font: 500 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #444; text-anchor: middle; }
+   .wrrf-diagram .streamlabel { font: 500 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #444; }
+   .wrrf-diagram .zonelabel { font: 700 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #fff; text-anchor: middle; }
+   .wrrf-diagram .zonelabel-d { font: 700 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #1a1a1a; text-anchor: middle; }
+   .wrrf-diagram .section { font: 700 18px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #888; text-anchor: middle; letter-spacing:2px; }
+   .wrrf-diagram .note { font: 400 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #555; }
+   .wrrf-diagram .dim { font: 400 18px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #888; text-anchor: middle; }
+   .wrrf-diagram .unmodeled { fill: #ececec; stroke: #aaa; stroke-width:1; stroke-dasharray:3,2; }
+   .wrrf-diagram .anaerobic { fill: #6b4a8a; stroke: #4a3463; stroke-width:1; }
+   .wrrf-diagram .anoxic { fill: #2f7d6e; stroke: #1f5b50; stroke-width:1; }
+   .wrrf-diagram .aerobic { fill: #4a90c0; stroke: #2e6b95; stroke-width:1; }
+   .wrrf-diagram .clarifier { fill: #e0d4b8; stroke: #8c7a55; stroke-width:1.2; }
+   .wrrf-diagram .digester-an { fill: #6b4a8a; stroke: #4a3463; stroke-width:1.2; }
+   .wrrf-diagram .digester-ae { fill: #4a90c0; stroke: #2e6b95; stroke-width:1.2; }
+   .wrrf-diagram .thickener { fill: #c8bb9c; stroke: #8c7a55; stroke-width:1; }
+   .wrrf-diagram .mbr { fill: #2e6b95; stroke: #1a4e75; stroke-width:1; }
+   .wrrf-diagram .chem { fill: #d97a4a; stroke: #a85a30; stroke-width:1; }
+   .wrrf-diagram .dw { fill: #b8a878; stroke: #7a6a40; stroke-width:1; }
+   .wrrf-diagram .mainflow { stroke: #1a1a1a; stroke-width:1.6; fill:none; }
+   .wrrf-diagram .recycle { stroke: #c2272d; stroke-width:1.4; fill:none; stroke-dasharray: 5,3; }
+   .wrrf-diagram .sludge { stroke: #7a5a30; stroke-width:1.5; fill:none; }
+   .wrrf-diagram .gas { stroke: #6b4a8a; stroke-width:1.4; fill:none; stroke-dasharray: 3,2; }
+   .wrrf-diagram .dose { stroke: #d97a4a; stroke-width:1.4; fill:none; }
+
    #wrrf-tt {
      position: fixed; pointer-events: none; z-index: 9999;
      background: #1a1a1a; color: #f5f3ee;
@@ -190,36 +219,6 @@ train (AD, AED, or no digestion).
 
    <div class="wrrf-diagram" id="B1">
    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800">
-   <style>
-       .bg          { fill: #fbfbf8; }
-       .title       { font: 700 32px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #1a1a1a; }
-       .subtitle    { font: 400 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #555; }
-       .smalllabel  { font: 500 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #444; text-anchor: middle; }
-       .streamlabel { font: 500 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #444; }
-       .zonelabel   { font: 700 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #fff; text-anchor: middle; }
-       .zonelabel-d { font: 700 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #1a1a1a; text-anchor: middle; }
-       .section     { font: 700 18px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #888; text-anchor: middle; letter-spacing:2px; }
-       .note        { font: 400 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #555; }
-       .dim         { font: 400 18px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #888; text-anchor: middle; }
-       .unmodeled   { fill: #ececec; stroke: #aaa; stroke-width:1; stroke-dasharray:3,2; }
-
-       .anaerobic   { fill: #6b4a8a; stroke: #4a3463; stroke-width:1; }
-       .anoxic      { fill: #2f7d6e; stroke: #1f5b50; stroke-width:1; }
-       .aerobic     { fill: #4a90c0; stroke: #2e6b95; stroke-width:1; }
-       .clarifier   { fill: #e0d4b8; stroke: #8c7a55; stroke-width:1.2; }
-       .digester-an { fill: #6b4a8a; stroke: #4a3463; stroke-width:1.2; }
-       .digester-ae { fill: #4a90c0; stroke: #2e6b95; stroke-width:1.2; }
-       .thickener   { fill: #c8bb9c; stroke: #8c7a55; stroke-width:1; }
-       .mbr         { fill: #2e6b95; stroke: #1a4e75; stroke-width:1; }
-       .chem        { fill: #d97a4a; stroke: #a85a30; stroke-width:1; }
-       .dw          { fill: #b8a878; stroke: #7a6a40; stroke-width:1; }
-
-       .mainflow    { stroke: #1a1a1a; stroke-width:1.6; fill:none; }
-       .recycle     { stroke: #c2272d; stroke-width:1.4; fill:none; stroke-dasharray: 5,3; }
-       .sludge      { stroke: #7a5a30; stroke-width:1.5; fill:none; }
-       .gas         { stroke: #6b4a8a; stroke-width:1.4; fill:none; stroke-dasharray: 3,2; }
-       .dose        { stroke: #d97a4a; stroke-width:1.4; fill:none; }
-     </style>
 
    <defs>
      <marker id="arr-main" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
@@ -506,36 +505,6 @@ train (AD, AED, or no digestion).
 
    <div class="wrrf-diagram" id="B2">
    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800">
-   <style>
-     .bg          { fill: #fbfbf8; }
-     .title       { font: 700 32px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #1a1a1a; }
-     .subtitle    { font: 400 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #555; }
-     .smalllabel  { font: 500 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #444; text-anchor: middle; }
-     .streamlabel { font: 500 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #444; }
-     .zonelabel   { font: 700 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #fff; text-anchor: middle; }
-     .zonelabel-d { font: 700 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #1a1a1a; text-anchor: middle; }
-     .section     { font: 700 18px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #888; text-anchor: middle; letter-spacing:2px; }
-     .note        { font: 400 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #555; }
-     .dim         { font: 400 18px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #888; text-anchor: middle; }
-     .unmodeled   { fill: #ececec; stroke: #aaa; stroke-width:1; stroke-dasharray:3,2; }
-
-     .anaerobic   { fill: #6b4a8a; stroke: #4a3463; stroke-width:1; }
-     .anoxic      { fill: #2f7d6e; stroke: #1f5b50; stroke-width:1; }
-     .aerobic     { fill: #4a90c0; stroke: #2e6b95; stroke-width:1; }
-     .clarifier   { fill: #e0d4b8; stroke: #8c7a55; stroke-width:1.2; }
-     .digester-an { fill: #6b4a8a; stroke: #4a3463; stroke-width:1.2; }
-     .digester-ae { fill: #4a90c0; stroke: #2e6b95; stroke-width:1.2; }
-     .thickener   { fill: #c8bb9c; stroke: #8c7a55; stroke-width:1; }
-     .mbr         { fill: #2e6b95; stroke: #1a4e75; stroke-width:1; }
-     .chem        { fill: #d97a4a; stroke: #a85a30; stroke-width:1; }
-     .dw          { fill: #b8a878; stroke: #7a6a40; stroke-width:1; }
-
-     .mainflow    { stroke: #1a1a1a; stroke-width:1.6; fill:none; }
-     .recycle     { stroke: #c2272d; stroke-width:1.4; fill:none; stroke-dasharray: 5,3; }
-     .sludge      { stroke: #7a5a30; stroke-width:1.5; fill:none; }
-     .gas         { stroke: #6b4a8a; stroke-width:1.4; fill:none; stroke-dasharray: 3,2; }
-     .dose        { stroke: #d97a4a; stroke-width:1.4; fill:none; }
-   </style>
 
    <defs>
      <marker id="arr-main" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
@@ -573,36 +542,6 @@ train (AD, AED, or no digestion).
 
    <div class="wrrf-diagram" id="B3">
    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800">
-   <style>
-     .bg          { fill: #fbfbf8; }
-     .title       { font: 700 32px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #1a1a1a; }
-     .subtitle    { font: 400 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #555; }
-     .smalllabel  { font: 500 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #444; text-anchor: middle; }
-     .streamlabel { font: 500 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #444; }
-     .zonelabel   { font: 700 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #fff; text-anchor: middle; }
-     .zonelabel-d { font: 700 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #1a1a1a; text-anchor: middle; }
-     .section     { font: 700 18px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #888; text-anchor: middle; letter-spacing:2px; }
-     .note        { font: 400 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #555; }
-     .dim         { font: 400 18px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #888; text-anchor: middle; }
-     .unmodeled   { fill: #ececec; stroke: #aaa; stroke-width:1; stroke-dasharray:3,2; }
-
-     .anaerobic   { fill: #6b4a8a; stroke: #4a3463; stroke-width:1; }
-     .anoxic      { fill: #2f7d6e; stroke: #1f5b50; stroke-width:1; }
-     .aerobic     { fill: #4a90c0; stroke: #2e6b95; stroke-width:1; }
-     .clarifier   { fill: #e0d4b8; stroke: #8c7a55; stroke-width:1.2; }
-     .digester-an { fill: #6b4a8a; stroke: #4a3463; stroke-width:1.2; }
-     .digester-ae { fill: #4a90c0; stroke: #2e6b95; stroke-width:1.2; }
-     .thickener   { fill: #c8bb9c; stroke: #8c7a55; stroke-width:1; }
-     .mbr         { fill: #2e6b95; stroke: #1a4e75; stroke-width:1; }
-     .chem        { fill: #d97a4a; stroke: #a85a30; stroke-width:1; }
-     .dw          { fill: #b8a878; stroke: #7a6a40; stroke-width:1; }
-
-     .mainflow    { stroke: #1a1a1a; stroke-width:1.6; fill:none; }
-     .recycle     { stroke: #c2272d; stroke-width:1.4; fill:none; stroke-dasharray: 5,3; }
-     .sludge      { stroke: #7a5a30; stroke-width:1.5; fill:none; }
-     .gas         { stroke: #6b4a8a; stroke-width:1.4; fill:none; stroke-dasharray: 3,2; }
-     .dose        { stroke: #d97a4a; stroke-width:1.4; fill:none; }
-   </style>
 
    <defs>
      <marker id="arr-main" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
@@ -645,36 +584,6 @@ Same six-zone aerobic activated sludge as the B series but without primary clari
 
    <div class="wrrf-diagram" id="C1">
    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800">
-   <style>
-     .bg          { fill: #fbfbf8; }
-     .title       { font: 700 32px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #1a1a1a; }
-     .subtitle    { font: 400 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #555; }
-     .smalllabel  { font: 500 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #444; text-anchor: middle; }
-     .streamlabel { font: 500 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #444; }
-     .zonelabel   { font: 700 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #fff; text-anchor: middle; }
-     .zonelabel-d { font: 700 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #1a1a1a; text-anchor: middle; }
-     .section     { font: 700 18px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #888; text-anchor: middle; letter-spacing:2px; }
-     .note        { font: 400 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #555; }
-     .dim         { font: 400 18px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #888; text-anchor: middle; }
-     .unmodeled   { fill: #ececec; stroke: #aaa; stroke-width:1; stroke-dasharray:3,2; }
-
-     .anaerobic   { fill: #6b4a8a; stroke: #4a3463; stroke-width:1; }
-     .anoxic      { fill: #2f7d6e; stroke: #1f5b50; stroke-width:1; }
-     .aerobic     { fill: #4a90c0; stroke: #2e6b95; stroke-width:1; }
-     .clarifier   { fill: #e0d4b8; stroke: #8c7a55; stroke-width:1.2; }
-     .digester-an { fill: #6b4a8a; stroke: #4a3463; stroke-width:1.2; }
-     .digester-ae { fill: #4a90c0; stroke: #2e6b95; stroke-width:1.2; }
-     .thickener   { fill: #c8bb9c; stroke: #8c7a55; stroke-width:1; }
-     .mbr         { fill: #2e6b95; stroke: #1a4e75; stroke-width:1; }
-     .chem        { fill: #d97a4a; stroke: #a85a30; stroke-width:1; }
-     .dw          { fill: #b8a878; stroke: #7a6a40; stroke-width:1; }
-
-     .mainflow    { stroke: #1a1a1a; stroke-width:1.6; fill:none; }
-     .recycle     { stroke: #c2272d; stroke-width:1.4; fill:none; stroke-dasharray: 5,3; }
-     .sludge      { stroke: #7a5a30; stroke-width:1.5; fill:none; }
-     .gas         { stroke: #6b4a8a; stroke-width:1.4; fill:none; stroke-dasharray: 3,2; }
-     .dose        { stroke: #d97a4a; stroke-width:1.4; fill:none; }
-   </style>
 
    <defs>
      <marker id="arr-main" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
@@ -712,36 +621,6 @@ Same six-zone aerobic activated sludge as the B series but without primary clari
 
    <div class="wrrf-diagram" id="C2">
    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800">
-   <style>
-     .bg          { fill: #fbfbf8; }
-     .title       { font: 700 32px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #1a1a1a; }
-     .subtitle    { font: 400 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #555; }
-     .smalllabel  { font: 500 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #444; text-anchor: middle; }
-     .streamlabel { font: 500 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #444; }
-     .zonelabel   { font: 700 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #fff; text-anchor: middle; }
-     .zonelabel-d { font: 700 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #1a1a1a; text-anchor: middle; }
-     .section     { font: 700 18px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #888; text-anchor: middle; letter-spacing:2px; }
-     .note        { font: 400 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #555; }
-     .dim         { font: 400 18px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #888; text-anchor: middle; }
-     .unmodeled   { fill: #ececec; stroke: #aaa; stroke-width:1; stroke-dasharray:3,2; }
-
-     .anaerobic   { fill: #6b4a8a; stroke: #4a3463; stroke-width:1; }
-     .anoxic      { fill: #2f7d6e; stroke: #1f5b50; stroke-width:1; }
-     .aerobic     { fill: #4a90c0; stroke: #2e6b95; stroke-width:1; }
-     .clarifier   { fill: #e0d4b8; stroke: #8c7a55; stroke-width:1.2; }
-     .digester-an { fill: #6b4a8a; stroke: #4a3463; stroke-width:1.2; }
-     .digester-ae { fill: #4a90c0; stroke: #2e6b95; stroke-width:1.2; }
-     .thickener   { fill: #c8bb9c; stroke: #8c7a55; stroke-width:1; }
-     .mbr         { fill: #2e6b95; stroke: #1a4e75; stroke-width:1; }
-     .chem        { fill: #d97a4a; stroke: #a85a30; stroke-width:1; }
-     .dw          { fill: #b8a878; stroke: #7a6a40; stroke-width:1; }
-
-     .mainflow    { stroke: #1a1a1a; stroke-width:1.6; fill:none; }
-     .recycle     { stroke: #c2272d; stroke-width:1.4; fill:none; stroke-dasharray: 5,3; }
-     .sludge      { stroke: #7a5a30; stroke-width:1.5; fill:none; }
-     .gas         { stroke: #6b4a8a; stroke-width:1.4; fill:none; stroke-dasharray: 3,2; }
-     .dose        { stroke: #d97a4a; stroke-width:1.4; fill:none; }
-   </style>
 
    <defs>
      <marker id="arr-main" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
@@ -779,36 +658,6 @@ Same six-zone aerobic activated sludge as the B series but without primary clari
 
    <div class="wrrf-diagram" id="C3">
    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800">
-   <style>
-     .bg          { fill: #fbfbf8; }
-     .title       { font: 700 32px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #1a1a1a; }
-     .subtitle    { font: 400 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #555; }
-     .smalllabel  { font: 500 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #444; text-anchor: middle; }
-     .streamlabel { font: 500 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #444; }
-     .zonelabel   { font: 700 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #fff; text-anchor: middle; }
-     .zonelabel-d { font: 700 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #1a1a1a; text-anchor: middle; }
-     .section     { font: 700 18px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #888; text-anchor: middle; letter-spacing:2px; }
-     .note        { font: 400 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #555; }
-     .dim         { font: 400 18px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #888; text-anchor: middle; }
-     .unmodeled   { fill: #ececec; stroke: #aaa; stroke-width:1; stroke-dasharray:3,2; }
-
-     .anaerobic   { fill: #6b4a8a; stroke: #4a3463; stroke-width:1; }
-     .anoxic      { fill: #2f7d6e; stroke: #1f5b50; stroke-width:1; }
-     .aerobic     { fill: #4a90c0; stroke: #2e6b95; stroke-width:1; }
-     .clarifier   { fill: #e0d4b8; stroke: #8c7a55; stroke-width:1.2; }
-     .digester-an { fill: #6b4a8a; stroke: #4a3463; stroke-width:1.2; }
-     .digester-ae { fill: #4a90c0; stroke: #2e6b95; stroke-width:1.2; }
-     .thickener   { fill: #c8bb9c; stroke: #8c7a55; stroke-width:1; }
-     .mbr         { fill: #2e6b95; stroke: #1a4e75; stroke-width:1; }
-     .chem        { fill: #d97a4a; stroke: #a85a30; stroke-width:1; }
-     .dw          { fill: #b8a878; stroke: #7a6a40; stroke-width:1; }
-
-     .mainflow    { stroke: #1a1a1a; stroke-width:1.6; fill:none; }
-     .recycle     { stroke: #c2272d; stroke-width:1.4; fill:none; stroke-dasharray: 5,3; }
-     .sludge      { stroke: #7a5a30; stroke-width:1.5; fill:none; }
-     .gas         { stroke: #6b4a8a; stroke-width:1.4; fill:none; stroke-dasharray: 3,2; }
-     .dose        { stroke: #d97a4a; stroke-width:1.4; fill:none; }
-   </style>
 
    <defs>
      <marker id="arr-main" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
@@ -851,36 +700,6 @@ Longer SRT (~6 d) retains nitrifiers for NH₄⁺ oxidation. E2-P adds primary c
 
    <div class="wrrf-diagram" id="E2">
    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800">
-   <style>
-     .bg          { fill: #fbfbf8; }
-     .title       { font: 700 32px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #1a1a1a; }
-     .subtitle    { font: 400 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #555; }
-     .smalllabel  { font: 500 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #444; text-anchor: middle; }
-     .streamlabel { font: 500 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #444; }
-     .zonelabel   { font: 700 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #fff; text-anchor: middle; }
-     .zonelabel-d { font: 700 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #1a1a1a; text-anchor: middle; }
-     .section     { font: 700 18px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #888; text-anchor: middle; letter-spacing:2px; }
-     .note        { font: 400 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #555; }
-     .dim         { font: 400 18px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #888; text-anchor: middle; }
-     .unmodeled   { fill: #ececec; stroke: #aaa; stroke-width:1; stroke-dasharray:3,2; }
-
-     .anaerobic   { fill: #6b4a8a; stroke: #4a3463; stroke-width:1; }
-     .anoxic      { fill: #2f7d6e; stroke: #1f5b50; stroke-width:1; }
-     .aerobic     { fill: #4a90c0; stroke: #2e6b95; stroke-width:1; }
-     .clarifier   { fill: #e0d4b8; stroke: #8c7a55; stroke-width:1.2; }
-     .digester-an { fill: #6b4a8a; stroke: #4a3463; stroke-width:1.2; }
-     .digester-ae { fill: #4a90c0; stroke: #2e6b95; stroke-width:1.2; }
-     .thickener   { fill: #c8bb9c; stroke: #8c7a55; stroke-width:1; }
-     .mbr         { fill: #2e6b95; stroke: #1a4e75; stroke-width:1; }
-     .chem        { fill: #d97a4a; stroke: #a85a30; stroke-width:1; }
-     .dw          { fill: #b8a878; stroke: #7a6a40; stroke-width:1; }
-
-     .mainflow    { stroke: #1a1a1a; stroke-width:1.6; fill:none; }
-     .recycle     { stroke: #c2272d; stroke-width:1.4; fill:none; stroke-dasharray: 5,3; }
-     .sludge      { stroke: #7a5a30; stroke-width:1.5; fill:none; }
-     .gas         { stroke: #6b4a8a; stroke-width:1.4; fill:none; stroke-dasharray: 3,2; }
-     .dose        { stroke: #d97a4a; stroke-width:1.4; fill:none; }
-   </style>
 
    <defs>
      <marker id="arr-main" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
@@ -918,36 +737,6 @@ Longer SRT (~6 d) retains nitrifiers for NH₄⁺ oxidation. E2-P adds primary c
 
    <div class="wrrf-diagram" id="E2P">
    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800">
-   <style>
-     .bg          { fill: #fbfbf8; }
-     .title       { font: 700 32px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #1a1a1a; }
-     .subtitle    { font: 400 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #555; }
-     .smalllabel  { font: 500 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #444; text-anchor: middle; }
-     .streamlabel { font: 500 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #444; }
-     .zonelabel   { font: 700 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #fff; text-anchor: middle; }
-     .zonelabel-d { font: 700 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #1a1a1a; text-anchor: middle; }
-     .section     { font: 700 18px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #888; text-anchor: middle; letter-spacing:2px; }
-     .note        { font: 400 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #555; }
-     .dim         { font: 400 18px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #888; text-anchor: middle; }
-     .unmodeled   { fill: #ececec; stroke: #aaa; stroke-width:1; stroke-dasharray:3,2; }
-
-     .anaerobic   { fill: #6b4a8a; stroke: #4a3463; stroke-width:1; }
-     .anoxic      { fill: #2f7d6e; stroke: #1f5b50; stroke-width:1; }
-     .aerobic     { fill: #4a90c0; stroke: #2e6b95; stroke-width:1; }
-     .clarifier   { fill: #e0d4b8; stroke: #8c7a55; stroke-width:1.2; }
-     .digester-an { fill: #6b4a8a; stroke: #4a3463; stroke-width:1.2; }
-     .digester-ae { fill: #4a90c0; stroke: #2e6b95; stroke-width:1.2; }
-     .thickener   { fill: #c8bb9c; stroke: #8c7a55; stroke-width:1; }
-     .mbr         { fill: #2e6b95; stroke: #1a4e75; stroke-width:1; }
-     .chem        { fill: #d97a4a; stroke: #a85a30; stroke-width:1; }
-     .dw          { fill: #b8a878; stroke: #7a6a40; stroke-width:1; }
-
-     .mainflow    { stroke: #1a1a1a; stroke-width:1.6; fill:none; }
-     .recycle     { stroke: #c2272d; stroke-width:1.4; fill:none; stroke-dasharray: 5,3; }
-     .sludge      { stroke: #7a5a30; stroke-width:1.5; fill:none; }
-     .gas         { stroke: #6b4a8a; stroke-width:1.4; fill:none; stroke-dasharray: 3,2; }
-     .dose        { stroke: #d97a4a; stroke-width:1.4; fill:none; }
-   </style>
 
    <defs>
      <marker id="arr-main" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
@@ -990,36 +779,6 @@ Compared to E2-P, F1 differs in solids treatment by using anaerobic digestion.
 
    <div class="wrrf-diagram" id="F1">
    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800">
-   <style>
-     .bg          { fill: #fbfbf8; }
-     .title       { font: 700 32px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #1a1a1a; }
-     .subtitle    { font: 400 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #555; }
-     .smalllabel  { font: 500 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #444; text-anchor: middle; }
-     .streamlabel { font: 500 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #444; }
-     .zonelabel   { font: 700 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #fff; text-anchor: middle; }
-     .zonelabel-d { font: 700 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #1a1a1a; text-anchor: middle; }
-     .section     { font: 700 18px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #888; text-anchor: middle; letter-spacing:2px; }
-     .note        { font: 400 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #555; }
-     .dim         { font: 400 18px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #888; text-anchor: middle; }
-     .unmodeled   { fill: #ececec; stroke: #aaa; stroke-width:1; stroke-dasharray:3,2; }
-
-     .anaerobic   { fill: #6b4a8a; stroke: #4a3463; stroke-width:1; }
-     .anoxic      { fill: #2f7d6e; stroke: #1f5b50; stroke-width:1; }
-     .aerobic     { fill: #4a90c0; stroke: #2e6b95; stroke-width:1; }
-     .clarifier   { fill: #e0d4b8; stroke: #8c7a55; stroke-width:1.2; }
-     .digester-an { fill: #6b4a8a; stroke: #4a3463; stroke-width:1.2; }
-     .digester-ae { fill: #4a90c0; stroke: #2e6b95; stroke-width:1.2; }
-     .thickener   { fill: #c8bb9c; stroke: #8c7a55; stroke-width:1; }
-     .mbr         { fill: #2e6b95; stroke: #1a4e75; stroke-width:1; }
-     .chem        { fill: #d97a4a; stroke: #a85a30; stroke-width:1; }
-     .dw          { fill: #b8a878; stroke: #7a6a40; stroke-width:1; }
-
-     .mainflow    { stroke: #1a1a1a; stroke-width:1.6; fill:none; }
-     .recycle     { stroke: #c2272d; stroke-width:1.4; fill:none; stroke-dasharray: 5,3; }
-     .sludge      { stroke: #7a5a30; stroke-width:1.5; fill:none; }
-     .gas         { stroke: #6b4a8a; stroke-width:1.4; fill:none; stroke-dasharray: 3,2; }
-     .dose        { stroke: #d97a4a; stroke-width:1.4; fill:none; }
-   </style>
 
    <defs>
      <marker id="arr-main" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
@@ -1062,36 +821,6 @@ BNR configurations with primary clarification. G1–G3 use the Johannesburg step
 
    <div class="wrrf-diagram" id="G1">
    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800">
-   <style>
-     .bg          { fill: #fbfbf8; }
-     .title       { font: 700 32px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #1a1a1a; }
-     .subtitle    { font: 400 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #555; }
-     .smalllabel  { font: 500 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #444; text-anchor: middle; }
-     .streamlabel { font: 500 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #444; }
-     .zonelabel   { font: 700 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #fff; text-anchor: middle; }
-     .zonelabel-d { font: 700 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #1a1a1a; text-anchor: middle; }
-     .section     { font: 700 18px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #888; text-anchor: middle; letter-spacing:2px; }
-     .note        { font: 400 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #555; }
-     .dim         { font: 400 18px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #888; text-anchor: middle; }
-     .unmodeled   { fill: #ececec; stroke: #aaa; stroke-width:1; stroke-dasharray:3,2; }
-
-     .anaerobic   { fill: #6b4a8a; stroke: #4a3463; stroke-width:1; }
-     .anoxic      { fill: #2f7d6e; stroke: #1f5b50; stroke-width:1; }
-     .aerobic     { fill: #4a90c0; stroke: #2e6b95; stroke-width:1; }
-     .clarifier   { fill: #e0d4b8; stroke: #8c7a55; stroke-width:1.2; }
-     .digester-an { fill: #6b4a8a; stroke: #4a3463; stroke-width:1.2; }
-     .digester-ae { fill: #4a90c0; stroke: #2e6b95; stroke-width:1.2; }
-     .thickener   { fill: #c8bb9c; stroke: #8c7a55; stroke-width:1; }
-     .mbr         { fill: #2e6b95; stroke: #1a4e75; stroke-width:1; }
-     .chem        { fill: #d97a4a; stroke: #a85a30; stroke-width:1; }
-     .dw          { fill: #b8a878; stroke: #7a6a40; stroke-width:1; }
-
-     .mainflow    { stroke: #1a1a1a; stroke-width:1.6; fill:none; }
-     .recycle     { stroke: #c2272d; stroke-width:1.4; fill:none; stroke-dasharray: 5,3; }
-     .sludge      { stroke: #7a5a30; stroke-width:1.5; fill:none; }
-     .gas         { stroke: #6b4a8a; stroke-width:1.4; fill:none; stroke-dasharray: 3,2; }
-     .dose        { stroke: #d97a4a; stroke-width:1.4; fill:none; }
-   </style>
 
    <defs>
      <marker id="arr-main" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
@@ -1129,36 +858,6 @@ BNR configurations with primary clarification. G1–G3 use the Johannesburg step
 
    <div class="wrrf-diagram" id="G2">
    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800">
-   <style>
-     .bg          { fill: #fbfbf8; }
-     .title       { font: 700 32px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #1a1a1a; }
-     .subtitle    { font: 400 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #555; }
-     .smalllabel  { font: 500 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #444; text-anchor: middle; }
-     .streamlabel { font: 500 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #444; }
-     .zonelabel   { font: 700 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #fff; text-anchor: middle; }
-     .zonelabel-d { font: 700 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #1a1a1a; text-anchor: middle; }
-     .section     { font: 700 18px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #888; text-anchor: middle; letter-spacing:2px; }
-     .note        { font: 400 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #555; }
-     .dim         { font: 400 18px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #888; text-anchor: middle; }
-     .unmodeled   { fill: #ececec; stroke: #aaa; stroke-width:1; stroke-dasharray:3,2; }
-
-     .anaerobic   { fill: #6b4a8a; stroke: #4a3463; stroke-width:1; }
-     .anoxic      { fill: #2f7d6e; stroke: #1f5b50; stroke-width:1; }
-     .aerobic     { fill: #4a90c0; stroke: #2e6b95; stroke-width:1; }
-     .clarifier   { fill: #e0d4b8; stroke: #8c7a55; stroke-width:1.2; }
-     .digester-an { fill: #6b4a8a; stroke: #4a3463; stroke-width:1.2; }
-     .digester-ae { fill: #4a90c0; stroke: #2e6b95; stroke-width:1.2; }
-     .thickener   { fill: #c8bb9c; stroke: #8c7a55; stroke-width:1; }
-     .mbr         { fill: #2e6b95; stroke: #1a4e75; stroke-width:1; }
-     .chem        { fill: #d97a4a; stroke: #a85a30; stroke-width:1; }
-     .dw          { fill: #b8a878; stroke: #7a6a40; stroke-width:1; }
-
-     .mainflow    { stroke: #1a1a1a; stroke-width:1.6; fill:none; }
-     .recycle     { stroke: #c2272d; stroke-width:1.4; fill:none; stroke-dasharray: 5,3; }
-     .sludge      { stroke: #7a5a30; stroke-width:1.5; fill:none; }
-     .gas         { stroke: #6b4a8a; stroke-width:1.4; fill:none; stroke-dasharray: 3,2; }
-     .dose        { stroke: #d97a4a; stroke-width:1.4; fill:none; }
-   </style>
 
    <defs>
      <marker id="arr-main" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
@@ -1196,36 +895,6 @@ BNR configurations with primary clarification. G1–G3 use the Johannesburg step
 
    <div class="wrrf-diagram" id="G3">
    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800">
-   <style>
-     .bg          { fill: #fbfbf8; }
-     .title       { font: 700 32px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #1a1a1a; }
-     .subtitle    { font: 400 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #555; }
-     .smalllabel  { font: 500 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #444; text-anchor: middle; }
-     .streamlabel { font: 500 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #444; }
-     .zonelabel   { font: 700 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #fff; text-anchor: middle; }
-     .zonelabel-d { font: 700 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #1a1a1a; text-anchor: middle; }
-     .section     { font: 700 18px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #888; text-anchor: middle; letter-spacing:2px; }
-     .note        { font: 400 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #555; }
-     .dim         { font: 400 18px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #888; text-anchor: middle; }
-     .unmodeled   { fill: #ececec; stroke: #aaa; stroke-width:1; stroke-dasharray:3,2; }
-
-     .anaerobic   { fill: #6b4a8a; stroke: #4a3463; stroke-width:1; }
-     .anoxic      { fill: #2f7d6e; stroke: #1f5b50; stroke-width:1; }
-     .aerobic     { fill: #4a90c0; stroke: #2e6b95; stroke-width:1; }
-     .clarifier   { fill: #e0d4b8; stroke: #8c7a55; stroke-width:1.2; }
-     .digester-an { fill: #6b4a8a; stroke: #4a3463; stroke-width:1.2; }
-     .digester-ae { fill: #4a90c0; stroke: #2e6b95; stroke-width:1.2; }
-     .thickener   { fill: #c8bb9c; stroke: #8c7a55; stroke-width:1; }
-     .mbr         { fill: #2e6b95; stroke: #1a4e75; stroke-width:1; }
-     .chem        { fill: #d97a4a; stroke: #a85a30; stroke-width:1; }
-     .dw          { fill: #b8a878; stroke: #7a6a40; stroke-width:1; }
-
-     .mainflow    { stroke: #1a1a1a; stroke-width:1.6; fill:none; }
-     .recycle     { stroke: #c2272d; stroke-width:1.4; fill:none; stroke-dasharray: 5,3; }
-     .sludge      { stroke: #7a5a30; stroke-width:1.5; fill:none; }
-     .gas         { stroke: #6b4a8a; stroke-width:1.4; fill:none; stroke-dasharray: 3,2; }
-     .dose        { stroke: #d97a4a; stroke-width:1.4; fill:none; }
-   </style>
 
    <defs>
      <marker id="arr-main" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
@@ -1268,36 +937,6 @@ H1 combines chemical phosphorus removal (Fe:sup:`3+`/Al:sup:`3+`) with a 4-stage
 
    <div class="wrrf-diagram" id="H1">
    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800">
-   <style>
-     .bg          { fill: #fbfbf8; }
-     .title       { font: 700 32px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #1a1a1a; }
-     .subtitle    { font: 400 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #555; }
-     .smalllabel  { font: 500 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #444; text-anchor: middle; }
-     .streamlabel { font: 500 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #444; }
-     .zonelabel   { font: 700 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #fff; text-anchor: middle; }
-     .zonelabel-d { font: 700 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #1a1a1a; text-anchor: middle; }
-     .section     { font: 700 18px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #888; text-anchor: middle; letter-spacing:2px; }
-     .note        { font: 400 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #555; }
-     .dim         { font: 400 18px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #888; text-anchor: middle; }
-     .unmodeled   { fill: #ececec; stroke: #aaa; stroke-width:1; stroke-dasharray:3,2; }
-
-     .anaerobic   { fill: #6b4a8a; stroke: #4a3463; stroke-width:1; }
-     .anoxic      { fill: #2f7d6e; stroke: #1f5b50; stroke-width:1; }
-     .aerobic     { fill: #4a90c0; stroke: #2e6b95; stroke-width:1; }
-     .clarifier   { fill: #e0d4b8; stroke: #8c7a55; stroke-width:1.2; }
-     .digester-an { fill: #6b4a8a; stroke: #4a3463; stroke-width:1.2; }
-     .digester-ae { fill: #4a90c0; stroke: #2e6b95; stroke-width:1.2; }
-     .thickener   { fill: #c8bb9c; stroke: #8c7a55; stroke-width:1; }
-     .mbr         { fill: #2e6b95; stroke: #1a4e75; stroke-width:1; }
-     .chem        { fill: #d97a4a; stroke: #a85a30; stroke-width:1; }
-     .dw          { fill: #b8a878; stroke: #7a6a40; stroke-width:1; }
-
-     .mainflow    { stroke: #1a1a1a; stroke-width:1.6; fill:none; }
-     .recycle     { stroke: #c2272d; stroke-width:1.4; fill:none; stroke-dasharray: 5,3; }
-     .sludge      { stroke: #7a5a30; stroke-width:1.5; fill:none; }
-     .gas         { stroke: #6b4a8a; stroke-width:1.4; fill:none; stroke-dasharray: 3,2; }
-     .dose        { stroke: #d97a4a; stroke-width:1.4; fill:none; }
-   </style>
 
    <defs>
      <marker id="arr-main" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
@@ -1340,36 +979,6 @@ Five-stage Bardenpho without primary clarification — raw wastewater provides c
 
    <div class="wrrf-diagram" id="I1">
    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800">
-   <style>
-     .bg          { fill: #fbfbf8; }
-     .title       { font: 700 32px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #1a1a1a; }
-     .subtitle    { font: 400 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #555; }
-     .smalllabel  { font: 500 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #444; text-anchor: middle; }
-     .streamlabel { font: 500 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #444; }
-     .zonelabel   { font: 700 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #fff; text-anchor: middle; }
-     .zonelabel-d { font: 700 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #1a1a1a; text-anchor: middle; }
-     .section     { font: 700 18px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #888; text-anchor: middle; letter-spacing:2px; }
-     .note        { font: 400 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #555; }
-     .dim         { font: 400 18px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #888; text-anchor: middle; }
-     .unmodeled   { fill: #ececec; stroke: #aaa; stroke-width:1; stroke-dasharray:3,2; }
-
-     .anaerobic   { fill: #6b4a8a; stroke: #4a3463; stroke-width:1; }
-     .anoxic      { fill: #2f7d6e; stroke: #1f5b50; stroke-width:1; }
-     .aerobic     { fill: #4a90c0; stroke: #2e6b95; stroke-width:1; }
-     .clarifier   { fill: #e0d4b8; stroke: #8c7a55; stroke-width:1.2; }
-     .digester-an { fill: #6b4a8a; stroke: #4a3463; stroke-width:1.2; }
-     .digester-ae { fill: #4a90c0; stroke: #2e6b95; stroke-width:1.2; }
-     .thickener   { fill: #c8bb9c; stroke: #8c7a55; stroke-width:1; }
-     .mbr         { fill: #2e6b95; stroke: #1a4e75; stroke-width:1; }
-     .chem        { fill: #d97a4a; stroke: #a85a30; stroke-width:1; }
-     .dw          { fill: #b8a878; stroke: #7a6a40; stroke-width:1; }
-
-     .mainflow    { stroke: #1a1a1a; stroke-width:1.6; fill:none; }
-     .recycle     { stroke: #c2272d; stroke-width:1.4; fill:none; stroke-dasharray: 5,3; }
-     .sludge      { stroke: #7a5a30; stroke-width:1.5; fill:none; }
-     .gas         { stroke: #6b4a8a; stroke-width:1.4; fill:none; stroke-dasharray: 3,2; }
-     .dose        { stroke: #d97a4a; stroke-width:1.4; fill:none; }
-   </style>
 
    <defs>
      <marker id="arr-main" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
@@ -1407,36 +1016,6 @@ Five-stage Bardenpho without primary clarification — raw wastewater provides c
 
    <div class="wrrf-diagram" id="I2">
    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800">
-   <style>
-     .bg          { fill: #fbfbf8; }
-     .title       { font: 700 32px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #1a1a1a; }
-     .subtitle    { font: 400 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #555; }
-     .smalllabel  { font: 500 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #444; text-anchor: middle; }
-     .streamlabel { font: 500 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #444; }
-     .zonelabel   { font: 700 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #fff; text-anchor: middle; }
-     .zonelabel-d { font: 700 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #1a1a1a; text-anchor: middle; }
-     .section     { font: 700 18px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #888; text-anchor: middle; letter-spacing:2px; }
-     .note        { font: 400 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #555; }
-     .dim         { font: 400 18px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #888; text-anchor: middle; }
-     .unmodeled   { fill: #ececec; stroke: #aaa; stroke-width:1; stroke-dasharray:3,2; }
-
-     .anaerobic   { fill: #6b4a8a; stroke: #4a3463; stroke-width:1; }
-     .anoxic      { fill: #2f7d6e; stroke: #1f5b50; stroke-width:1; }
-     .aerobic     { fill: #4a90c0; stroke: #2e6b95; stroke-width:1; }
-     .clarifier   { fill: #e0d4b8; stroke: #8c7a55; stroke-width:1.2; }
-     .digester-an { fill: #6b4a8a; stroke: #4a3463; stroke-width:1.2; }
-     .digester-ae { fill: #4a90c0; stroke: #2e6b95; stroke-width:1.2; }
-     .thickener   { fill: #c8bb9c; stroke: #8c7a55; stroke-width:1; }
-     .mbr         { fill: #2e6b95; stroke: #1a4e75; stroke-width:1; }
-     .chem        { fill: #d97a4a; stroke: #a85a30; stroke-width:1; }
-     .dw          { fill: #b8a878; stroke: #7a6a40; stroke-width:1; }
-
-     .mainflow    { stroke: #1a1a1a; stroke-width:1.6; fill:none; }
-     .recycle     { stroke: #c2272d; stroke-width:1.4; fill:none; stroke-dasharray: 5,3; }
-     .sludge      { stroke: #7a5a30; stroke-width:1.5; fill:none; }
-     .gas         { stroke: #6b4a8a; stroke-width:1.4; fill:none; stroke-dasharray: 3,2; }
-     .dose        { stroke: #d97a4a; stroke-width:1.4; fill:none; }
-   </style>
 
    <defs>
      <marker id="arr-main" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
@@ -1474,36 +1053,6 @@ Five-stage Bardenpho without primary clarification — raw wastewater provides c
 
    <div class="wrrf-diagram" id="I3">
    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800">
-   <style>
-     .bg          { fill: #fbfbf8; }
-     .title       { font: 700 32px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #1a1a1a; }
-     .subtitle    { font: 400 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #555; }
-     .smalllabel  { font: 500 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #444; text-anchor: middle; }
-     .streamlabel { font: 500 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #444; }
-     .zonelabel   { font: 700 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #fff; text-anchor: middle; }
-     .zonelabel-d { font: 700 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #1a1a1a; text-anchor: middle; }
-     .section     { font: 700 18px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #888; text-anchor: middle; letter-spacing:2px; }
-     .note        { font: 400 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #555; }
-     .dim         { font: 400 18px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #888; text-anchor: middle; }
-     .unmodeled   { fill: #ececec; stroke: #aaa; stroke-width:1; stroke-dasharray:3,2; }
-
-     .anaerobic   { fill: #6b4a8a; stroke: #4a3463; stroke-width:1; }
-     .anoxic      { fill: #2f7d6e; stroke: #1f5b50; stroke-width:1; }
-     .aerobic     { fill: #4a90c0; stroke: #2e6b95; stroke-width:1; }
-     .clarifier   { fill: #e0d4b8; stroke: #8c7a55; stroke-width:1.2; }
-     .digester-an { fill: #6b4a8a; stroke: #4a3463; stroke-width:1.2; }
-     .digester-ae { fill: #4a90c0; stroke: #2e6b95; stroke-width:1.2; }
-     .thickener   { fill: #c8bb9c; stroke: #8c7a55; stroke-width:1; }
-     .mbr         { fill: #2e6b95; stroke: #1a4e75; stroke-width:1; }
-     .chem        { fill: #d97a4a; stroke: #a85a30; stroke-width:1; }
-     .dw          { fill: #b8a878; stroke: #7a6a40; stroke-width:1; }
-
-     .mainflow    { stroke: #1a1a1a; stroke-width:1.6; fill:none; }
-     .recycle     { stroke: #c2272d; stroke-width:1.4; fill:none; stroke-dasharray: 5,3; }
-     .sludge      { stroke: #7a5a30; stroke-width:1.5; fill:none; }
-     .gas         { stroke: #6b4a8a; stroke-width:1.4; fill:none; stroke-dasharray: 3,2; }
-     .dose        { stroke: #d97a4a; stroke-width:1.4; fill:none; }
-   </style>
 
    <defs>
      <marker id="arr-main" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
@@ -1546,36 +1095,6 @@ Five-stage Bardenpho liquid train with a completely-mixed membrane bioreactor (M
 
    <div class="wrrf-diagram" id="N1">
    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800">
-   <style>
-     .bg          { fill: #fbfbf8; }
-     .title       { font: 700 32px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #1a1a1a; }
-     .subtitle    { font: 400 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #555; }
-     .smalllabel  { font: 500 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #444; text-anchor: middle; }
-     .streamlabel { font: 500 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #444; }
-     .zonelabel   { font: 700 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #fff; text-anchor: middle; }
-     .zonelabel-d { font: 700 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #1a1a1a; text-anchor: middle; }
-     .section     { font: 700 18px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #888; text-anchor: middle; letter-spacing:2px; }
-     .note        { font: 400 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #555; }
-     .dim         { font: 400 18px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #888; text-anchor: middle; }
-     .unmodeled   { fill: #ececec; stroke: #aaa; stroke-width:1; stroke-dasharray:3,2; }
-
-     .anaerobic   { fill: #6b4a8a; stroke: #4a3463; stroke-width:1; }
-     .anoxic      { fill: #2f7d6e; stroke: #1f5b50; stroke-width:1; }
-     .aerobic     { fill: #4a90c0; stroke: #2e6b95; stroke-width:1; }
-     .clarifier   { fill: #e0d4b8; stroke: #8c7a55; stroke-width:1.2; }
-     .digester-an { fill: #6b4a8a; stroke: #4a3463; stroke-width:1.2; }
-     .digester-ae { fill: #4a90c0; stroke: #2e6b95; stroke-width:1.2; }
-     .thickener   { fill: #c8bb9c; stroke: #8c7a55; stroke-width:1; }
-     .mbr         { fill: #2e6b95; stroke: #1a4e75; stroke-width:1; }
-     .chem        { fill: #d97a4a; stroke: #a85a30; stroke-width:1; }
-     .dw          { fill: #b8a878; stroke: #7a6a40; stroke-width:1; }
-
-     .mainflow    { stroke: #1a1a1a; stroke-width:1.6; fill:none; }
-     .recycle     { stroke: #c2272d; stroke-width:1.4; fill:none; stroke-dasharray: 5,3; }
-     .sludge      { stroke: #7a5a30; stroke-width:1.5; fill:none; }
-     .gas         { stroke: #6b4a8a; stroke-width:1.4; fill:none; stroke-dasharray: 3,2; }
-     .dose        { stroke: #d97a4a; stroke-width:1.4; fill:none; }
-   </style>
 
    <defs>
      <marker id="arr-main" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
@@ -1613,36 +1132,6 @@ Five-stage Bardenpho liquid train with a completely-mixed membrane bioreactor (M
 
    <div class="wrrf-diagram" id="N2">
    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800">
-   <style>
-     .bg          { fill: #fbfbf8; }
-     .title       { font: 700 32px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #1a1a1a; }
-     .subtitle    { font: 400 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #555; }
-     .smalllabel  { font: 500 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #444; text-anchor: middle; }
-     .streamlabel { font: 500 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #444; }
-     .zonelabel   { font: 700 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #fff; text-anchor: middle; }
-     .zonelabel-d { font: 700 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #1a1a1a; text-anchor: middle; }
-     .section     { font: 700 18px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #888; text-anchor: middle; letter-spacing:2px; }
-     .note        { font: 400 21px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #555; }
-     .dim         { font: 400 18px 'Inter','Helvetica Neue',Arial,sans-serif; fill: #888; text-anchor: middle; }
-     .unmodeled   { fill: #ececec; stroke: #aaa; stroke-width:1; stroke-dasharray:3,2; }
-
-     .anaerobic   { fill: #6b4a8a; stroke: #4a3463; stroke-width:1; }
-     .anoxic      { fill: #2f7d6e; stroke: #1f5b50; stroke-width:1; }
-     .aerobic     { fill: #4a90c0; stroke: #2e6b95; stroke-width:1; }
-     .clarifier   { fill: #e0d4b8; stroke: #8c7a55; stroke-width:1.2; }
-     .digester-an { fill: #6b4a8a; stroke: #4a3463; stroke-width:1.2; }
-     .digester-ae { fill: #4a90c0; stroke: #2e6b95; stroke-width:1.2; }
-     .thickener   { fill: #c8bb9c; stroke: #8c7a55; stroke-width:1; }
-     .mbr         { fill: #2e6b95; stroke: #1a4e75; stroke-width:1; }
-     .chem        { fill: #d97a4a; stroke: #a85a30; stroke-width:1; }
-     .dw          { fill: #b8a878; stroke: #7a6a40; stroke-width:1; }
-
-     .mainflow    { stroke: #1a1a1a; stroke-width:1.6; fill:none; }
-     .recycle     { stroke: #c2272d; stroke-width:1.4; fill:none; stroke-dasharray: 5,3; }
-     .sludge      { stroke: #7a5a30; stroke-width:1.5; fill:none; }
-     .gas         { stroke: #6b4a8a; stroke-width:1.4; fill:none; stroke-dasharray: 3,2; }
-     .dose        { stroke: #d97a4a; stroke-width:1.4; fill:none; }
-   </style>
 
    <defs>
      <marker id="arr-main" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
