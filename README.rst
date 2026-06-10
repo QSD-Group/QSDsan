@@ -43,7 +43,7 @@ QSDsan: Quantitative Sustainable Design for Sanitation and Resource Recovery Sys
    :target: https://groups.google.com/g/qsdsan
 
 .. YouTube video
-.. image:: https://img.shields.io/endpoint?color=%23ff0000&label=YouTube%20 @qsd-group&url=https%3A%2F%2Fyoutube-channel-badge-blond.vercel.app%2Fapi%2Fvideos
+.. image:: https://img.shields.io/endpoint?color=%23ff0000&label=YouTube%20@qsd-group&url=https%3A%2F%2Fyoutube-channel-badge-blond.vercel.app%2Fapi%2Fvideos
    :target: https://www.youtube.com/@qsd-group
 
 |
@@ -54,7 +54,7 @@ QSDsan: Quantitative Sustainable Design for Sanitation and Resource Recovery Sys
 
 What is ``QSDsan``?
 -------------------
-``QSDsan`` is an open-source, community-led platform for the quantitative sustainable design (QSD) [1]_ of sanitation and resource recovery systems [2]_. Built in Python, it integrates process modeling, system simulation, techno-economic analysis (TEA), and life cycle assessment (LCA) to support transparent, reproducible, and comprehensive evaluation of emerging technologies. Leveraging BioSTEAM [3]_, the platform provides modular and extensible tools to compare treatment configurations, evaluate resource recovery opportunities, and assess energy, cost, and sustainability tradeoffs. These capabilities support the research, development, and deployment (RD&D) of early-stage technologies for advancing sustainable water management and circular resource recovery.
+``QSDsan`` is an open-source, community-led platform for the quantitative sustainable design (QSD) [1]_ of sanitation and resource recovery systems [2]_. Built in Python, it integrates process modeling, system simulation, techno-economic analysis (TEA), and life cycle assessment (LCA) to support transparent, reproducible, and comprehensive evaluation of emerging technologies. Leveraging BioSTEAM [3]_, the platform provides modular and extensible tools to compare treatment configurations, evaluate resource recovery opportunities, and assess energy, cost, and sustainability tradeoffs. The platform has a range of built-in unit operations and systems, including commonly used treatment processes and biokinetic models. These capabilities support the research, development, and deployment (RD&D) of early-stage technologies for advancing sustainable water management and circular resource recovery.
 
 All systems developed with ``QSDsan`` are included in the package `EXPOsan <https://github.com/QSD-Group/EXPOsan>`_ - exposition of sanitation and resource recovery systems.
 
@@ -118,22 +118,22 @@ Then navigate into the repository (``cd QSDsan``) and install in editable mode w
 For diagram generation, ``QSDsan`` uses Graphviz. If diagrams fail to render, install Graphviz following the `official Graphviz download instructions <https://graphviz.org/download/>`_ and see the `FAQ <docs/source/FAQ.rst#graphviz-installation>`_ for a quick check.
 
 
-Documentation
--------------
-You can find tutorials and documents at:
+Homepage and Documentation
+--------------------------
+The ``QSDsan`` homepage and full documentation are at:
 
-   https://qsdsan.readthedocs.io
+   https://qsdsan.com
 
-All tutorials are written using Jupyter Notebook, you can run your own Jupyter environment, or you can click the ``launch binder`` badge on the top to launch the environment in your browser.
+It hosts the tutorials, API reference, published systems and publications, and learning materials. All tutorials are written using Jupyter Notebook; you can run your own Jupyter environment, or click the ``launch binder`` badge at the top to launch the environment in your browser.
 
 Many tutorials have companion video walkthroughs on our `YouTube channel <https://www.youtube.com/channel/UC8fyVeo9xf10KeuZ_4vC_GA>`_. The videos were recorded against earlier versions of ``QSDsan`` and remain useful for the concepts and the big picture, but some APIs may be outdated. Refer to the notebooks for the authoritative reference for syntax and API.
 
 
 Authors and Contributing
 ------------------------
-``QSDsan`` and its related packages are developed by the Quantitative Sustainable Design Group and the broader community. `Yalin Li <https://github.com/yalinli2>`_ is the currently maintainer.  See `commit history <https://github.com/QSD-Group/QSDsan/graphs/contributors>`_ for contributors who have contributed to the repository. 
+``QSDsan`` and its related packages are developed by the Quantitative Sustainable Design Group and the broader community. `Yalin Li <https://github.com/yalinli2>`_ is the current maintainer.  See `commit history <https://github.com/QSD-Group/QSDsan/graphs/contributors>`_ for contributors who have contributed to the repository. 
 
-If you want to contribute to ``QSDsan``, please refer to the `Contributing Guidelines <https://qsdsan.readthedocs.io/en/latest/CONTRIBUTING.html>`_ section of the documentation for instructions and guidelines.
+If you want to contribute to ``QSDsan``, please refer to the `Contributing Guidelines <https://qsdsan.com/en/latest/CONTRIBUTING.html>`_ section of the documentation for instructions and guidelines.
 
 
 License Information
