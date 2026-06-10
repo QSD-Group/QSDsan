@@ -23,9 +23,8 @@
 
 # # %%
 
-from .._sanunit import SanUnit
-from .._waste_stream import WasteStream
-from ..equipments import Column, Electrode, Machine, Membrane
+from qsdsan import SanUnit, WasteStream
+from qsdsan.equipments import Column, Electrode, Machine, Membrane
 
 __all__ = ('ElectrochemicalCell',
            'ESAPRecovery',
