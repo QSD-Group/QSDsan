@@ -176,7 +176,7 @@ Other WRRFs
 
    .. grid-item-card:: Conventional Activated Sludge
 
-      Python implementation of the CAS system as described in `Shoerner et al. <https://doi.org/10.1039/C5EE03715H>`_
+      Python implementation of the CAS system as described in `Shoener et al. <https://doi.org/10.1039/C5EE03715H>`_
 
       +++
 
