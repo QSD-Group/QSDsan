@@ -6,6 +6,7 @@ This document records notable changes to `QSDsan <https://github.com/QSD-Group/Q
 
 `1.6.0`_
 --------
+- Re-hosted the NJ Bioenergy web app under group-owned infrastructure: frontend at ``https://nj-bioenergy.apps.qsdsan.com`` (group Vercel) and backend at ``https://nj-bioenergy-api.apps.qsdsan.com`` (AWS ECS Express Mode behind CloudFront). The app page Launch button now points to the new URL. The old ``qsdsan.app`` address 301-redirects to the new frontend while the domain registration lapses.
 - Consolidated the standalone Jekyll website (formerly served at ``qsdsan.com``) into the Sphinx documentation, which now serves as the single canonical site.
 - Restyled the :ref:`Systems & Publications <systems>` page with a platform-and-methodology introduction (QSD, QSDsan, DMsan) and, for every entry, the full citation plus Read Paper / Source Code buttons; added a :ref:`Learning <learning>` page (workshops) and an :ref:`App <app>` page (web-app gallery).
 - Added theme-adaptive (light/dark) navigation-card icons, a "Home" entry in the sidebar, footer links (GitHub, PyPI, YouTube, email, and the QSDsan Google Group), and a note on joining the Google Group for updates.
