@@ -1,36 +1,36 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+# #!/usr/bin/env python3
+# # -*- coding: utf-8 -*-
 
-'''
-QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
+# '''
+# QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
-This module is developed by:
+# This module is developed by:
+#     Zixuan Wang <wyatt4428@gmail.com>
+#     Smiti Mittal <smitimittal@gmail.com>
+#     Yalin Li <mailto.yalin.li@gmail.com>
+#     Anna Kogler <akogler@stanford.edu>
 
-    Smiti Mittal <smitimittal@gmail.com>
+# This module is under the University of Illinois/NCSA Open Source License.
+# Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
+# for license details.
 
-    Yalin Li <mailto.yalin.li@gmail.com>
+# Reference for the default electrochemical cell modelled below: 
+#     Evaluating Membrane Performance in Electrochemical Stripping Reactor for Nitrogen Removal
+#     Julia Simon, Department of Chemical Engineering, Stanford University
+#     Principal Investigator: Professor William Tarpeh
+#     Second Reader: Professor Gerald Fuller
+# '''
 
-    Anna Kogler <akogler@stanford.edu>
+# # %%
 
-This module is under the University of Illinois/NCSA Open Source License.
-Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
-for license details.
+from qsdsan import SanUnit, WasteStream
+from qsdsan.equipments import Column, Electrode, Machine, Membrane
 
-Reference for the default electrochemical cell modelled below: 
-    Evaluating Membrane Performance in Electrochemical Stripping Reactor for Nitrogen Removal
-    Julia Simon, Department of Chemical Engineering, Stanford University
-    Principal Investigator: Professor William Tarpeh
-    Second Reader: Professor Gerald Fuller
-'''
-
-# %%
-
-from ..._sanunit import SanUnit
-from ..._waste_stream import WasteStream
-from ...equipments import Column, Electrode, Machine, Membrane
-
-__all__ = ('ElectrochemicalCell',)
-
+__all__ = ('ElectrochemicalCell',
+           'ESAPRecovery',
+           'ESAPEffluent',
+           'ESAP',
+           'ElectrochemicalStrippingAdsorptionPrecipitation',)
 
 class ElectrochemicalCell(SanUnit):
     '''

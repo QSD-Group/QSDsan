@@ -154,7 +154,7 @@ class Components(Chemicals):
             for component in components: self.append(component)
 
 
-    def compile(self, skip_checks=False, ignore_inaccurate_molar_weight=False, 
+    def compile(self, skip_checks=False, ignore_inaccurate_molar_weight=True, 
                 adjust_MW_to_measured_as=False):
         '''
         Cast as a :class:`CompiledComponents` object.
@@ -686,7 +686,7 @@ class CompiledComponents(CompiledChemicals):
         for i in _num_component_properties:
             dct[i] = component_data_array(components, i)
 
-    def compile(self, skip_checks=False, ignore_inaccurate_molar_weight=False):
+    def compile(self, skip_checks=False, ignore_inaccurate_molar_weight=True):
         '''Do nothing, :class:`CompiledComponents` have already been compiled.'''
         pass
 

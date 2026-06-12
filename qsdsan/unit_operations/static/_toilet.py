@@ -151,8 +151,15 @@ class Toilet(SanUnit, Decay, isabstract=True):
         N_tot_user = self.N_tot_user or self.N_toilet*self.N_user
         for i in self.outs:
             if not i.F_mass == 0:
-                i.F_mass *= N_tot_user
-
+                i.F_mass *= N_tot_user  
+                # try:
+                #     with np.errstate(over='raise'):
+                #         i.F_mass *= N_tot_user  
+                # except FloatingPointError:
+                #     print("Overflow detected. Force RO permeate to be constant.")
+                #     self.ins[5].imass['H2O'] = 0.302
+                #     i.F_mass *= N_tot_user  
+                #     breakpoint()
 
     def _cost(self):
         self.baseline_purchase_costs['Total toilets'] = self.CAPEX * self.N_toilet * self.price_ratio
