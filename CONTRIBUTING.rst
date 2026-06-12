@@ -278,6 +278,8 @@ Submitting a Pull Request
 -------------------------
 #. Once you are satisfied with your changes and have pushed all commits to your fork, go to your GitHub fork of ``QSDsan`` and submit a `pull request <https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/creating-a-pull-request>`_. Before submitting, pull the latest changes from the upstream repository (``git pull upstream main``) and resolve any conflicts, so your branch is ahead of the upstream ``main`` and not behind it.
 
+#. When opening the pull request, leave the **"Allow edits from maintainers"** checkbox checked (it is on by default). This lets maintainers push small fixes or adjustments directly to your branch without having to ask you to make every minor change, which speeds up the review cycle.
+
 #. A member of the Quantitative Sustainable Design Group will review your changes and accept them or discuss any needed edits with you.
 
 
