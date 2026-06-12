@@ -94,6 +94,7 @@ SYSTEMS = {
     'pm2_ecorecover': lambda: _load('pm2_ecorecover'),
     'biobinder': lambda: _load('biobinder'),            # construct only; distillation sim is CI-fragile
     'saf': lambda: _load('saf'),                        # construct only; distillation sim is CI-fragile
+    'g2rt': lambda: _load('g2rt'),
 }
 
 # Modules deliberately NOT exercised here, each with a reason. A new EXPOsan
