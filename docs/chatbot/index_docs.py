@@ -16,11 +16,12 @@ import embeddings
 
 
 # Pages indexed from the built docs: the tutorials / API / FAQ / Systems &
-# Publications / Learning / App subtrees plus the homepage (index.html), which
-# carries the install and overview content. Read the Docs build scaffolding is
-# skipped.
+# Publications / Learning / App subtrees plus a few top-level guide pages
+# (index.html carries install + overview; CONTRIBUTING.html carries the dev-setup
+# / install instructions, including the uv workflow). Read the Docs build
+# scaffolding is skipped.
 _INDEXED_DIRS = ("tutorials", "api", "faq", "systems", "learning", "app")
-_INDEXED_ROOT_PAGES = ("index.html",)
+_INDEXED_ROOT_PAGES = ("index.html", "CONTRIBUTING.html")
 _SKIP_PAGES = {"genindex.html", "search.html", "py-modindex.html", "404.html"}
 
 

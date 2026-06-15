@@ -27,7 +27,7 @@ The following guideline is adapted from `BioSTEAM <https://biosteam.readthedocs.
 
 Setting Up
 ----------
-You can set up using the command line or `GitHub Desktop <https://desktop.github.com/>`_, a graphical alternative that is friendlier if you are new to the command line. ``QSDsan`` requires **Python 3.12 or newer**.
+You can set up using the command line or `GitHub Desktop <https://desktop.github.com/>`_, a graphical alternative that is friendlier if you are new to the command line. ``QSDsan`` is currently tested against **Python 3.12** (the minimum required to install it).
 
 Via the command line
 ^^^^^^^^^^^^^^^^^^^^^
@@ -47,7 +47,7 @@ Via the command line
 
    The remaining setup steps all run from inside this ``QSDsan/`` folder. If you close your terminal and come back later, ``cd`` back into it before continuing.
 
-#. Create and activate a virtual environment so ``QSDsan`` and its dependencies stay isolated from your other projects. Pick **one** of the two options below; both produce a ``.venv/`` folder inside ``QSDsan/``. ``QSDsan`` requires Python 3.12 or newer, so make sure the interpreter you use here meets that.
+#. Create and activate a virtual environment so ``QSDsan`` and its dependencies stay isolated from your other projects. Pick **one** of the two options below; both produce a ``.venv/`` folder inside ``QSDsan/``. ``QSDsan`` is currently tested against Python 3.12, so use that version for the interpreter here.
 
    **Option A: standard library (pip).**
 
@@ -79,6 +79,10 @@ Via the command line
        #   macOS / Linux:         source .venv/bin/activate
 
    Once activated, your shell prompt typically shows ``(.venv)`` at the start. Every command in the rest of this guide assumes you are still inside ``QSDsan/`` with this environment activated.
+
+   .. note::
+
+      Prefer ``conda``? An activated ``conda`` environment works too: create one with ``conda create -n qsdsan python=3.12``, run ``conda activate qsdsan`` (``qsdsan`` is just the environment name, you can replace it with your preferred name), and use the Option A (``pip``) command in the next step. The ``.venv`` options above are recommended for a project-local, self-contained setup.
 
 #. Install ``QSDsan`` in editable mode with the development dependencies. This installs ``QSDsan`` from your local clone along with the packages needed for testing and building the documentation. Use the command matching the option you chose above:
 
