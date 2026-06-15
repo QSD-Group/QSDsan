@@ -11,7 +11,7 @@ Platform and methodology
 .. grid:: 1
    :gutter: 4
 
-   .. grid-item-card:: Structured methodology: (QSD)
+   .. grid-item-card:: Structured methodology: QSD
 
       .. image:: ../images/systems/qsd.png
          :width: 400px
