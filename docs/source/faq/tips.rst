@@ -8,6 +8,8 @@ If you cloned ``QSDsan`` (and/or ``EXPOsan``) and want to work on the code, inst
 .. code:: bash
 
     pip install -e ".[dev]"
+    # or, with uv:
+    uv pip install -e ".[dev]"
 
 Use a dedicated virtual environment (``.venv`` or a ``conda`` env) to keep the editable install isolated. To use that environment in Jupyter:
 
@@ -106,12 +108,12 @@ However, GitHub does not allow you to directly create a private fork (or more ac
 
 #. If you have never used ``git`` in your CLI, GitHub would ask for authentication and requires you create to a personal access token (instead of using your username and password), follow the instructions from `GitHub <https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token>`_ to create the token.
 #. For Mac users, you'll probably run into an error related to ``/Library/Developer/CommandLineTools`` if you don't have Xcode Command Line (i.e., ``xcode-select``), follow these `instructions <https://www.freecodecamp.org/news/install-xcode-command-line-tools/>`_ to install it. Note that as you can see in the linked post, even the ``xcode-select``, which is much smaller than the full Xcode app, requires 1GB+ space.
-#. After you clone ``QSDsan``, install it from the cloned repository with ``pip install -e ".[dev]"`` so Python imports your local copy.
+#. After you clone ``QSDsan``, install it from the cloned repository with ``pip install -e ".[dev]"`` (or ``uv pip install -e ".[dev]"``) so Python imports your local copy.
 
 
 Upgrade Python
 --------------
-``QSDsan`` currently requires Python 3.12 or newer.
+``QSDsan`` is currently tested against Python 3.12 (the minimum required to install it).
 
 If you need to upgrade Python but have a lot of existing packages, creating a virtual environment may be the best way to avoid conflicts. If you are using ``conda``, it has related documentation on `Python upgrading <https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-python.html>`_.
 

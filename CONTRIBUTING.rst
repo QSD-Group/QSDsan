@@ -27,7 +27,7 @@ The following guideline is adapted from `BioSTEAM <https://biosteam.readthedocs.
 
 Setting Up
 ----------
-You can set up using the command line or `GitHub Desktop <https://desktop.github.com/>`_, a graphical alternative that is friendlier if you are new to the command line. ``QSDsan`` requires **Python 3.12 or newer**.
+You can set up using the command line or `GitHub Desktop <https://desktop.github.com/>`_, a graphical alternative that is friendlier if you are new to the command line. ``QSDsan`` is currently tested against **Python 3.12** (the minimum required to install it).
 
 Via the command line
 ^^^^^^^^^^^^^^^^^^^^^
@@ -47,7 +47,7 @@ Via the command line
 
    The remaining setup steps all run from inside this ``QSDsan/`` folder. If you close your terminal and come back later, ``cd`` back into it before continuing.
 
-#. Create and activate a virtual environment so ``QSDsan`` and its dependencies stay isolated from your other projects. Pick **one** of the two options below; both produce a ``.venv/`` folder inside ``QSDsan/``. ``QSDsan`` requires Python 3.12 or newer, so make sure the interpreter you use here meets that.
+#. Create and activate a virtual environment so ``QSDsan`` and its dependencies stay isolated from your other projects. Pick **one** of the two options below; both produce a ``.venv/`` folder inside ``QSDsan/``. ``QSDsan`` is currently tested against Python 3.12, so use that version for the interpreter here.
 
    **Option A: standard library (pip).**
 
@@ -79,6 +79,10 @@ Via the command line
        #   macOS / Linux:         source .venv/bin/activate
 
    Once activated, your shell prompt typically shows ``(.venv)`` at the start. Every command in the rest of this guide assumes you are still inside ``QSDsan/`` with this environment activated.
+
+   .. note::
+
+      Prefer ``conda``? An activated ``conda`` environment works too: create one with ``conda create -n qsdsan python=3.12``, run ``conda activate qsdsan`` (``qsdsan`` is just the environment name, you can replace it with your preferred name), and use the Option A (``pip``) command in the next step. The ``.venv`` options above are recommended for a project-local, self-contained setup.
 
 #. Install ``QSDsan`` in editable mode with the development dependencies. This installs ``QSDsan`` from your local clone along with the packages needed for testing and building the documentation. Use the command matching the option you chose above:
 
@@ -277,6 +281,8 @@ Push your branch to your fork. Pushing your work online backs up your history an
 Submitting a Pull Request
 -------------------------
 #. Once you are satisfied with your changes and have pushed all commits to your fork, go to your GitHub fork of ``QSDsan`` and submit a `pull request <https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/creating-a-pull-request>`_. Before submitting, pull the latest changes from the upstream repository (``git pull upstream main``) and resolve any conflicts, so your branch is ahead of the upstream ``main`` and not behind it.
+
+#. When opening the pull request, leave the **"Allow edits from maintainers"** checkbox checked (it is on by default). This lets maintainers push small fixes or adjustments directly to your branch without having to ask you to make every minor change, which speeds up the review cycle.
 
 #. A member of the Quantitative Sustainable Design Group will review your changes and accept them or discuss any needed edits with you.
 
