@@ -38,3 +38,16 @@ def test_homepage_install_section_is_indexed():
     assert inst["url"] == (
         "https://qsdsan.readthedocs.io/en/latest/index.html#installation"
     )
+
+
+def test_contributing_dev_setup_is_indexed():
+    # CONTRIBUTING.html is a top-level guide page (not under tutorials/api), so it
+    # must be whitelisted for the bot to answer dev-setup questions like the uv
+    # install workflow.
+    chunks = index_docs.build_qsdsan_chunks(str(HTML_DIR))
+    setup = next(c for c in chunks if c["title"] == "Setting up a development environment")
+    assert setup["type"] == "guide"
+    assert "uv" in setup["text"]
+    assert setup["url"] == (
+        "https://qsdsan.readthedocs.io/en/latest/CONTRIBUTING.html#setting-up"
+    )
