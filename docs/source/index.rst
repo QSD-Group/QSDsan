@@ -74,11 +74,15 @@ What is ``QSDsan``?
 
 Installation
 ------------
-``QSDsan`` requires Python 3.12 or newer. The easiest way to install ``QSDsan`` is through ``pip`` in a command-line interface (e.g., Anaconda Prompt, terminal):
+``QSDsan`` requires Python 3.12 or newer. The easiest way to install ``QSDsan`` is through ``pip`` in a command-line interface (e.g., a terminal or Anaconda Prompt):
 
 .. code::
 
     pip install qsdsan
+
+.. note::
+
+    ``pip`` is the standard installer and works inside any environment, including a ``conda`` environment if you already use Anaconda. For a faster, drop-in alternative you can use `uv <https://docs.astral.sh/uv/>`_ (``uv pip install qsdsan``); it produces the same result. Installing into a dedicated virtual environment is recommended; the :doc:`Contributing guidelines <CONTRIBUTING>` give a step-by-step setup.
 
 To upgrade an existing installation:
 

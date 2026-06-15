@@ -80,6 +80,10 @@ Via the command line
 
    Once activated, your shell prompt typically shows ``(.venv)`` at the start. Every command in the rest of this guide assumes you are still inside ``QSDsan/`` with this environment activated.
 
+   .. note::
+
+      Prefer ``conda``? An activated ``conda`` environment works too: create one with ``conda create -n qsdsan python=3.12``, run ``conda activate qsdsan`` (``qsdsan`` is just the environment name, you can replace it with your preferred name), and use the Option A (``pip``) command in the next step. The ``.venv`` options above are recommended for a project-local, self-contained setup.
+
 #. Install ``QSDsan`` in editable mode with the development dependencies. This installs ``QSDsan`` from your local clone along with the packages needed for testing and building the documentation. Use the command matching the option you chose above:
 
    .. code:: bash

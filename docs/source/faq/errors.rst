@@ -15,13 +15,7 @@ Graphviz installation has two parts:
 1. The Graphviz software, which provides the ``dot`` executable used to render diagrams.
 2. The Python ``graphviz`` package, which lets Python call Graphviz.
 
-For the Graphviz software, follow the `official Graphviz download instructions <https://graphviz.org/download/>`_ for your operating system. If you use ``conda``, the ``conda-forge`` package can install both the software and Python interface:
-
-.. code::
-
-   conda install -c conda-forge python-graphviz
-
-If you do not use ``conda``, install the Graphviz software first, then install the Python interface in your active Python environment:
+For the Graphviz software, follow the `official Graphviz download instructions <https://graphviz.org/download/>`_ for your operating system. Then install the Python interface in your active Python environment:
 
 .. code::
 
@@ -68,12 +62,12 @@ Sometimes (even though you have downloaded/cloned/installed ``qsdsan``), you sti
 
 There are multiple possible reasons:
 
-- If you have multiple conda environments, make sure you first do ``conda activate <ENV NAME>`` (replace ``<ENV NAME>`` with the actual name of your environment) to activate the environment.
-- If you are using a cloned version of ``QSDsan`` for development, install it from the cloned repository with ``pip install -e ".[dev]"``.
+- If you use a virtual environment, make sure it is activated first (run the activation script for a ``.venv``, or ``conda activate <ENV NAME>`` for a ``conda`` env, replacing ``<ENV NAME>`` with the actual name of your environment).
+- If you are using a cloned version of ``QSDsan`` for development, install it from the cloned repository with ``pip install -e ".[dev]"`` (or ``uv pip install -e ".[dev]"``).
 - If you are using Jupyter Notebook
 
     - Make sure Jupyter is using the same environment where ``QSDsan`` is installed.
-    - To add your active environment as a Jupyter kernel, run this in your command-line interface (CLI, e.g., Anaconda Prompt, terminal; first do ``conda activate <ENV NAME>`` if you are using a virtual environment, and replace ``<KERNEL NAME>`` with the name you like):
+    - To add your active environment as a Jupyter kernel, run this in your command-line interface (CLI, e.g., a terminal or Anaconda Prompt; activate your environment first if you use one, and replace ``<KERNEL NAME>`` with the name you like):
 
         .. code::
 
@@ -82,7 +76,7 @@ There are multiple possible reasons:
 
         .. note::
 
-            If you do not have ``ipykernel``, firstly do ``conda install ipykernel``
+            If you do not have ``ipykernel``, install it first with ``pip install ipykernel`` (or ``conda install ipykernel`` in a ``conda`` env).
 
 
         Then when you open the Jupyter Notebook, select the ``<KERNEL NAME>`` kernel when you create a new notebook you can find more details in this post about `enabling multiple kernels in Jupyter Notebook <https://medium.com/@ace139/enable-multiple-kernels-in-jupyter-notebooks-6098c738fe72>`_.
