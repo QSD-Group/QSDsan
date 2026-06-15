@@ -113,7 +113,7 @@ However, GitHub does not allow you to directly create a private fork (or more ac
 
 Upgrade Python
 --------------
-``QSDsan`` currently requires Python 3.12 or newer.
+``QSDsan`` is currently tested against Python 3.12 (the minimum required to install it).
 
 If you need to upgrade Python but have a lot of existing packages, creating a virtual environment may be the best way to avoid conflicts. If you are using ``conda``, it has related documentation on `Python upgrading <https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-python.html>`_.
 

@@ -116,6 +116,6 @@ To fix this, Windows users can look at this `thread <https://stackoverflow.com/q
 
 Version compatibility
 ---------------------
-``QSDsan`` requires Python 3.12 or newer and pins specific minimum versions of ``biosteam``, ``thermosteam``, and other dependencies. The authoritative version table lives in `pyproject.toml <https://github.com/QSD-Group/QSDsan/blob/main/pyproject.toml>`_; the table here is a quick reference and may lag.
+``QSDsan`` is currently tested against Python 3.12 and pins specific minimum versions of ``biosteam``, ``thermosteam``, and other dependencies. The authoritative version table lives in `pyproject.toml <https://github.com/QSD-Group/QSDsan/blob/main/pyproject.toml>`_; the table here is a quick reference and may lag.
 
 If you see import errors after upgrading one of those dependencies independently of ``QSDsan``, the most reliable fix is to reinstall ``QSDsan`` in a fresh environment so the resolver picks compatible versions of everything at once.

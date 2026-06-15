@@ -27,7 +27,7 @@ The following guideline is adapted from `BioSTEAM <https://biosteam.readthedocs.
 
 Setting Up
 ----------
-You can set up using the command line or `GitHub Desktop <https://desktop.github.com/>`_, a graphical alternative that is friendlier if you are new to the command line. ``QSDsan`` requires **Python 3.12 or newer**.
+You can set up using the command line or `GitHub Desktop <https://desktop.github.com/>`_, a graphical alternative that is friendlier if you are new to the command line. ``QSDsan`` is currently tested against **Python 3.12** (the minimum required to install it).
 
 Via the command line
 ^^^^^^^^^^^^^^^^^^^^^
@@ -47,7 +47,7 @@ Via the command line
 
    The remaining setup steps all run from inside this ``QSDsan/`` folder. If you close your terminal and come back later, ``cd`` back into it before continuing.
 
-#. Create and activate a virtual environment so ``QSDsan`` and its dependencies stay isolated from your other projects. Pick **one** of the two options below; both produce a ``.venv/`` folder inside ``QSDsan/``. ``QSDsan`` requires Python 3.12 or newer, so make sure the interpreter you use here meets that.
+#. Create and activate a virtual environment so ``QSDsan`` and its dependencies stay isolated from your other projects. Pick **one** of the two options below; both produce a ``.venv/`` folder inside ``QSDsan/``. ``QSDsan`` is currently tested against Python 3.12, so use that version for the interpreter here.
 
    **Option A: standard library (pip).**
 

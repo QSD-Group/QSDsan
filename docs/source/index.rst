@@ -74,7 +74,7 @@ What is ``QSDsan``?
 
 Installation
 ------------
-``QSDsan`` requires Python 3.12 or newer. The easiest way to install ``QSDsan`` is through ``pip`` in a command-line interface (e.g., a terminal or Anaconda Prompt):
+``QSDsan`` is currently tested against Python 3.12, the minimum required to install it. The easiest way to install ``QSDsan`` is through ``pip`` in a command-line interface (e.g., a terminal or Anaconda Prompt):
 
 .. code::
 
