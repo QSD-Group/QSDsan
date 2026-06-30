@@ -4,7 +4,7 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
-    
+
     Yalin Li <mailto.yalin.li@gmail.com>
 
     Ali Ahmad <aa3056@scarletmail.rutgers.edu>
@@ -21,7 +21,7 @@ __all__ = (
 
 # %%
 
-CEPCI = {
+CEPCI_by_year = {
     1990: 357.6,
     1991: 361.3,
     1992: 358.2,
@@ -55,10 +55,10 @@ CEPCI = {
     2020: 596.2,
     2021: 708.8,
     2022: 816.0,
-    2023: 798.0,
+    2023: 797.9,
     }
 
-ChemPPI = {
+ChemPPI_by_year = {
     1984: 100.0,
     1985: 100.8,
     1986: 100.6,
@@ -96,13 +96,10 @@ ChemPPI = {
     2018: 290.2,
     2019: 292.1,
     2020: 289.0,
-    2021: 708.8,
-    2022: 816.0,
-    'Seider': 567.0,
     }
 
 # U.S. Energy Information Administration (EIA) Annual Energy Outlook (AEO)
-GDP = {
+GDP_by_year = {
   2003: 0.808,
   2005: 0.867,
   2007: 0.913,
@@ -126,7 +123,7 @@ GDP = {
   }
 
 # https://data.bls.gov/cgi-bin/srgate; CEU3232500008; Chemical manufacturing
-labor = {
+labor_by_year = {
     1990: 12.85,
     1991: 13.30,
     1992: 13.70,
@@ -164,7 +161,7 @@ labor = {
     }
 
 # Federal Reserve Economic Data, Personal Consumption Expenditures: Chain-type Price Index, Index 2017=1.00, Annual, Seasonally Adjusted
-PCEPI = {
+PCEPI_by_year = {
     2000: 73.822,
     2001: 75.302,
     2002: 76.291,
@@ -192,9 +189,14 @@ PCEPI = {
     2024: 121.966,
     }
 
+# Include BioSTEAM's CEPCI years that are not in the table above (e.g., pre-1990);
+# the more precise qsdsan values take precedence on overlapping years.
+from biosteam.units.design_tools import CEPCI_by_year as _bst_CEPCI_by_year
+CEPCI_by_year = {**_bst_CEPCI_by_year, **CEPCI_by_year}
+
 tea_indices = {
-    'CEPCI': CEPCI,
-    'ChemPPI': ChemPPI,
-    'labor': labor,
-    'PCEPI': PCEPI,
+    'CEPCI_by_year': CEPCI_by_year,
+    'ChemPPI_by_year': ChemPPI_by_year,
+    'labor_by_year': labor_by_year,
+    'PCEPI_by_year': PCEPI_by_year,
     }

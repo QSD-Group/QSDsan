@@ -12,10 +12,18 @@
 *.Rhistory
 *.sh
 .coverage
+.numba_cache/
 .coveralls.yml
 .pypirc
+.pytest_cache/
+pytest-cache-files-*
 _build
 build
 dist
 docs/build/*
 htmlcov
+
+# docs chatbot (feature: docs-chatbot)
+QSDsan-docs-chatbot.code-workspace
+.venv
+docs/source/_static/chatbot/index.json

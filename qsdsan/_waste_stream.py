@@ -5,9 +5,9 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
-    
+
     Joy Zhang <joycheung1994@gmail.com>
-    
+
     Yalin Li <mailto.yalin.li@gmail.com>
 
 Part of this module is based on the Thermosteam package:
@@ -28,6 +28,7 @@ from thermosteam.base import DictionaryView, SparseVector
 from biosteam.utils import MissingStream
 from . import SanStream, MissingSanStream
 from .utils import auom, copy_attr, WasteStreamScope
+from .units_of_measure import waste_stream_units_of_measure
 from biosteam.utils import Scope
 from warnings import warn
 
@@ -78,8 +79,8 @@ _default_ratios = {'iHi_XPAOPP': 0,
                    'iSUInf_SU': 1.,
                    'iXUOHOE_XUE': None,}
 
-vol_unit = auom('L/hr')
-conc_unit = auom('mg/L')
+vol_unit = waste_stream_units_of_measure['volumetric_flow']
+conc_unit = waste_stream_units_of_measure['concentration']
 
 
 # %%
@@ -202,8 +203,15 @@ del by_conc
 
 class WasteStream(SanStream):
     '''
-    A subclass of :class:`~.SanStream` with additional attributes and methods
-    for wastewater.
+    A :class:`~.SanStream` with wastewater-specific aggregate properties
+    and influent characterization models.
+
+    :class:`WasteStream` includes the life cycle impact functionality of
+    :class:`~.SanStream`. Use it when you need wastewater-modeling
+    quantities such as COD, BOD, TKN, TP, solids, pH, biodegradability
+    fractions, or influent characterization methods. Despite the name,
+    the stream does not need to be literal waste; the name reflects the
+    wastewater modeling capabilities added by this class.
 
     .. note::
 
@@ -249,9 +257,13 @@ class WasteStream(SanStream):
     dry_mass : float
         Total solids, dry mass of dissolved and suspended solids, in mg/L.
     charge : float
-        TO BE IMPLEMENTED
-    ratios : float
-        TO BE IMPLEMENTED
+        Total charge, in mmol/L. Calculated from component ``i_charge`` values.
+        Note that this only accounts for fully dissociated (strong) electrolytes;
+        pH-dependent speciation of weak acids is not yet supported.
+    ratios : dict
+        Ratios used to partition composite influent parameters (e.g., COD, TKN)
+        into individual component concentrations when constructing a
+        :class:`WasteStream` via the ``*_inf_model`` classmethods.
     stream_impact_item : :class:`StreamImpactItem`
         The :class:`StreamImpactItem` this stream is linked to.
     additional_properties : dict
@@ -273,7 +285,7 @@ class WasteStream(SanStream):
     _default_ratios = _default_ratios
     ticket_name = 'ws'
 
-    def __init__(self, ID='', flow=(), phase='l', T=298.15, P=101325.,
+    def __init__(self, ID='', flow=None, phase='l', T=298.15, P=101325.,
                  units='kg/hr', price=0., thermo=None,
                  pH=7., SAlk=2.5, COD=None, BOD=None, uBOD=None,
                  ThOD=None, cnBOD=None,
@@ -348,8 +360,8 @@ class WasteStream(SanStream):
         For missing streams, but it's almost always for unit initialization,
         you don't really need to interact with this class
         
-        >>> import biosteam as bst, qsdsan as qs
-        >>> ms = bst.utils.MissingStream(source=None, sink=None)
+        >>> import qsdsan as qs
+        >>> ms = qs.MissingStream(source=None, sink=None)
         >>> mws = qs.WasteStream.from_stream(ms)
         >>> mws
         <MissingWasteStream>
@@ -359,17 +371,17 @@ class WasteStream(SanStream):
         >>> cmps = qs.Components.load_default()
         >>> qs.set_thermo(cmps)
         >>> s = qs.Stream('s', H2O=100, price=5)
-        >>> s.show()
+        >>> s.show() # doctest: +ELLIPSIS
         Stream: s
          phase: 'l', T: 298.15 K, P: 101325 Pa
-         flow (kmol/hr): H2O  100
+         flow...H2O
         >>> s.price
         5.0
         >>> ws = qs.WasteStream.from_stream(stream=s, ID='ws', T=250, price=8)
-        >>> ws.show()
+        >>> ws.show() # doctest: +ELLIPSIS
         WasteStream: ws
          phase: 'l', T: 250 K, P: 101325 Pa
-         flow (g/hr): H2O  1.8e+06
+         flow...H2O
          WasteStream-specific properties:
           pH         : 7.0
          Component concentrations (mg/L):
@@ -409,7 +421,7 @@ class WasteStream(SanStream):
         P : float, optional
             The unit for pressure. The default is 'Pa'.
         flow : str, optional
-            The unit for the flow. The default is 'kg/hr'.
+            The unit for the flow. The default is 'g/hr'.
         composition : bool, optional
             Whether to show flow information of different :class:`Component` objects in
             this waste stream as a percentage. The default is False.
@@ -732,7 +744,17 @@ class WasteStream(SanStream):
 
     @property
     def pH(self):
-        '''[float] pH, unitless.'''
+        '''
+        [float] pH, unitless.
+
+        .. warning::
+
+            ``QSDsan`` does not yet calculate pH from stream composition. This
+            returns the value you assigned (at construction or via
+            ``ws.pH = ...``), or 7 by default, so it is not a reliable estimate
+            of the actual pH. Treat it as an input and set it from a measured or
+            assumed value.
+        '''
         return self._liq_sol_properties('pH', 7.)
     @pH.setter
     def pH(self, ph):
@@ -741,7 +763,16 @@ class WasteStream(SanStream):
 
     @property
     def SAlk(self):
-        '''[float] Alkalinity, in meq/L (or mmol HCO3-/L). Assumed to be mainly bicarbonate.'''
+        '''
+        [float] Alkalinity, in meq/L (or mmol HCO3-/L). Assumed to be mainly bicarbonate.
+
+        .. warning::
+
+            ``QSDsan`` does not yet calculate alkalinity from stream
+            composition. This returns the value you provided at construction
+            (``SAlk=``), or 2.5 by default, so it is not a reliable estimate.
+            Treat it as an input and set it from a measured or assumed value.
+        '''
         return self._liq_sol_properties('SAlk', 0.)
 
     @property
@@ -833,7 +864,6 @@ class WasteStream(SanStream):
     # @property
     # def charge(self):
     #     return self._liq_sol_properties('charge', self.composite('charge'))
-
 
     @property
     def iconc(self):

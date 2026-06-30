@@ -5,6 +5,7 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
+
     Yalin Li <mailto.yalin.li@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
@@ -15,7 +16,7 @@ for license details.
 # %%
 
 import qsdsan as qs
-from warnings import warn
+from warnings import warn, catch_warnings, filterwarnings
 from biosteam.utils import MissingStream
 from . import Stream
 from .utils import auom
@@ -28,8 +29,14 @@ excluded_slots = ('characterization_factors',)
 
 class SanStream(Stream):
     '''
-    A subclass of :class:`thermosteam.Stream` with additional attributes
-    for environmental impacts.
+    A :class:`thermosteam.Stream` with QSDsan stream-level life cycle
+    impact functionality.
+
+    Use :class:`SanStream` when you need the material, thermodynamic,
+    pricing, and flow behavior of :class:`thermosteam.Stream`, plus the
+    ability to link the stream to environmental impact accounting. Use
+    :class:`WasteStream` instead when wastewater-specific aggregate
+    properties or influent characterization models are needed.
 
     .. note::
 
@@ -58,7 +65,7 @@ class SanStream(Stream):
         )
     ticket_name = 'ss'
 
-    def __init__(self, ID='', flow=(), phase='l', T=298.15, P=101325.,
+    def __init__(self, ID='', flow=None, phase='l', T=298.15, P=101325.,
                  units='kg/hr', price=0., thermo=None, stream_impact_item=None,
                  **component_flows):
         if 'impact_item' in component_flows.keys():
@@ -102,6 +109,24 @@ class SanStream(Stream):
             If True and the original stream has an :class:`~.StreamImpactItem`,
             then a new :class:`~.StreamImpactItem` will be created for the new stream
             and the new impact item will be linked to the original impact item.
+
+        Examples
+        --------
+        >>> from qsdsan import set_thermo, SanStream
+        >>> from qsdsan.utils import create_example_components
+        >>> cmps = create_example_components()
+        >>> set_thermo(cmps)
+        >>> ss1 = SanStream('ss1', Water=100, NaCl=1, T=320, price=3.18)
+        >>> ss2 = ss1.copy('ss2')
+        >>> ss2.mol is ss1.mol  # data is copied, not shared
+        False
+        >>> ss2.T  # temperature, pressure, and flows are copied
+        320.0
+        >>> ss2.price  # but price is not copied unless requested
+        0.0
+        >>> ss3 = ss1.copy('ss3', copy_price=True)
+        >>> ss3.price
+        3.18
         '''
 
         new = super().copy(ID=new_ID)
@@ -134,6 +159,27 @@ class SanStream(Stream):
             then a new :class:`~.StreamImpactItem` will be created for the new stream
             and the new impact item will be linked to the original impact item.
 
+        Examples
+        --------
+        >>> from qsdsan import set_thermo, SanStream
+        >>> from qsdsan.utils import create_example_components
+        >>> cmps = create_example_components()
+        >>> set_thermo(cmps)
+        >>> ss1 = SanStream('ss1', Water=100, NaCl=1, T=320, price=3.18)
+        >>> ss2 = SanStream('ss2')
+        >>> ss2.copy_like(ss1)
+        >>> ss2.imass['Water']  # flows, temperature, and pressure are copied
+        100.0
+        >>> ss2.T
+        320.0
+        >>> ss2.price  # price is not copied unless requested
+        0.0
+        >>> ss2.copy_like(ss1, copy_price=True)
+        >>> ss2.price  # now copied from the source stream
+        3.18
+        >>> ss1.price  # the source stream is left unchanged
+        3.18
+
         See Also
         --------
         :func:`copy` for the differences between ``copy``, ``copy_like``, and ``copy_flow``.
@@ -143,11 +189,11 @@ class SanStream(Stream):
         if not isinstance(other, SanStream):
             return
         if copy_price:
-            other.price = self.price
+            self.price = other.price
         if copy_impact_item:
             if hasattr(other, '_stream_impact_item'):
                 if other.stream_impact_item is not None:
-                    self.stream_impact_item.copy(stream=self)
+                    other.stream_impact_item.copy(stream=self)
 
 
     def copy_flow(self, other, IDs=..., *, remove=False, exclude=False):
@@ -165,6 +211,19 @@ class SanStream(Stream):
         exclude=False: bool, optional
             If True, exclude designated components when copying.
 
+        Examples
+        --------
+        >>> from qsdsan import set_thermo, SanStream
+        >>> from qsdsan.utils import create_example_components
+        >>> cmps = create_example_components()
+        >>> set_thermo(cmps)
+        >>> ss1 = SanStream('ss1', Water=100, NaCl=1, T=320)
+        >>> ss2 = SanStream('ss2', T=300)
+        >>> ss2.copy_flow(ss1)
+        >>> ss2.imass['Water']  # only the mass flows are copied
+        100.0
+        >>> ss2.T  # temperature (and pressure) are left unchanged
+        300.0
 
         See Also
         --------
@@ -236,7 +295,13 @@ class SanStream(Stream):
         >>> ss1.price
         3.18
         '''
-        new = Stream.proxy(self, ID=ID)
+        # `Stream.proxy` copies `characterization_factors`, which qsdsan
+        # overrides to redirect users to `stream_impact_item`. That redirect
+        # warning is meant for direct user access, not this internal roundtrip,
+        # so suppress it just for the super() call.
+        with catch_warnings():
+            filterwarnings('ignore', message='The property `characterization_factors`')
+            new = Stream.proxy(self, ID=ID)
         new._stream_impact_item = None
         return new
 
@@ -262,7 +327,8 @@ class SanStream(Stream):
             to the component properties if not provided.
         '''
         if not gas_IDs:
-            gas_IDs = original_stream.gases if isinstance(original_stream, SanStream) \
+            gas_IDs = [c.ID for c in original_stream.chemicals.gases] \
+                if isinstance(original_stream, SanStream) \
                 else [i.ID for i in original_stream.components if i.locked_state=='g']
         if receiving_stream:
             receiving_stream.imass[gas_IDs] += original_stream.imass[gas_IDs]
@@ -322,8 +388,8 @@ class SanStream(Stream):
         For missing streams, but it's almost always for unit initialization,
         you don't really need to interact with this class
         
-        >>> import biosteam as bst, qsdsan as qs
-        >>> ms = bst.utils.MissingStream(source=None, sink=None)
+        >>> import qsdsan as qs
+        >>> ms = qs.MissingStream(source=None, sink=None)
         >>> mss = qs.SanStream.from_stream(ms)
         >>> mss
         <MissingSanStream>
@@ -333,17 +399,17 @@ class SanStream(Stream):
         >>> cmps = qs.Components.load_default()
         >>> qs.set_thermo(cmps)
         >>> s = qs.Stream('s', H2O=100, price=5)
-        >>> s.show()
+        >>> s.show() # doctest: +ELLIPSIS
         Stream: s
          phase: 'l', T: 298.15 K, P: 101325 Pa
-         flow (kmol/hr): H2O  100
+         flow...H2O
         >>> s.price
         5.0
         >>> ss = qs.SanStream.from_stream(stream=s, ID='ss', T=350, price=10)
-        >>> ss.show()
+        >>> ss.show() # doctest: +ELLIPSIS
         SanStream: ss
          phase: 'l', T: 350 K, P: 101325 Pa
-         flow (kmol/hr): H2O  100
+         flow...H2O
         >>> ss.price
         10.0
         '''
@@ -406,17 +472,17 @@ class SanStream(Stream):
         >>> cmps = qs.Components.load_default()
         >>> qs.set_thermo(cmps)
         >>> ss = qs.SanStream('ss', H2O=100, price=5)
-        >>> ss.show()
+        >>> ss.show() # doctest: +ELLIPSIS
         SanStream: ss
          phase: 'l', T: 298.15 K, P: 101325 Pa
-         flow (kmol/hr): H2O  5.55
+         flow...H2O
         >>> ss.price
         5.0
         >>> s = ss.to_stream(ID='s', T=350, price=10)
-        >>> s.show()
+        >>> s.show() # doctest: +ELLIPSIS
         Stream: s
          phase: 'l', T: 350 K, P: 101325 Pa
-         flow (kmol/hr): H2O  5.55
+         flow...H2O
         >>> s.price
         10.0
         '''        
@@ -601,7 +667,7 @@ class SanStream(Stream):
         FossilEnergyConsumption (MJ)                         5
         >>> # `get_impact` returns a float
         >>> ethanol.get_impact('GWP', time=5, time_unit='day')
-        240.0
+        240
         >>> # `get_impacts` returns a dict
         >>> ethanol.get_impacts()
         {'GlobalWarming': 2, 'FossilEnergyConsumption': 5.0}

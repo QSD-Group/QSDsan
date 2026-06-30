@@ -1,0 +1,44 @@
+# This workflow keeps package lower bounds aligned with minor/major release bumps.
+
+name: sync-dependency-bounds
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+    paths:
+      - ".github/requirements-release.txt"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    if: ${{ github.actor == 'dependabot[bot]' && github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Dependabot branch
+      uses: actions/checkout@v6
+      with:
+        ref: ${{ github.event.pull_request.head.ref }}
+        repository: ${{ github.event.pull_request.head.repo.full_name }}
+        token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: "3.12"
+    - name: Sync dependency lower bounds
+      run: |
+        python .github/scripts/sync_dependency_lower_bounds.py
+    - name: Commit lower-bound updates
+      run: |
+        if git diff --quiet -- pyproject.toml; then
+          echo "No lower-bound updates needed."
+          exit 0
+        fi
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git add pyproject.toml
+        git commit -m "Update BioSTEAM lower bounds"
+        git push

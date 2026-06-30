@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 320" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <style>
+    .integ    { fill: #1e3a55; stroke: #6fb1ff; stroke-width: 1.6; }
+    .unit     { fill: #1f3b18; stroke: #8ad07b; stroke-width: 1.6; }
+    .stream   { fill: #3b1d2e; stroke: #e89cc8; stroke-width: 1.6; }
+    .heading  { font-size: 16px; font-weight: 600; fill: #ebebeb; }
+    .body     { font-size: 13px; fill: #ebebeb; }
+    .muted    { font-size: 12px; fill: #aaaaaa; }
+    .mono     { font-family: 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace;
+                font-size: 13px; fill: #ebebeb; }
+    .accent   { fill: #6fb1ff; font-style: italic; font-size: 12px; }
+  </style>
+
+  <defs>
+    <marker id="arr-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#6fb1ff"/>
+    </marker>
+    <marker id="arr-gray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#aaaaaa"/>
+    </marker>
+  </defs>
+
+  <!-- Top: integrator -->
+  <rect class="integ" x="290" y="25" width="260" height="70" rx="8" ry="8"/>
+  <text class="heading" x="420" y="55" text-anchor="middle">scipy.integrate.solve_ivp</text>
+  <text class="muted"   x="420" y="78" text-anchor="middle">picks (t, y), asks the system for dy/dt</text>
+
+  <!-- Down arrow: (t, y) -->
+  <line x1="360" y1="100" x2="190" y2="155"
+        stroke="#6fb1ff" stroke-width="1.7" marker-end="url(#arr-blue)"/>
+  <text class="accent" x="240" y="120" text-anchor="middle">(t, y)</text>
+
+  <!-- Up arrow: dy/dt (straight, mirroring the down arrow) -->
+  <line x1="630" y1="155" x2="480" y2="100"
+        stroke="#6fb1ff" stroke-width="1.7" marker-end="url(#arr-blue)"/>
+  <text class="accent" x="580" y="120" text-anchor="middle">dy/dt</text>
+
+  <!-- Bottom row -->
+  <!-- SanUnit A -->
+  <rect class="unit" x="60"  y="155" width="200" height="135" rx="8" ry="8"/>
+  <text class="heading" x="160" y="183" text-anchor="middle">SanUnit A</text>
+  <text class="mono"    x="160" y="212" text-anchor="middle">_compile_ODE</text>
+  <text class="mono"    x="160" y="234" text-anchor="middle">_state, _dstate</text>
+  <text class="muted"   x="160" y="268" text-anchor="middle">updates own state</text>
+  <text class="muted"   x="160" y="282" text-anchor="middle">from y_ins</text>
+
+  <!-- WasteStream -->
+  <rect class="stream" x="310" y="180" width="200" height="85" rx="8" ry="8"/>
+  <text class="heading" x="410" y="208" text-anchor="middle">WasteStream</text>
+  <text class="mono"    x="410" y="237" text-anchor="middle">.state, .dstate</text>
+
+  <!-- SanUnit B -->
+  <rect class="unit" x="560" y="155" width="200" height="135" rx="8" ry="8"/>
+  <text class="heading" x="660" y="183" text-anchor="middle">SanUnit B</text>
+  <text class="mono"    x="660" y="212" text-anchor="middle">_compile_AE</text>
+  <text class="mono"    x="660" y="234" text-anchor="middle">_state, _dstate</text>
+  <text class="muted"   x="660" y="268" text-anchor="middle">reads y_ins from</text>
+  <text class="muted"   x="660" y="282" text-anchor="middle">upstream</text>
+
+  <!-- Horizontal arrows: unit -> stream -> unit -->
+  <line x1="263" y1="222" x2="307" y2="222"
+        stroke="#aaaaaa" stroke-width="1.6" marker-end="url(#arr-gray)"/>
+  <text class="accent" x="285" y="216" text-anchor="middle">_update_state</text>
+
+  <line x1="513" y1="222" x2="557" y2="222"
+        stroke="#aaaaaa" stroke-width="1.6" marker-end="url(#arr-gray)"/>
+  <text class="accent" x="535" y="216" text-anchor="middle">y_ins</text>
+</svg>

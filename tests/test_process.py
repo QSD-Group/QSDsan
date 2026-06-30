@@ -3,6 +3,7 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
+
     Joy Zhang <joycheung1994@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
@@ -12,10 +13,10 @@ for license details.
 
 
 
-__all__ = ('test_process',)
+__all__ = ('test_process', 'test_kinetic_reaction')
 
 def test_process():
-    import pytest, os, qsdsan.processes as pc
+    import pytest, os, qsdsan.process_models as pc
     from sympy import symbols, Eq
     from sympy.parsing.sympy_parser import parse_expr
     from math import isclose
@@ -114,10 +115,158 @@ def test_process():
     assert p12 in asm2d
     assert set(asm2d.parameters.keys()) == set(params)
 
+    # `load_from_file` accepts `conserved_for` as a dict for per-process rules.
+    # Listed process IDs get their dict value; unlisted IDs fall back to the
+    # function's default tuple ('COD', 'N', 'P', 'charge').
+    partial_rules = {'aero_hydrolysis': ('COD', 'N')}
+    asm2d_partial = Processes.load_from_file(
+        path,
+        conserved_for=partial_rules,
+        parameters=params,
+        compile=False,
+    )
+    partial_by_id = {p.ID: p for p in asm2d_partial}
+    assert partial_by_id['aero_hydrolysis'].conserved_for == ('COD', 'N')
+    other_ids = [pid for pid in partial_by_id if pid != 'aero_hydrolysis']
+    assert other_ids, 'expected more than one process in the file'
+    assert all(partial_by_id[pid].conserved_for == ('COD', 'N', 'P', 'charge')
+               for pid in other_ids)
+
+    # `load_from_file` also reads a `conserved_for` column from the data file.
+    # Build a minimal table in-memory so the test doesn't depend on a fixture.
+    import pandas as pd
+    rxn_df = pd.DataFrame(
+        {
+            'S_F':           {'p_only_cod':  1.0, 'p_cod_n':     1.0, 'p_no_col':    1.0},
+            'X_S':           {'p_only_cod': -1.0, 'p_cod_n':    -1.0, 'p_no_col':   -1.0},
+            'conserved_for': {'p_only_cod': 'COD', 'p_cod_n': 'COD,N', 'p_no_col':    ''},
+            'rate':          {'p_only_cod': 'k1*X_S', 'p_cod_n': 'k2*X_S', 'p_no_col': 'k3*X_S'},
+        }
+    )
+    file_loaded = Processes.load_from_file(
+        data=rxn_df,
+        conserved_for=None,
+        parameters=('k1', 'k2', 'k3'),
+        compile=False,
+    )
+    by_id = {p.ID: p for p in file_loaded}
+    assert by_id['p_only_cod'].conserved_for == ('COD',)
+    assert by_id['p_cod_n'].conserved_for == ('COD', 'N')
+    # Empty cell parses as no enforcement.
+    assert by_id['p_no_col'].conserved_for == ()
+    # The `conserved_for` column is consumed and does not appear as a stoichiometry component.
+    assert 'conserved_for' not in by_id['p_cod_n'].stoichiometry
+
+    # Kwarg-dict overrides the file column for the listed process.
+    file_with_override = Processes.load_from_file(
+        data=rxn_df,
+        conserved_for={'p_only_cod': ('COD', 'N')},
+        parameters=('k1', 'k2', 'k3'),
+        compile=False,
+    )
+    by_id2 = {p.ID: p for p in file_with_override}
+    assert by_id2['p_only_cod'].conserved_for == ('COD', 'N')  # kwarg wins
+    assert by_id2['p_cod_n'].conserved_for == ('COD', 'N')     # file column kept
+
+    # `conserved_for` is required (keyword-only, no default).
+    with pytest.raises(TypeError, match='conserved_for'):
+        Processes.load_from_file(data=rxn_df, parameters=('k1', 'k2', 'k3'),
+                                 compile=False)
+
+    # `dynamic_parameters` is a public accessor for `_dyn_params`; empty when
+    # all parameters are static, and shared between a process and the
+    # CompiledProcesses it belongs to.
+    assert p1.dynamic_parameters == {}
+    assert asm2d.dynamic_parameters == {}
+    assert p12.dynamic_parameters is asm2d.dynamic_parameters
+
+    @p1.dynamic_parameter(symbol='f_SI', params={})
+    def _f_SI_eval(state_arr, params):
+        return 0.0
+    assert 'f_SI' in p1.dynamic_parameters
+    assert p1.dynamic_parameters['f_SI'] is p1._dyn_params['f_SI']
+
     pc.create_adm1_cmps()
     pc.create_asm1_cmps()
     pc.create_asm2d_cmps()
         
 
+def test_kinetic_reaction():
+    import pytest
+    import qsdsan as qs
+    from math import log, isclose
+    from qsdsan.process_models import KineticReaction as KRxn
+
+    gas_kwargs = dict(phase='g', particle_size='Dissolved gas',
+                      degradability='Undegradable', organic=False)
+    SO2Cl2 = qs.Component('SO2Cl2', **gas_kwargs)
+    SO2    = qs.Component('SO2',    **gas_kwargs)
+    Cl2    = qs.Component('Cl2',    **gas_kwargs)
+    qs.set_thermo(qs.Components((SO2Cl2, SO2, Cl2)))
+
+    # --- first-order reaction ---
+    rxn1 = KRxn('SO2Cl2', n=1, k=2.2e-5, t=1e5, reaction='SO2Cl2 -> SO2 + Cl2')
+    assert rxn1.n == 1
+    assert rxn1.k == 2.2e-5
+    assert rxn1.t == 1e5
+    assert rxn1.C0 is None  # not yet set
+
+    s1 = qs.Stream('s1_kr', SO2Cl2=100, SO2=10, Cl2=5)
+    rxn1(s1)
+    assert isclose(rxn1.X, 1 - pow(2.71828, -2.2e-5 * 1e5), rel_tol=1e-3)
+
+    hl = rxn1.half_life
+    assert isclose(hl, log(2) / 2.2e-5, rel_tol=1e-6)
+
+    assert rxn1.rate_equation is not None
+    assert rxn1.integrated_rate_equation is not None
+
+    # --- property setters re-calculate X when C0 is already set ---
+    rxn1.k = 3.0e-5   # triggers k.setter recalc branch
+    rxn1.t = 2e5      # triggers t.setter recalc branch
+    rxn1.n = 1        # same value; exercises n.setter without changing
+
+    # --- second-order reaction: C0 must be positive at construction for n!=1 ---
+    rxn2 = KRxn('SO2Cl2', n=2, k=1e-3, t=100,
+                reaction='SO2Cl2 -> SO2 + Cl2', C0=1.0)
+    s2 = qs.Stream('s2_kr', SO2Cl2=50, SO2=5, Cl2=5)
+    rxn2(s2)   # __call__ updates C0 from stream concentration
+    assert 0 < rxn2.X < 1
+    assert rxn2.half_life > 0
+    assert rxn2.integrated_rate_equation is not None
+
+    # C0 <= 0 raises ValueError (exercises C0.setter error branch)
+    with pytest.raises(ValueError, match='C0'):
+        rxn2.C0 = -1
+
+    # --- zeroth-order reaction: test properties without stream call ---
+    # (stream call requires k*t < C0(stream) to stay under 100% conversion;
+    #  we just need to cover the n=0 branch of integrated_rate_equation)
+    rxn0 = KRxn('SO2Cl2', n=0, k=5e-4, t=500,
+                reaction='SO2Cl2 -> SO2 + Cl2', C0=1.0)
+    assert rxn0.integrated_rate_equation is not None  # covers n=0 branch: C0 - k*t
+    assert rxn0.half_life > 0
+
+    # half_life guard: n!=1 with falsy C0
+    rxn_hl = KRxn('SO2Cl2', n=2, k=1e-3, t=100,
+                  reaction='SO2Cl2 -> SO2 + Cl2', C0=2.0)
+    rxn_hl._C0 = None  # bypass setter to put C0 in falsy state
+    with pytest.raises(ValueError, match='C0'):
+        _ = rxn_hl.half_life
+
+    # --- constructor error cases ---
+    with pytest.raises(ValueError, match='basis'):
+        KRxn('SO2Cl2', n=1, k=1e-3, t=100,
+             reaction='SO2Cl2 -> SO2 + Cl2', basis='mass')
+
+    with pytest.raises(ValueError, match='single-phase'):
+        KRxn('SO2Cl2', n=1, k=1e-3, t=100,
+             reaction='SO2Cl2 -> SO2 + Cl2', phases=('g', 'l'))
+
+    with pytest.raises(ValueError, match='non-negative integer'):
+        KRxn('SO2Cl2', n=1.5, k=1e-3, t=100, reaction='SO2Cl2 -> SO2 + Cl2')
+
+
 if __name__ == '__main__':
     test_process()
+    test_kinetic_reaction()

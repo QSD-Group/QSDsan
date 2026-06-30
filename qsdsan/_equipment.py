@@ -5,6 +5,7 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
+
     Yalin Li <mailto.yalin.li@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
@@ -15,11 +16,8 @@ for license details.
 
 # %%
 
-try: from biosteam.utils import NotImplementedMethod
-except:
-    from biosteam.utils import AbstractMethod
-    NotImplementedMethod = AbstractMethod
 from thermosteam.utils import registered
+from ._compat import NotImplementedMethod
 from .utils import (auom, register_with_prefix)
 
 __all__ = ('Equipment',)
