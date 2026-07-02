@@ -1003,10 +1003,10 @@ G2RT_homogenizer_path = ospath.join(g2rt_su_data_path, '_g2rt_homogenizer.csv')
 @price_ratio()
 class G2RThomogenizer(Copier):
     '''
-    Homogenizer and buffer tanks in generation II reinveted toilets to  break 
+    Homogenizer and buffer tanks in generation II reinveted toilets to  break
     up solids [1].
-    
-    .. note:
+
+    .. note::
 
         This is a non-reactive unit (i.e., the effluent is copied from the influent)
 
@@ -2023,10 +2023,10 @@ g2rt_solids_separation_path = ospath.join(g2rt_su_data_path, '_g2rt_solids_separ
 class G2RTSolidsSeparation(SanUnit):
     '''
     Solids separation unit in generation II reinveted toilets as a frontend separator [1].
-    
-    .. note:
 
-    Non-reactive. Moisture content of the effluent solid is adjusted to be 99% [2].
+    .. note::
+
+        Non-reactive. Moisture content of the effluent solid is adjusted to be 99% [2].
 
     The following components should be included in system thermo object for simulation:
     H2O
@@ -2181,11 +2181,11 @@ g2rt_belt_separation_path = ospath.join(g2rt_su_data_path, '_g2rt_belt_separatio
 class G2RTBeltSeparation(SanUnit):
     '''
     Belt separation unit in generation II reinveted toilets before the buffer tank [1].
-    
-    .. note:
 
-    Non-reactive. Moisture content of the effluent solid is adjusted to be 96-99% [2].
-    The solids in the liquid stream influent is partially transferred to the solids effluent.
+    .. note::
+
+        Non-reactive. Moisture content of the effluent solid is adjusted to be 96-99% [2].
+        The solids in the liquid stream influent is partially transferred to the solids effluent.
 
     The following components should be included in system thermo object for simulation:
     H2O, OtherSS.

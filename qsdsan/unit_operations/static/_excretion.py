@@ -341,6 +341,7 @@ class Excretion(SanUnit):
         (N, P, K) that is wasted.
 
         .. note::
+
             Not considered for Mg and Ca.
         '''
         return self._waste_ratio
