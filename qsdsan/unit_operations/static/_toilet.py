@@ -27,7 +27,7 @@ from ... import SanUnit, WasteStream, Construction
 from ...process_models import Decay
 from ...utils import ospath, load_data, data_path, dct_from_str, price_ratio
 
-__all__ = ('Toilet', 'MURT', 'PitLatrine', 'UDDT', )
+__all__ = ('Toilet', 'ReinventedToilet', 'MURT', 'SURT', 'PitLatrine', 'UDDT', )
 
 
 # %%
@@ -151,15 +151,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
         N_tot_user = self.N_tot_user or self.N_toilet*self.N_user
         for i in self.outs:
             if not i.F_mass == 0:
-                i.F_mass *= N_tot_user  
-                # try:
-                #     with np.errstate(over='raise'):
-                #         i.F_mass *= N_tot_user  
-                # except FloatingPointError:
-                #     print("Overflow detected. Force RO permeate to be constant.")
-                #     self.ins[5].imass['H2O'] = 0.302
-                #     i.F_mass *= N_tot_user  
-                #     breakpoint()
+                i.F_mass *= N_tot_user
 
     def _cost(self):
         self.baseline_purchase_costs['Total toilets'] = self.CAPEX * self.N_toilet * self.price_ratio
@@ -351,9 +343,176 @@ class Toilet(SanUnit, Decay, isabstract=True):
 # %%
 
 murt_path = ospath.join(data_path, 'sanunit_data/_murt.tsv')
+surt_path = ospath.join(data_path, 'sanunit_data/g2rt/_surt.csv')
+# G2RT-specific flushing-water usage that SURT needs but isn't yet part of
+# Toilet's own `_toilet.tsv` (the rest of SURT's usage assumptions match Toilet's defaults)
+g2rt_flushing_water_path = ospath.join(data_path, 'sanunit_data/g2rt/_g2rt_toilet.csv')
+
+class ReinventedToilet(Toilet):
+    '''
+    Abstract parent class for "reinvented toilet" designs with a ceramic
+    squatting pan + urinal front end, aerobic MCF/N2O decay kinetics, and a
+    standard front-end costing scheme. Shared by :class:`~.MURT` and
+    :class:`~.SURT`, which only need to supply `_data_path` (their own full
+    parameter data file) and their own `_run` (which must end by calling
+    `_run_degradation`).
+
+    See Also
+    --------
+    :class:`~.MURT`
+    :class:`~.SURT`
+    '''
+    _N_outs = 3
+    _units = {
+        'Collection period': 'd',
+        }
+    _data_path = None  # set by subclasses
+
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
+                 degraded_components=('OtherSS',), N_user=1, N_tot_user=1,
+                 N_toilet=None, if_toilet_paper=True, if_flushing=True, if_cleansing=False,
+                 if_desiccant=True, if_air_emission=True, if_ideal_emptying=True,
+                 CAPEX=0, OPEX_over_CAPEX=0, lifetime=10,
+                 N_squatting_pan_per_toilet=1, N_urinal_per_toilet=1,
+                 if_include_front_end=True, **kwargs):
+
+        Toilet.__init__(
+            self, ID, ins, outs, thermo=thermo, init_with=init_with,
+            degraded_components=degraded_components,
+            N_user=N_user, N_tot_user=N_tot_user, N_toilet=N_toilet,
+            if_toilet_paper=if_toilet_paper, if_flushing=if_flushing,
+            if_cleansing=if_cleansing, if_desiccant=if_desiccant,
+            if_air_emission=if_air_emission, if_ideal_emptying=if_ideal_emptying,
+            CAPEX=CAPEX, OPEX_over_CAPEX=OPEX_over_CAPEX
+            )
+        self.N_squatting_pan_per_toilet = N_squatting_pan_per_toilet
+        self.N_urinal_per_toilet = N_urinal_per_toilet
+        self.if_include_front_end = if_include_front_end
+        self._mixed_in = WasteStream(f'{self.ID}_mixed_in')
+
+        data = load_data(path=self._data_path)
+        for para in data.index:
+            value = float(data.loc[para]['expected'])
+            setattr(self, para, value)
+        del data
+
+        for attr, value in kwargs.items():
+            setattr(self, attr, value)
+
+    def _init_lca(self):
+        self.construction = [
+            Construction(item='Ceramic', linked_unit=self, quantity_unit='kg'),
+            Construction(item='Fan', linked_unit=self, quantity_unit='kg'),
+        ]
+
+    def _run_degradation(self):
+        mixed_out, CH4, N2O = self.outs
+        CH4.phase = N2O.phase = 'g'
+
+        mixed_in = self._mixed_in
+        mixed_in.mix_from(self.ins)
+        tot_COD_kg = sum(float(getattr(i, 'COD')) * i.F_vol for i in self.ins) / 1e3
+
+        # Air emission
+        if self.if_air_emission:
+            # N loss due to ammonia volatilization
+            NH3_rmd, NonNH3_rmd = \
+                self.allocate_N_removal(mixed_in.TN/1e3*mixed_in.F_vol*self.N_volatilization,
+                                        mixed_in.imass['NH3'])
+            mixed_in.imass['NH3'] -= NH3_rmd
+            mixed_in.imass['NonNH3'] -= NonNH3_rmd
+
+            # Energy/N loss due to degradation
+            mixed_in._COD = tot_COD_kg * 1e3 / mixed_in.F_vol # accounting for COD loss in leachate
+            Decay._first_order_run(self, waste=mixed_in, treated=mixed_out, CH4=CH4, N2O=N2O)
+        else:
+            mixed_out.copy_like(mixed_in)
+            CH4.empty()
+            N2O.empty()
+
+        # Aquatic emission when not ideally emptied
+        if not self.if_ideal_emptying:
+           self.get_emptying_emission(
+                waste=mixed_out, CH4=CH4, N2O=N2O,
+                empty_ratio=self.empty_ratio,
+                CH4_factor=self.COD_max_decay*self.MCF_aq*self.max_CH4_emission,
+                N2O_factor=self.N2O_EF_decay*44/28)
+        self._scale_up_outs()
+
+    def _design(self):
+        design = self.design_results
+        constr = self.construction
+        if self.if_include_front_end:
+            design['Number of users per toilet'] = self.N_user
+            design['Parallel toilets'] = N = self.N_toilet
+            design['Collection period'] = self.collection_period
+            design['Ceramic'] = Ceramic_quant = (
+                self.squatting_pan_weight * self.N_squatting_pan_per_toilet+
+                self.urinal_weight * self.N_urinal_per_toilet
+                )
+            design['Fan'] = Fan_quant = 1  # assume fan quantity is 1
+            constr[0].quantity = Ceramic_quant * N
+            constr[1].quantity = Fan_quant * N
+            self.add_construction(add_cost=False)
+        else:
+            design.clear()
+            for i in constr: i.quantity = 0
+
+
+    def _cost(self):
+        C = self.baseline_purchase_costs
+        if self.if_include_front_end:
+            N_toilet = self.N_toilet
+            C['Ceramic Toilets'] = (
+                self.squatting_pan_cost * self.N_squatting_pan_per_toilet +
+                self.urinal_cost * self.N_urinal_per_toilet
+                ) * N_toilet
+            C['Fan'] = self.fan_cost * N_toilet
+            C['Misc. parts'] = (
+                self.led_cost +
+                self.anticor_floor_cost +
+                self.circuit_change_cost +
+                self.pipe_cost
+                ) * N_toilet
+
+            ratio = self.price_ratio
+            for equipment, cost in C.items():
+                C[equipment] = cost * ratio
+        else:
+            self.baseline_purchase_costs.clear()
+
+        sum_purchase_costs = sum(v for v in C.values())
+        self.add_OPEX = (
+            self._calc_replacement_cost() +
+            self._calc_maintenance_labor_cost() +
+            sum_purchase_costs * self.OPEX_over_CAPEX / (365 * 24)
+            )
+
+    def _calc_replacement_cost(self):
+        return 0
+
+    def _calc_maintenance_labor_cost(self):
+        return 0
+
+    @property
+    def collection_period(self):
+        '''[float] Time interval between storage tank collection, [d].'''
+        return self._collection_period
+    @collection_period.setter
+    def collection_period(self, i):
+        self._collection_period = float(i)
+
+    @property
+    def tau(self):
+        '''[float] Retention time of the unit, same as `collection_period`.'''
+        return self.collection_period
+    @tau.setter
+    def tau(self, i):
+        self.collection_period = i
+
 
 @price_ratio()
-class MURT(Toilet):
+class MURT(ReinventedToilet):
     '''
     Multi-unit reinvented toilet.
 
@@ -402,157 +561,84 @@ class MURT(Toilet):
 
     See Also
     --------
-    :class:`qsdsan.unit_operations.Toilet`
+    :class:`~.ReinventedToilet`
     '''
-    _N_outs = 3
-    _units = {
-        'Collection period': 'd',
-        }
-
-    def __init__(self, ID='', ins=None, outs=(), thermo=None, init_with='WasteStream',
-                 degraded_components=('OtherSS',), N_user=1, N_tot_user=1,
-                 N_toilet=None, if_toilet_paper=True, if_flushing=True, if_cleansing=False,
-                 if_desiccant=True, if_air_emission=True, if_ideal_emptying=True,
-                 CAPEX=0, OPEX_over_CAPEX=0, lifetime=10,
-                 N_squatting_pan_per_toilet=1, N_urinal_per_toilet=1,
-                 if_include_front_end=True, **kwargs):
-
-        Toilet.__init__(
-            self, ID, ins, outs, thermo=thermo, init_with=init_with,
-            degraded_components=degraded_components,
-            N_user=N_user, N_tot_user=N_tot_user, N_toilet=N_toilet,
-            if_toilet_paper=if_toilet_paper, if_flushing=if_flushing,
-            if_cleansing=if_cleansing, if_desiccant=if_desiccant,
-            if_air_emission=if_air_emission, if_ideal_emptying=if_ideal_emptying,
-            CAPEX=CAPEX, OPEX_over_CAPEX=OPEX_over_CAPEX
-            )
-        self.N_squatting_pan_per_toilet = N_squatting_pan_per_toilet
-        self.N_urinal_per_toilet = N_urinal_per_toilet
-        self.if_include_front_end = if_include_front_end
-        self._mixed_in = WasteStream(f'{self.ID}_mixed_in')
-
-        data = load_data(path=murt_path)
-        for para in data.index:
-            value = float(data.loc[para]['expected'])
-            setattr(self, para, value)
-        del data
-
-        for attr, value in kwargs.items():
-            setattr(self, attr, value)
-
-    def _init_lca(self):
-        self.construction = [
-            Construction(item='Ceramic', linked_unit=self, quantity_unit='kg'),
-            Construction(item='Fan', linked_unit=self, quantity_unit='kg'),
-        ]
-
+    _data_path = murt_path
 
     def _run(self):
         Toilet._run(self)
-        mixed_out, CH4, N2O = self.outs
-        CH4.phase = N2O.phase = 'g'
-
-        mixed_in = self._mixed_in
-        mixed_in.mix_from(self.ins)
-        tot_COD_kg = sum(float(getattr(i, 'COD')) * i.F_vol for i in self.ins) / 1e3
-        # breakpoint()
-        # Air emission
-        if self.if_air_emission:
-            # N loss due to ammonia volatilization
-            NH3_rmd, NonNH3_rmd = \
-                self.allocate_N_removal(mixed_in.TN/1e3*mixed_in.F_vol*self.N_volatilization,
-                                        mixed_in.imass['NH3'])
-            mixed_in.imass ['NH3'] -= NH3_rmd
-            mixed_in.imass['NonNH3'] -= NonNH3_rmd
-            
-            # Energy/N loss due to degradation
-            mixed_in._COD = tot_COD_kg * 1e3 / mixed_in.F_vol # accounting for COD loss in leachate
-            Decay._first_order_run(self, waste=mixed_in, treated=mixed_out, CH4=CH4, N2O=N2O)
-        else:
-            mixed_out.copy_like(mixed_in)
-            CH4.empty()
-            N2O.empty()
-            
-        # Aquatic emission when not ideally emptied
-        if not self.if_ideal_emptying:
-           self.get_emptying_emission(
-                waste=mixed_out, CH4=CH4, N2O=N2O,
-                empty_ratio=self.empty_ratio,
-                CH4_factor=self.COD_max_decay*self.MCF_aq*self.max_CH4_emission,
-                N2O_factor=self.N2O_EF_decay*44/28)
-        self._scale_up_outs()
+        self._run_degradation()
 
 
-    def _design(self):
-        design = self.design_results
-        constr = self.construction
-        if self.if_include_front_end:
-            design['Number of users per toilet'] = self.N_user
-            design['Parallel toilets'] = N = self.N_toilet
-            design['Collection period'] = self.collection_period
-            design['Ceramic'] = Ceramic_quant = (
-                self.squatting_pan_weight * self.N_squatting_pan_per_toilet+
-                self.urinal_weight * self.N_urinal_per_toilet
-                )
-            design['Fan'] = Fan_quant = 1  # assume fan quantity is 1
-            constr[0].quantity = Ceramic_quant * N
-            constr[1].quantity = Fan_quant * N
-            self.add_construction(add_cost=False)
-        else:
-            design.clear()
-            for i in constr: i.quantity = 0
-            
+@price_ratio()
+class SURT(ReinventedToilet):
+    '''
+    Single-unit reinvented toilet -- a single-unit variant of the reinvented
+    toilet design (see :class:`~.MURT`) with its own `collection_period` and
+    G2RT-specific flushing-water usage. Unlike MURT, flushing water is
+    pre-mixed upstream (e.g. by EXPOsan g2rt's `FWMixer`) rather than
+    provided as a toilet inlet, so only urine, feces, and toilet paper are
+    toilet inlets here.
 
-    def _cost(self):
-        C = self.baseline_purchase_costs
-        if self.if_include_front_end:
-            N_toilet = self.N_toilet
-            C['Ceramic Toilets'] = (
-                self.squatting_pan_cost * self.N_squatting_pan_per_toilet +
-                self.urinal_cost * self.N_urinal_per_toilet
-                ) * N_toilet
-            C['Fan'] = self.fan_cost * N_toilet
-            C['Misc. parts'] = (
-                self.led_cost +
-                self.anticor_floor_cost +
-                self.circuit_change_cost +
-                self.pipe_cost
-                ) * N_toilet
+    The following components should be included in system thermo object for simulation:
+    Tissue, WoodAsh, H2O, NH3, NonNH3, P, K, Mg, CH4, N2O.
 
-            ratio = self.price_ratio
-            for equipment, cost in C.items():
-                C[equipment] = cost * ratio
-        else:
-            self.baseline_purchase_costs.clear()
+    The following impact items should be pre-constructed for life cycle assessment:
+    Ceramic, Fan.
 
-        sum_purchase_costs = sum(v for v in C.values())
-        self.add_OPEX = (
-            self._calc_replacement_cost() +
-            self._calc_maintenance_labor_cost() +
-            sum_purchase_costs * self.OPEX_over_CAPEX / (365 * 24)
-            )
+    Parameters
+    ----------
+    ins : Iterable(stream)
+        waste_in: mixed excreta.
+    Outs : Iterable(stream)
+        waste_out: degraded mixed excreta.
+        CH4: fugitive CH4.
+        N2O: fugitive N2O.
+    N_squatting_pan_per_toilet : int
+        The number of squatting pan per toilet.
+    N_urinal_per_toilet : int
+        The number of urinals per toilet.
+    if_include_front_end : bool
+        If False, will not consider the capital and operating costs of this unit.
 
-    def _calc_replacement_cost(self):
-        return 0
+    Examples
+    --------
+    >>> from qsdsan.utils import create_example_sanitation_components
+    >>> cmps = create_example_sanitation_components()
+    >>> from qsdsan import System
+    >>> from qsdsan.unit_operations import Excretion, SURT
+    >>> U1 = Excretion('U1')
+    >>> # The decay rate constants and max CH4 emission are not loaded by
+    >>> # default; set them so the degradation calculation can run.
+    >>> U2 = SURT('U2', ins=(U1-0, U1-1, 'toilet_paper'),
+    ...           outs=('mixed', 'CH4', 'N2O'),
+    ...           decay_k_COD=3, decay_k_N=3, max_CH4_emission=0.25,
+    ...           N_user=4, N_tot_user=400)
+    >>> sys = System('sys', path=(U1, U2))
+    >>> sys.simulate()
+    >>> U2.N_toilet  # ceil(N_tot_user/N_user)
+    100
 
-    def _calc_maintenance_labor_cost(self):
-        return 0
+    See `g2rt systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/g2rt/systems.py>`_
+    for use in a complete sanitation system.
 
-    @property
-    def collection_period(self):
-        '''[float] Time interval between storage tank collection, [d].'''
-        return self._collection_period
-    @collection_period.setter
-    def collection_period(self, i):
-        self._collection_period = float(i)
-        
-    @property
-    def tau(self):
-        '''[float] Retention time of the unit, same as `collection_period`.'''
-        return self.collection_period
-    @tau.setter
-    def tau(self, i):
-        self.collection_period = i
+    See Also
+    --------
+    :class:`~.MURT`
+    '''
+    _ins_size_is_fixed = False
+    _data_path = surt_path
+
+    def __init__(self, *args, **kwargs):
+        ReinventedToilet.__init__(self, *args, **kwargs)
+        data = load_data(path=g2rt_flushing_water_path)
+        self._flushing_water = float(data.loc['flushing_water']['expected'])
+        del data
+
+    def _run(self):
+        ur, fec, tp = self.ins
+        tp.imass['Tissue'] = int(self.if_toilet_paper)*self.toilet_paper
+        self._run_degradation()
 
 
 # %%
