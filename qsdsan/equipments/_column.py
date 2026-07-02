@@ -11,6 +11,7 @@ This module is developed by:
     Yalin Li <mailto.yalin.li@gmail.com>
 
     Anna Kogler <akogler@stanford.edu>
+    
     Zixuan Wang <wyatt4428@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
