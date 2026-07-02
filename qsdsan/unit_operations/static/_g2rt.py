@@ -53,13 +53,16 @@ __all__ = ('FWMixer',
 
 #%%
 mscwo_gas_module_path = ospath.join(g2rt_su_data_path, '_mscwo_gas_handling_module.csv')
+
+#TODO: update O2, N2, CO2
+
 @price_ratio()
 class mSCWOGasModule(IsothermalCompressor):
     '''
     Gas handling unit that consisted of compressors and an injection pressure vessel
     
     The following components should be included in system thermo object for simulation:
-    O2, N2, CO2  #TODO: update
+    O2, N2, CO2  
 
     The following impact items should be pre-constructed for life cycle assessment:
     Compressor_4kW, Compressor_300kW, StainlessSteel
@@ -1259,15 +1262,17 @@ class VolumeReductionFilterPress(SanUnit):
 #%%
 vr_concentrator_path = ospath.join(g2rt_su_data_path, '_vr_concentrator.csv')
 
+#TODO: consider installing a heat exchanger to receive heat from pasteurization.
+
 @price_ratio()
 class VRConcentrator(SanUnit): 
     '''
-    This concentrator unit is used in solids treatmnet in volume reduction 
+    This concentrator unit is used in solids treatmnet in volume reduction
     generation II reinveted toilet [1]. The heat source is from a heating coil.
-#TODO: consider installing a heat exchange to receive heat from pasteurization.
+
     The following components should be included in system thermo object for simulation:
-    H2O, N, CH4, N2O.
-    
+    H2O, N, CH4, NH3, N2O.
+
     The following impact items should be pre-constructed for life cycle assessment:
     StainlessSteel, HeatingUnit, ElectricMotor, Pump, Polyethylene.
 
@@ -1277,8 +1282,9 @@ class VRConcentrator(SanUnit):
         RO reject liquid.
     outs : Iterable(stream)
         Condensed effluent, recirculation water, fugitive N2O, fugitive CH4, fugitive NH3, water vapor
-    excess_water_recirculate_ratio: float, optional, 0 to 1
+    excess_water_recirculate_ratio : float, optional, 0 to 1
         fraction of excess water that recirculates to ultrafiltration. Defaults to 1.
+
     Warnings
     --------
     Energy balance is not performed for this unit.
@@ -1662,12 +1668,15 @@ class G2RTSolidsTank(Copier):
 
 #%%
 vr_drying_tunnel_path = ospath.join(g2rt_su_data_path, '_vr_dryingtunnel.csv')
+
+#TODO: consider installing a heat exchanger to receive heat from pasteurization.
+
 @price_ratio()
 class VRdryingtunnel(SanUnit):
     '''
     This drying tunnel unit is used to produce solids cakes in volume reduction 
     generation II reinveted toilet [1]. The heat source is from a heating coil.
-    #TODO: consider installing a heat exchange to receive heat from pasteurization.
+    
     The following components should be included in system thermo object for simulation:
     H2O, N, CH4, N2O.
     
