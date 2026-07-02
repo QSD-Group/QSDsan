@@ -23,7 +23,10 @@ from ._eco_san import (
     EcoSanAerobic, EcoSanAnaerobic, EcoSanAnoxic, EcoSanBioCost,
     EcoSanECR, EcoSanMBR, EcoSanPrimary, EcoSanSolar, EcoSanSystem,
 )
-from ._electrochemical_cell import ElectrochemicalCell
+from ._electrochemical_cell import (
+    ElectrochemicalCell, ESAPRecovery, ESAPEffluent, ESAP,
+    ElectrochemicalStrippingAdsorptionPrecipitation,
+)
 from ._excretion import Excretion, ExcretionmASM2d
 from ._g2rt import (
     FWMixer, G2RTBeltSeparation, G2RTControls, G2RTExcretion,
@@ -75,7 +78,8 @@ __all__ = (
     'CropApplication',
     'EcoSanAerobic', 'EcoSanAnaerobic', 'EcoSanAnoxic', 'EcoSanBioCost',
     'EcoSanECR', 'EcoSanMBR', 'EcoSanPrimary', 'EcoSanSolar', 'EcoSanSystem',
-    'ElectrochemicalCell',
+    'ElectrochemicalCell', 'ESAPRecovery', 'ESAPEffluent', 'ESAP',
+    'ElectrochemicalStrippingAdsorptionPrecipitation',
     'Excretion', 'ExcretionmASM2d',
     'FWMixer', 'G2RTBeltSeparation', 'G2RTControls', 'G2RTExcretion',
     'G2RThomogenizer', 'G2RTHousing', 'G2RTLiquidsTank', 'G2RTReverseOsmosis',
