@@ -25,6 +25,14 @@ from ._eco_san import (
 )
 from ._electrochemical_cell import ElectrochemicalCell
 from ._excretion import Excretion, ExcretionmASM2d
+from ._g2rt import (
+    FWMixer, G2RTBeltSeparation, G2RTControls, G2RTExcretion,
+    G2RThomogenizer, G2RTHousing, G2RTLiquidsTank, G2RTReverseOsmosis,
+    G2RTSolidsSeparation, G2RTSolidsTank, G2RTUltrafiltration,
+    mSCWOConcentratorModule, mSCWOGasModule, mSCWOReactorModule,
+    UFMixer, VolumeReductionCombustor, VolumeReductionFilterPress,
+    VRConcentrator, VRdryingtunnel, VRpasteurization,
+)
 from ._hydroprocessing import Hydrocracking, Hydrotreating
 from ._hydrothermal import CatalyticHydrothermalGasification, HydrothermalLiquefaction
 from ._internal_circulation_rx import InternalCirculationRx
@@ -48,7 +56,7 @@ from ._sludge_thickening import (
     SludgeThickening, BeltThickener, SludgeCentrifuge, SludgeSeparator,
 )
 from ._sludge_treatment import Thickener, Centrifuge, Incinerator
-from ._toilet import Toilet, MURT, PitLatrine, UDDT
+from ._toilet import Toilet, ReinventedToilet, MURT, SURT, PitLatrine, UDDT
 from ._treatment_bed import DryingBed, LiquidTreatmentBed
 from ._trucking import Trucking
 
@@ -69,6 +77,12 @@ __all__ = (
     'EcoSanECR', 'EcoSanMBR', 'EcoSanPrimary', 'EcoSanSolar', 'EcoSanSystem',
     'ElectrochemicalCell',
     'Excretion', 'ExcretionmASM2d',
+    'FWMixer', 'G2RTBeltSeparation', 'G2RTControls', 'G2RTExcretion',
+    'G2RThomogenizer', 'G2RTHousing', 'G2RTLiquidsTank', 'G2RTReverseOsmosis',
+    'G2RTSolidsSeparation', 'G2RTSolidsTank', 'G2RTUltrafiltration',
+    'mSCWOConcentratorModule', 'mSCWOGasModule', 'mSCWOReactorModule',
+    'UFMixer', 'VolumeReductionCombustor', 'VolumeReductionFilterPress',
+    'VRConcentrator', 'VRdryingtunnel', 'VRpasteurization',
     'Hydrocracking', 'Hydrotreating',
     'CatalyticHydrothermalGasification', 'HydrothermalLiquefaction',
     'InternalCirculationRx',
@@ -88,7 +102,7 @@ __all__ = (
     'SludgePasteurization',
     'SludgeThickening', 'BeltThickener', 'SludgeCentrifuge', 'SludgeSeparator',
     'Thickener', 'Centrifuge', 'Incinerator',
-    'Toilet', 'MURT', 'PitLatrine', 'UDDT',
+    'Toilet', 'ReinventedToilet', 'MURT', 'SURT', 'PitLatrine', 'UDDT',
     'DryingBed', 'LiquidTreatmentBed',
     'Trucking',
 )
