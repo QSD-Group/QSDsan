@@ -520,45 +520,6 @@ class LCA:
             lifetime = self.lifetime
             for i, j in impacts.items(): impacts[i] = j/lifetime
         return impacts
-    
-    def get_other_unit_impacts(self, units=None, annual=False):
-        
-        '''
-        Return the total impacts of "other" ImpactItems objects for specified units,
-        calculated over the entire lifetime or annualized.
-        '''
-        # Use default construction units if no specific units are provided
-        units = self.construction_units if units is None else units
-        
-        # Ensure `units` is iterable
-        if not isinstance(units, Iterable) or isinstance(units, str):
-            units = (units,)
-        
-        # Initialize a dictionary to accumulate impacts for each indicator
-        impacts = dict.fromkeys((i.ID for i in self.indicators), 0.)
-        
-        for unit in units:
-            # Skip the unit if it doesn't have the `power_kW` attribute
-            if not hasattr(unit, 'power_kW'):
-                continue
-            # Determine quantity based on the unit's power utility rate over the entire lifetime
-            quantity = unit.power_kW * self.lifetime_hr
-        
-            # Accumulate impacts for each impact item in `other_items`
-            for item_id, details in self.other_items.items():
-                item = ImpactItem.get_item(item_id)
-                for indicator, cf_value in item.CFs.items():
-                    if indicator not in impacts:
-                        continue
-                    impacts[indicator] += cf_value * quantity
-        
-        # If annual impacts are requested, divide each impact by the total lifetime
-        if annual:
-            lifetime = self.lifetime
-            for i, j in impacts.items():
-                impacts[i] = j / lifetime
-        
-        return impacts
 
     def _time_basis(self, annual=False, time_frame=None):
         '''
