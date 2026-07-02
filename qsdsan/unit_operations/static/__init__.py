@@ -23,7 +23,7 @@ from ._eco_san import (
     EcoSanAerobic, EcoSanAnaerobic, EcoSanAnoxic, EcoSanBioCost,
     EcoSanECR, EcoSanMBR, EcoSanPrimary, EcoSanSolar, EcoSanSystem,
 )
-from ._electrochemical_cell import ElectrochemicalCell
+# from ._electrochemical_cell import ElectrochemicalCell
 from ._excretion import Excretion, ExcretionmASM2d
 from ._hydroprocessing import Hydrocracking, Hydrotreating
 from ._hydrothermal import CatalyticHydrothermalGasification, HydrothermalLiquefaction
@@ -67,7 +67,7 @@ __all__ = (
     'CropApplication',
     'EcoSanAerobic', 'EcoSanAnaerobic', 'EcoSanAnoxic', 'EcoSanBioCost',
     'EcoSanECR', 'EcoSanMBR', 'EcoSanPrimary', 'EcoSanSolar', 'EcoSanSystem',
-    'ElectrochemicalCell',
+    # 'ElectrochemicalCell',
     'Excretion', 'ExcretionmASM2d',
     'Hydrocracking', 'Hydrotreating',
     'CatalyticHydrothermalGasification', 'HydrothermalLiquefaction',
