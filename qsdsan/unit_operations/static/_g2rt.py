@@ -1896,8 +1896,8 @@ class G2RTHousing(Copier):
         design = self.design_results
         constr = self.construction
         design['Steel'] = constr[0].quantity = self.housing_steel_weight
-        design['Aluminum'] = constr[1].quantity = self.housing_zinc_coat
-        design['ZincCoat'] = constr[2].quantity = self.housing_aluminum_weight
+        design['Aluminum'] = constr[1].quantity = self.housing_aluminum_weight
+        design['ZincCoat'] = constr[2].quantity = self.housing_zinc_coat
         design['Polyethylene'] = constr[3].quantity = self.housing_PE_weight
         self.add_construction(add_cost=False)
         
