@@ -805,8 +805,7 @@ class WWTpump(SanUnit):
     def building_unit_cost(self, i):
         self._building_unit_cost = i
 
-#TODO: why do we set up a standalone class for SludgePump instead of lumping it into WWTpump
-class SludgePump(Pump):
+class SludgePump(Pump, WWTpump):
     '''
     Pumps used in HTL system
     See qsdsan.unit_operations.WWTpump for pipe and pump weight calculation
@@ -840,11 +839,33 @@ class SludgePump(Pump):
     _SS_per_pump = 725 * 0.5
     _units = {'Pump pipe stainless steel': 'kg',
               'Pump stainless steel': 'kg'}
+    # `WWTpump._F_BM_default` (empty) otherwise shadows BioSTEAM's real
+    # `Pump._F_BM_default` via MRO, silently dropping the bare-module factor.
+    _F_BM_default = Pump._F_BM_default
 
     include_construction = True
 
+    def __init__(self, ID='', ins=None, outs=(), thermo=None, *,
+                 P=None, pump_type='Default', material='Cast iron',
+                 dP_design=101325, ignore_NPSH=True,
+                 init_with='Stream', F_BM_default=None, isdynamic=False):
+        # Pass a WWTpump-recognized placeholder so `Pump.__init__`'s internal
+        # `self.pump_type = ...` (which resolves to WWTpump's validating
+        # setter via MRO) doesn't reject the real value; then restore the
+        # real value directly (bypassing that setter) so BioSTEAM's own
+        # `_design`/`_cost` see the same `pump_type` they would without
+        # the WWTpump base (`design_sludge` doesn't use `self.pump_type`).
+        Pump.__init__(self, ID, ins, outs, thermo, P=P, pump_type='sludge',
+                      material=material, dP_design=dP_design, ignore_NPSH=ignore_NPSH,
+                      init_with=init_with, F_BM_default=F_BM_default, isdynamic=isdynamic)
+        self._pump_type = pump_type
+        self._Q_mgd = None # let `Q_mgd` (inherited from WWTpump) fall back to F_vol_in unless overridden
+
     def _design(self):
-        super()._design()
+        # Use BioSTEAM's generic Pump design (not WWTpump's, which MRO would
+        # otherwise pick up since `Pump` itself doesn't define `_design`) so
+        # `design_results['Type']` etc. are populated the way `Pump._cost` expects.
+        Pump._design(self)
         pipe, pumps, hdpe = self.design_sludge()
 
         D = self.design_results
@@ -860,120 +881,21 @@ class SludgePump(Pump):
                                  quantity=pipe + pumps, quantity_unit='kg'),
                     ]
 
+    def _run(self):
+        # Keep BioSTEAM's generic Pump._run (raises outlet pressure to `self.P`)
+        # instead of WWTpump._run (a no-op stream copy), which MRO would
+        # otherwise pick up since `Pump` itself doesn't define `_run`.
+        Pump._run(self)
+
+    def _cost(self):
+        # Keep BioSTEAM's generic Pump costing/power model (rather than
+        # WWTpump's WWTP-scale empirical cost/power formula, which MRO would
+        # otherwise pick up since `Pump` itself doesn't define `_cost`).
+        Pump._cost(self)
+
     def design_sludge(self, Q_mgd=None, N_pump=None, **kwargs):
-        '''
-        Design pump for handling waste sludge.
-
-        Parameters
-        ----------
-        Q_mgd : float
-            Volumetric flow rate in million gallon per day, [mgd].
-        N_pump : int
-            Number of the pumps.
-        kwargs : dict
-            Additional attribute values to set (e.g., `L_s`, `H_ts`),
-            this will overwrite the default values.
-        '''
-        Q_mgd = Q_mgd or self.Q_mgd
-        N_pump = N_pump or 1
-
-        val_dct = dict(
-            L_s=50, # length of suction pipe, [ft]
-            L_d=50, # length of discharge pipe, [ft]
-            H_ts=0., # H_ds_LIFT (D) - H_ss_LIFT (0)
-            H_p=0. # no pressure
-            )
-        val_dct.update(kwargs)
-
-        M_SS_IR_pipe, M_SS_IR_pump = self._design_generic(
-            Q_mgd=Q_mgd, N_pump=N_pump, **val_dct)
-
-        return M_SS_IR_pipe, M_SS_IR_pump, 0
-
-    def _design_generic(self, Q_mgd, N_pump=None, L_s=0., L_d=0., H_ts=0., H_p=0.):
-        self.Q_mgd = Q_mgd
-        self._H_ts = H_ts or self.H_ts
-        self._H_p = H_p or self.H_p
-        N_pump = N_pump or self.N_pump
-
-        v, C, Q_cfs = self.v, self.C, self.Q_cfs # [ft/s], -, [ft3/s]
-
-        ### Suction side ###
-        # Suction pipe (permeate header) dimensions
-        OD_s, t_s, ID_s = select_pipe(Q_cfs/N_pump, v) # [in]
-
-        # Suction friction head, [ft]
-        self._H_sf = 3.02 * L_s * (v**1.85) * (C**(-1.85)) * ((ID_s/12)**(-1.17))
-
-        ### Discharge side ###
-        # Discharge pipe (permeate collector) dimensions
-        OD_d, t_d, ID_d = select_pipe(Q_cfs, v)
-
-        # Discharge friction head, [ft]
-        self._H_df = 3.02 * L_d * (v**1.85) * (C**(-1.85)) * ((ID_d/12)**(-1.17))
-
-        ### Material usage ###
-        # Pipe SS, assume stainless steel, density = 0.29 lbs/in3
-        # SS volume for suction, [in3]
-        self._N_pump = N_pump
-        V_s = N_pump * pi/4*((OD_s)**2-(ID_s)**2) * (L_s*12)
-        # SS volume for discharge, [in3]
-        V_d = pi/4*((OD_d)**2-(ID_d)**2) * (L_d*12)
-
-        # Total SS mass, [kg]
-        M_SS_pipe = 0.29 * (V_s+V_d) * _lb_to_kg
-        M_SS_pump = N_pump * self.SS_per_pump
-        return M_SS_pipe, M_SS_pump
-
-    @property
-    def Q_mgd(self):
-        '''
-        [float] Volumetric flow rate in million gallon per day, [mgd].
-        Will use total volumetric flow through the unit if not provided.
-        '''
-        return self.F_vol_in*_m3_to_gal*24/1e6
-    @Q_mgd.setter
-    def Q_mgd(self, i):
-        self._Q_mgd = i
-
-    @property
-    def Q_cfs(self):
-        '''[float] Volumetric flow rate in cubic feet per second, [cfs].'''
-        return self.Q_mgd*1e6/24/60/60/_ft3_to_gal
-
-    @property
-    def H_ts(self):
-        '''[float] Total static head, [ft].'''
-        return self._H_ts
-
-    @property
-    def H_p(self):
-        '''[float] Pressure head, [ft].'''
-        return self._H_p
-
-    @property
-    def v(self):
-        '''[float] Fluid velocity, [ft/s].'''
-        return self._v
-    @v.setter
-    def v(self, i):
-        self._v = i
-
-    @property
-    def C(self):
-        '''[float] Hazen-Williams coefficient to calculate fluid friction.'''
-        return self._C
-    @C.setter
-    def C(self, i):
-        self._C = i
-
-    @property
-    def SS_per_pump(self):
-        '''[float] Quantity of stainless steel per pump, [kg/ea].'''
-        return self._SS_per_pump
-    @SS_per_pump.setter
-    def SS_per_pump(self, i):
-        self._SS_per_pump = i
+        kwargs.setdefault('H_ts', 0.)
+        return WWTpump.design_sludge(self, Q_mgd, N_pump, **kwargs)
 
 
 # %%
