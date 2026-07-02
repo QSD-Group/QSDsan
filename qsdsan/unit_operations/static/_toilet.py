@@ -640,6 +640,21 @@ class SURT(ReinventedToilet):
         tp.imass['Tissue'] = int(self.if_toilet_paper)*self.toilet_paper
         self._run_degradation()
 
+    @property
+    def power_kW(self):
+        '''[float] Power draw, [kW], auto-calculated from `power_utility`.'''
+        return self.power_utility.rate
+
+    @property
+    def OPEX(self):
+        '''[float] Operating expense excluding labor, [USD/d].'''
+        return (self.add_OPEX['Additional OPEX']-self._calc_maintenance_labor_cost())*24
+
+    @property
+    def labor_expense(self):
+        '''[float] Labor expense for maintenance, [USD/d].'''
+        return self._calc_maintenance_labor_cost()*24
+
 
 # %%
 
