@@ -1067,21 +1067,6 @@ class G2RThomogenizer(Copier):
                              Construction("polyethylene", linked_unit=self,
                                           item = "Polyethylene",
                                           quantity_unit= "kg")]
-    
-    # def _run(self):
-    #     waste_in = self.ins[0]
-    #     waste_out = self.outs[0]
-    #     waste_out.copy_like(waste_in)
-
-    #     mc_in = waste_in.imass['H2O'] / waste_in.F_mass # fraction
-    #     mc_out = self.moisture_content_out/100 #convert to fraction
-    #     
-    #     if mc_in < mc_out*0.999:
-    #         raise RuntimeError(f'Moisture content of the influent stream ({mc_in:.2f}) '
-    #                            f'is smaller than the desired moisture content ({mc_out:.2f}).')
-    #     TS_in = waste_in.F_mass - waste_in.imass['H2O'] # kg TS dry/hr
-    #     waste_out.imass['H2O'] = TS_in/(1-mc_out)*mc_out
-    #     waste_out._COD = waste_in.COD * waste_in.F_vol / waste_out.F_vol
         
     def _design(self): #kg
         design = self.design_results
@@ -2125,20 +2110,7 @@ class G2RTSolidsSeparation(SanUnit):
         TS_out = solid_stream.imass[solids].sum()
         if mc_in < mc_out*0.999:
             mc_out = mc_in
-        # # solid_stream.copy_flow(waste_in,solids) #all solids go to sludge, remove from waste_in
-        # solid_stream.imass[solids] = solid_stream.imass[solids] * self.solids_separator_TSS_removal/100 #add the removed solids back
 
-        # if mc_in < mc_out*0.999:
-        #     print(f"Moisture content of the influent stream ({mc_in:.4f})"
-        #           f"is smaller than that of the desired effluent stream ({mc_out:.4f})."
-        #           "High solids and low flushing event detected, adding more flushing water!")
-        #     solid_stream.imass['H2O'] = (waste_in.F_mass + flushing_water.F_mass) * mc_out
-        #     # raise RuntimeError(f'Moisture content of the influent stream ({mc_in:.4f}) '
-        #     #                    f'is smaller than the desired moisture content ({mc_out:.4f}).')
-        
-        # TS_in = waste_in.imass[solids].sum()+ flushing_water.imass[solids].sum()# kg TS dry/hr
-        # TS_out = solid_stream.imass[solids].sum()
-        
         #calculate water in the solid cakes
         solid_stream.imass['H2O'] = TS_out/(1-mc_out)*mc_out
 
