@@ -769,7 +769,8 @@ class VolumeReductionCombustor(SanUnit):
     
     @property
     def power_kW(self):
-        return 0
+        '''[float] Power draw, [kW], auto-calculated from `power_utility`.'''
+        return self.power_utility.rate
 
 #%%
 
@@ -857,7 +858,8 @@ class G2RTExcretion(Excretion):
 
     @property
     def power_kW(self):
-        return 0.0 #kW
+        '''[float] Power draw, [kW], auto-calculated from `power_utility`.'''
+        return self.power_utility.rate
 
     def _set_COD(self, ur, fec, tot_COD):
         ur.imass['sCOD'] = tot_COD*(1-self.e_fec) # in kg/hr
@@ -1658,18 +1660,19 @@ class G2RTSolidsTank(Copier):
         return solids_tank_maintenance_labor_cost/(365 * 24) # USD/hr
         #Macerator in the homogenizer functions as a pump. All the associated cost
         #should refere to sanunits.G2RThomogenizer
-        
+
     @property
     def OPEX(self):
         return (self.add_OPEX['Additional OPEX']-self._calc_maintenance_labor_cost())*24 #USD/day
-    
+
     @property
     def labor_expense(self):
         return self._calc_maintenance_labor_cost()*24 #USD/day
-    
+
     @property
     def power_kW(self):
-        return 0.0 #kW
+        '''[float] Power draw, [kW], auto-calculated from `power_utility`.'''
+        return self.power_utility.rate
 
 
 #%%
@@ -1910,14 +1913,15 @@ class G2RTHousing(Copier):
     @property
     def OPEX(self):
         return 0.0 #USD/day
-    
+
     @property
     def labor_expense(self):
         return 0.0 #USD/day
-    
+
     @property
     def power_kW(self):
-        return 0.0 #kW
+        '''[float] Power draw, [kW], auto-calculated from `power_utility`.'''
+        return self.power_utility.rate
 
 #%%
 g2rt_controls_path = ospath.join(g2rt_su_data_path, '_g2rt_controls.csv')
