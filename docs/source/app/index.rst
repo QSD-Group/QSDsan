@@ -32,7 +32,12 @@ We envision to host a series of web apps that illustrate the use of the QSDsan p
 
       +++
 
-      .. button-link:: https://nj-bioenergy.apps.qsdsan.com
-         :color: primary
+      .. raw:: html
 
-         Launch the app ↗
+         <div class="alert alert-info">
+
+      **Note:** This demo is temporarily unavailable while we move it to lower-cost hosting. Check back later.
+
+      .. raw:: html
+
+         </div>
