@@ -31,7 +31,7 @@ default environment, so a short one-time setup is needed for each session:
 
    .. code-block:: text
 
-      !pip install qsdsan exposan
+      !pip install qsdsan exposan[complete]
 
 #. Run that cell. Colab will warn that some pre-installed packages (such as
    ``numpy`` and ``matplotlib``) were already imported and that you must restart
@@ -43,6 +43,12 @@ default environment, so a short one-time setup is needed for each session:
    re-run the install cell.
 
 .. note::
+   The ``[complete]`` option installs all optional dependencies, 
+   this is because some ``EXPOsan`` modules use optional dependencies
+   that are not core to ``QSDsan`` or most of the systems in ``EXPOsan``.
+   If you want to save time and disk space, you can install only the core dependencies
+   with ``!pip install qsdsan exposan``.
+   
    The restart is needed only once per session. Do not import any packages
    before installing, restart once after installing, 
    and then skip the install cell, the warning will not reappear.
