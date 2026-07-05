@@ -31,7 +31,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -e ".[ci]"
-        pip install git+https://github.com/QSD-Group/EXPOsan.git
+        pip install "exposan[complete] @ git+https://github.com/QSD-Group/EXPOsan.git"
         pip install --no-deps --force-reinstall git+https://github.com/BioSTEAMDevelopmentGroup/thermosteam.git@master
         pip install --no-deps --force-reinstall git+https://github.com/BioSTEAMDevelopmentGroup/biosteam.git@master
     - name: Test with pytest

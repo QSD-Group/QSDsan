@@ -61,7 +61,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -c .github/requirements-release.txt -e ".[ci]"
-        pip install git+https://github.com/QSD-Group/EXPOsan.git
+        pip install "exposan[complete] @ git+https://github.com/QSD-Group/EXPOsan.git"
     - name: Run tutorial notebooks
       # -o addopts="" drops the package-wide --doctest-modules so this job runs
       # only the notebooks. --current-env ignores each notebook's named kernelspec
