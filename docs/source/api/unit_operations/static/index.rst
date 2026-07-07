@@ -1,5 +1,5 @@
-Static Unit Operations
-======================
+Static Units
+============
 
 Steady-state QSDsan unit operations — QSDsan-native units without dynamic state equations. They may include sanitation-specific design, costing, construction, TEA, LCA, or ``WasteStream`` behavior.
 
