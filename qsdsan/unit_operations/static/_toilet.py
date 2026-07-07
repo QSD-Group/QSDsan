@@ -343,7 +343,7 @@ class Toilet(SanUnit, Decay, isabstract=True):
 # %%
 
 murt_path = ospath.join(data_path, 'sanunit_data/_murt.tsv')
-surt_path = ospath.join(data_path, 'sanunit_data/g2rt/_surt.csv')
+surt_path = ospath.join(data_path, 'sanunit_data/_surt.csv')
 # G2RT-specific flushing-water usage that SURT needs but isn't yet part of
 # Toilet's own `_toilet.tsv` (the rest of SURT's usage assumptions match Toilet's defaults)
 g2rt_flushing_water_path = ospath.join(data_path, 'sanunit_data/g2rt/_g2rt_toilet.csv')
