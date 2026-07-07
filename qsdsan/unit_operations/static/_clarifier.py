@@ -918,7 +918,7 @@ class IdealClarifier(SanUnit):
         Cs = arr[:-1]
         Qi = arr[-1]
         Qs, e_rmv, mlss = self._Qs, self._e_rmv, self._MLSS
-        x = self.components.x #TODO
+        x = self.components.x
         i_tss = x * self.components.i_mass
 
         of, uf = self.outs
