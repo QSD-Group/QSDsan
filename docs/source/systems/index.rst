@@ -338,6 +338,11 @@ Non-sewered sanitation systems (NSSSs)
 
          Read Paper
 
+      .. button-link:: https://github.com/QSD-Group/EXPOsan/tree/main/exposan/g2rt
+         :color: secondary
+
+         Source Code
+
 
    .. grid-item-card:: Reclaimer
 

@@ -18,6 +18,7 @@ All classes are also importable directly from :mod:`qsdsan.unit_operations`.
    eco_san
    ElectrochemicalCell
    Excretion
+   g2rt
    hydroprocessing
    hydrothermal
    InternalCirculationRx
@@ -104,6 +105,29 @@ Excretion
 ---------
 :class:`~qsdsan.unit_operations.Excretion`,
 :class:`~qsdsan.unit_operations.ExcretionmASM2d`
+
+G2RT
+----
+:class:`~qsdsan.unit_operations.FWMixer`,
+:class:`~qsdsan.unit_operations.G2RTBeltSeparation`,
+:class:`~qsdsan.unit_operations.G2RTControls`,
+:class:`~qsdsan.unit_operations.G2RTExcretion`,
+:class:`~qsdsan.unit_operations.G2RThomogenizer`,
+:class:`~qsdsan.unit_operations.G2RTHousing`,
+:class:`~qsdsan.unit_operations.G2RTLiquidsTank`,
+:class:`~qsdsan.unit_operations.G2RTReverseOsmosis`,
+:class:`~qsdsan.unit_operations.G2RTSolidsSeparation`,
+:class:`~qsdsan.unit_operations.G2RTSolidsTank`,
+:class:`~qsdsan.unit_operations.G2RTUltrafiltration`,
+:class:`~qsdsan.unit_operations.mSCWOConcentratorModule`,
+:class:`~qsdsan.unit_operations.mSCWOGasModule`,
+:class:`~qsdsan.unit_operations.mSCWOReactorModule`,
+:class:`~qsdsan.unit_operations.UFMixer`,
+:class:`~qsdsan.unit_operations.VolumeReductionCombustor`,
+:class:`~qsdsan.unit_operations.VolumeReductionFilterPress`,
+:class:`~qsdsan.unit_operations.VRConcentrator`,
+:class:`~qsdsan.unit_operations.VRdryingtunnel`,
+:class:`~qsdsan.unit_operations.VRpasteurization`
 
 Hydroprocessing
 ---------------
@@ -193,7 +217,9 @@ Sludge Treatment
 Toilets
 -------
 :class:`~qsdsan.unit_operations.Toilet`,
+:class:`~qsdsan.unit_operations.ReinventedToilet`,
 :class:`~qsdsan.unit_operations.MURT`,
+:class:`~qsdsan.unit_operations.SURT`,
 :class:`~qsdsan.unit_operations.PitLatrine`,
 :class:`~qsdsan.unit_operations.UDDT`
 

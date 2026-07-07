@@ -649,8 +649,7 @@ class Incinerator(SanUnit):
 
         # Conservation of mass 
         mass_flue_gas = np.sum(inf*i_mass) - mass_ash
-        mass_co2 = mass_flue_gas - n2*i_mass[idx_n2] - h2o*i_mass[idx_h2o]
-        
+        mass_co2 = mass_flue_gas - n2*i_mass[idx_n2] - h2o*i_mass[idx_h2o] 
         flue_gas.set_flow([n2, h2o, (mass_co2/i_mass[idx_co2])], 
                           'kg/hr', (nitrogen_ID, water_ID, carbon_dioxide_ID))
         ash.set_flow(mass_ash/i_mass[idx_ash],'kg/hr', (ash_cmp_ID,))

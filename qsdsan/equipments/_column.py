@@ -11,6 +11,8 @@ This module is developed by:
     Yalin Li <mailto.yalin.li@gmail.com>
 
     Anna Kogler <akogler@stanford.edu>
+    
+    Zixuan Wang <wyatt4428@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
@@ -69,7 +71,6 @@ class Column(Equipment):
             'Surface area of columns': self.surface_area
             }
         return design
-
 
     def _cost(self):
         return self.unit_cost*self.N*self.surface_area

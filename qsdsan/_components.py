@@ -686,7 +686,7 @@ class CompiledComponents(CompiledChemicals):
         for i in _num_component_properties:
             dct[i] = component_data_array(components, i)
 
-    def compile(self, skip_checks=False, ignore_inaccurate_molar_weight=False):
+    def compile(self, skip_checks=False, ignore_inaccurate_molar_weight=False, adjust_MW_to_measured_as=False):
         '''Do nothing, :class:`CompiledComponents` have already been compiled.'''
         pass
 

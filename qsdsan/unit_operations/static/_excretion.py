@@ -122,6 +122,15 @@ class Excretion(SanUnit):
 
         # 14 kJ/g COD, the average lower heating value of excreta
         tot_COD = e_cal*self.e_exc*4.184/14/1e3 # in kg COD/hr
+        self._set_COD(ur, fec, tot_COD)
+
+    def _set_COD(self, ur, fec, tot_COD):
+        '''
+        Set the COD of the urine and feces streams from the total COD
+        excreted, [kg COD/hr]. Subclasses with a different component set
+        (e.g. one that distinguishes soluble vs. particulate COD) can
+        override this to set explicit component mass flows instead.
+        '''
         ur._COD = tot_COD*(1-self.e_fec) / (ur.F_vol/1e3) # in mg/L
         fec._COD = tot_COD*self.e_fec / (fec.F_vol/1e3) # in mg/L
 
@@ -332,6 +341,7 @@ class Excretion(SanUnit):
         (N, P, K) that is wasted.
 
         .. note::
+
             Not considered for Mg and Ca.
         '''
         return self._waste_ratio

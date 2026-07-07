@@ -65,5 +65,5 @@ class IsothermalCompressor(bst.units.IsothermalCompressor, qs.SanUnit):
             else:
                 self.construction = [
                     qs.Construction('compressor_4kW', linked_unit=self, item='Compressor_4kW', quantity_unit='ea', quantity=D['Number of 4 kW unit']),
-                    qs.Construction('compressor_300kW', linked_unit=self, item='Compressor_300kW', quantity_unit='ea', quantity=D['Number of 4 kW unit'])
+                    qs.Construction('compressor_300kW', linked_unit=self, item='Compressor_300kW', quantity_unit='ea', quantity=D['Number of 300 kW unit'])
                     ]

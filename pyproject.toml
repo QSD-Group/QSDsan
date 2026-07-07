@@ -93,9 +93,9 @@ qsdsan = [
     "data/sanunit_data/*",
     "data/sanunit_data/br/*",
     "data/sanunit_data/es/*",
+    "data/sanunit_data/g2rt/*",
     "data/sanunit_data/re/*",
     "equipments/*",
     "processes/*",
-    "sanunits/*",
     "utils/*",
 ]
