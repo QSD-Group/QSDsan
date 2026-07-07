@@ -790,12 +790,6 @@ class UFMixer(Mixer):
         Mixer.__init__(self, ID, ins, outs, thermo=thermo, init_with=init_with,
                          F_BM_default=F_BM_default, isdynamic=isdynamic)
         
-        
-    # def _run(self):
-    #     separated_liquid, uf_retentate = self.ins
-    #     waste_out, = self.outs
-    #     waste_out.mix_from(self.ins)
-    #     # print(f"The flushing water flow is {flushing.imass['H2O']} kg/h.")
 
 # %%
 toilet_path = ospath.join(g2rt_su_data_path, '_g2rt_toilet.csv')
@@ -2107,8 +2101,6 @@ class G2RTSolidsSeparation(SanUnit):
     
     def _run(self):
         waste_in,flushing_water = self.ins
-        # waste_in.mix_from(self.ins)
-        # print(waste_in.imass['H2O']) #TODO:debug
         liquid_stream, solid_stream = self.outs
         solubles, solids = self.solubles, self.solids
         solid_stream.mix_from(self.ins)
@@ -2273,20 +2265,15 @@ class G2RTBeltSeparation(SanUnit):
     
     def _run(self):
         liquid_in, solid_in = self.ins
-        # uf_retentate.show() #TODO:debug
         liquid_out, solid_out = self.outs
         solid_out.phase = 's'
         solubles, solids = self.solubles, self.solids
         solid_out.mix_from(self.ins)
         TS_in = solid_out.imass[solids].sum()
-        #solid_stream.copy_flow(solid_stream_in,solids) #all solids in go to solids out
         solid_out.imass[solids] = solid_in.imass[solids] + liquid_in.imass[solids] * self.belt_separator_TSS_removal/100 
         # the removed solids
         TS_out = solid_out.imass[solids].sum() # kg TS dry/hr
-        
-        # mc_in = solid_stream.imass['H2O'] / (solid_stream_in.F_mass + 
-        #                                      liquid_stream_in.F_mass +
-        #                                      uf_retentate.F_mass) # fraction
+
         if self.extreme:
             mc_out = self.extreme_moisture_content_out/100 #convert to fraction; 
         else:
@@ -2294,16 +2281,6 @@ class G2RTBeltSeparation(SanUnit):
         mc_in = solid_out.imass['H2O'] / (liquid_in.F_mass + solid_in.F_mass)
         if mc_in < mc_out*0.999:
             mc_out = mc_in
-        # if mc_in < mc_out*0.999:
-        #     raise RuntimeError(f'Moisture content of the influent stream ({mc_in:.4f}) '
-        #                        f'is smaller than the desired moisture content ({mc_out:.4f}).')
-        # mix_in = WasteStream(ID='mix_in')
-        # mix_in.mix_from((liquid_stream_in, uf_retentate,solid_stream_in))
-        
-        # TS_in = (solid_stream_in.imass[solids].sum()+ 
-        #          liquid_stream_in.imass[solids].sum()+
-        #          uf_retentate.imass[solids].sum()
-        #          ) # kg TS dry/hr
 
         #calculate water and solid COD in the solid cakes
         solid_out.imass['H2O'] = TS_out/(1-mc_out)*mc_out
