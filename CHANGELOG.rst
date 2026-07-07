@@ -13,6 +13,8 @@ This document records notable changes to `QSDsan <https://github.com/QSD-Group/Q
 
 - Consolidated a contributor's g2rt EXPOsan system (non-sewered toilet + resource-recovery train) into a new ``qsdsan.unit_operations.static`` ``g2rt`` module, and removed its circular dependency on ``exposan.g2rt`` via a ``capital_scale_func`` constructor hook.
 
+- Reclassified several ``qsdsan.unit_operations`` units (e.g. clarifiers, ``Mixer``/``Splitter``/``Pump``) into the ``dynamic`` submodule by simulation capability rather than file history; top-level imports are unaffected.
+
 
 `1.5.3`_
 --------
