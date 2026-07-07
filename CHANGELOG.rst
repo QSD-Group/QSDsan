@@ -6,12 +6,12 @@ This document records notable changes to `QSDsan <https://github.com/QSD-Group/Q
 
 `1.6.0`_
 --------
-- Re-hosted the NJ Bioenergy web app under group-owned infrastructure: frontend at ``https://nj-bioenergy.apps.qsdsan.com`` (group Vercel) and backend at ``https://nj-bioenergy-api.apps.qsdsan.com`` (AWS ECS Express Mode behind CloudFront). The app page Launch button now points to the new URL. The old ``qsdsan.app`` address 301-redirects to the new frontend while the domain registration lapses.
+- Re-hosted the NJ Bioenergy web app under group-owned infrastructure: frontend at ``https://nj-bioenergy.apps.qsdsan.com`` (group Vercel) and backend at ``https://nj-bioenergy-api.apps.qsdsan.com`` (four AWS Lambda functions behind CloudFront). The old ``qsdsan.app`` address 301-redirects to the new frontend while the domain registration lapses.
 - Consolidated the standalone Jekyll website (formerly served at ``qsdsan.com``) into the Sphinx documentation, which now serves as the single canonical site.
 - Restyled the :ref:`Systems & Publications <systems>` page with a platform-and-methodology introduction (QSD, QSDsan, DMsan) and, for every entry, the full citation plus Read Paper / Source Code buttons; added a :ref:`Learning <learning>` page (workshops) and an :ref:`App <app>` page (web-app gallery).
 - Added theme-adaptive (light/dark) navigation-card icons, a "Home" entry in the sidebar, footer links (GitHub, PyPI, YouTube, email, and the QSDsan Google Group), and a note on joining the Google Group for updates.
 
-- Took the NJ Bioenergy web app's live demo offline: the always-on ECS/ALB backend re-hosted above cost far more than its actual (rare) usage justified, so it was decommissioned. The app page's Launch button was replaced with a note that the demo is temporarily unavailable.
+- Consolidated a contributor's g2rt EXPOsan system (non-sewered toilet + resource-recovery train) into a new ``qsdsan.unit_operations.static`` ``g2rt`` module, and removed its circular dependency on ``exposan.g2rt`` via a ``capital_scale_func`` constructor hook.
 
 
 `1.5.3`_
