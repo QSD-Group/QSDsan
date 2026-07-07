@@ -310,7 +310,7 @@ class SludgePasteurization(SanUnit):
         ratio = self.price_ratio
         for equipment, cost in C.items(): 
             if equipment in ('Stainless steel', 'Steel'):
-                C[equipment] = cost * ratio
+                C[equipment] = cost * ratio # lumped_factor is already applied in design_results
             else:
                 C[equipment] = cost * ratio * lumped_factor
 
