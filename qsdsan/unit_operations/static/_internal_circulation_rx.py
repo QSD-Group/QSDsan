@@ -29,7 +29,8 @@ from biosteam.units.design_tools.tank_design import (
     mix_tank_purchase_cost_algorithms,
     TankPurchaseCostAlgorithm
     )
-from ..bst import HXutility, MixTank, Pump
+from ..bst import HXutility, MixTank
+from ..dynamic import Pump
 from ... import SanStream, SanUnit, Stream
 from ...utils import (
     compute_stream_COD,

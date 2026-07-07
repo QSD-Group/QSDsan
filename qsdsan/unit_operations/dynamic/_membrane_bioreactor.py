@@ -17,7 +17,9 @@ for license details.
 
 from math import ceil, floor
 from biosteam.exceptions import DesignError
-from .. import HXutility, WWTpump, InternalCirculationRx
+from ..bst._heat_exchanging import HXutility
+from ..static._pumping import WWTpump
+from ..static._internal_circulation_rx import InternalCirculationRx
 from ... import SanStream, WasteStream, SanUnit, Stream, Process, CompiledProcesses
 from ._bioreactor import CSTR, PFR
 from .. import dydt_cstr

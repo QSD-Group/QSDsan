@@ -21,7 +21,8 @@ from warnings import warn
 from math import ceil
 import numpy as np
 import CoolProp.CoolProp as CP
-from ..bst import Mixer, IsothermalCompressor
+from ..bst import IsothermalCompressor
+from ..dynamic import Mixer
 from ... import SanUnit, Construction, WasteStream
 from ._excretion import Excretion
 from ._non_reactive import Copier

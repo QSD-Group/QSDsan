@@ -15,9 +15,9 @@ for license details.
 
 from ... import SanUnit, WasteStream
 import numpy as np
-from ._pumping import WWTpump
+from ..static._pumping import WWTpump
 from warnings import warn
-from ._pumping import (
+from ..static._pumping import (
     default_F_BM as default_WWTpump_F_BM,
     default_equipment_lifetime as default_WWTpump_equipment_lifetime,
     )

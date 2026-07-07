@@ -5,6 +5,9 @@ BioSTEAM-inherited unit operations are steady-state units that build on BioSTEAM
 
 All classes are also importable directly from :mod:`qsdsan.unit_operations`.
 
+.. note::
+   Looking for :class:`~qsdsan.unit_operations.Mixer`, :class:`~qsdsan.unit_operations.Splitter`, or :class:`~qsdsan.unit_operations.Pump`? They also wrap BioSTEAM units, but because they support dynamic simulation they're documented on the :doc:`dynamic units page <../dynamic/index>` instead (Abstract and Pumping sections). :class:`~qsdsan.unit_operations.FakeSplitter` and :class:`~qsdsan.unit_operations.ReversedSplitter` below have no dynamic-state support, so they stay here.
+
 .. toctree::
    :maxdepth: 1
 
@@ -14,13 +17,10 @@ All classes are also importable directly from :mod:`qsdsan.unit_operations`.
    facilities
    Flash
    heat_exchanging
-   pumping
    tank
 
 Abstract
 --------
-:class:`~qsdsan.unit_operations.Mixer`,
-:class:`~qsdsan.unit_operations.Splitter`,
 :class:`~qsdsan.unit_operations.FakeSplitter`,
 :class:`~qsdsan.unit_operations.ReversedSplitter`
 
@@ -48,10 +48,6 @@ Heat Exchanging
 :class:`~qsdsan.unit_operations.HeatExchangerNetwork`,
 :class:`~qsdsan.unit_operations.HXprocess`,
 :class:`~qsdsan.unit_operations.HXutility`
-
-Pumping
--------
-:class:`~qsdsan.unit_operations.Pump`
 
 Tank
 ----

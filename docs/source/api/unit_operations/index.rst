@@ -5,9 +5,9 @@ Unit Operations
 
 This page lists the unit operation modules available in ``QSDsan``. Unit operations are organized into three primary categories:
 
-- ``bst`` units inherit from BioSTEAM unit operations and add QSDsan behavior while remaining steady-state. They are used the same way as native QSDsan units; for parameters and behavior specific to the BioSTEAM parent class, see the `BioSTEAM documentation <https://biosteam.readthedocs.io/en/latest/>`_.
-- ``QSDsan static`` units are QSDsan-native unit operations without dynamic state equations.
-- ``QSDsan dynamic`` units are QSDsan-native unit operations with dynamic state, derivative state, ODE, or algebraic-equation behavior.
+- ``bst`` units are thin wrappers that make a real BioSTEAM unit operation usable in QSDsan (same core BioSTEAM simulate/design/cost logic, plus QSDsan stream compatibility). They are used the same way as native QSDsan units; for parameters and behavior specific to the BioSTEAM parent class, see the `BioSTEAM documentation <https://biosteam.readthedocs.io/en/latest/>`_.
+- ``static`` units have no working dynamic-state contract -- running them with ``isdynamic=True`` would error.
+- ``dynamic`` units can run in dynamic mode -- ``isdynamic=True`` works, whether that capability is native to the unit or inherited from a BioSTEAM-wrapper base class (e.g. ``Mixer``, ``Splitter``, ``Pump``).
 
 .. toctree::
    :maxdepth: 1
@@ -20,7 +20,7 @@ This page lists the unit operation modules available in ``QSDsan``. Unit operati
 List of Unit Operations
 -----------------------
 
-#. ``Category`` indicates the unit operation category (BST, QSDsan static, or QSDsan dynamic).
+#. ``Category`` indicates the unit operation category (bst, static, or dynamic).
 #. ``Abstract`` indicates that design, costing, and environmental impact algorithms are not implemented.
 #. ``API page`` links to the detailed documentation page. Some units appear both on a category page and on their implementation module page.
 
@@ -30,9 +30,9 @@ List of Unit Operations
      <label for="unit-operation-category-filter">Category</label>
      <select id="unit-operation-category-filter">
        <option value="">All</option>
-       <option value="BST">BST</option>
-       <option value="QSDsan static">QSDsan static</option>
-       <option value="QSDsan dynamic">QSDsan dynamic</option>
+       <option value="bst">bst</option>
+       <option value="static">static</option>
+       <option value="dynamic">dynamic</option>
      </select>
      <label for="unit-operation-abstract-filter">Abstract</label>
      <select id="unit-operation-abstract-filter">

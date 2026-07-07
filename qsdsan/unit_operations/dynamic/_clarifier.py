@@ -21,8 +21,8 @@ from warnings import warn
 from numba import njit
 from ... import SanUnit, WasteStream
 import numpy as np
-from ._pumping import WWTpump
-from ._pumping import default_F_BM as default_WWTpump_F_BM
+from ..static._pumping import WWTpump
+from ..static._pumping import default_F_BM as default_WWTpump_F_BM
 from .. import dydt_cstr
 
 __all__ = ('FlatBottomCircularClarifier',

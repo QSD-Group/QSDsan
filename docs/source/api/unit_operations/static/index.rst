@@ -1,5 +1,5 @@
-Static QSDsan Units
-===================
+Static Unit Operations
+======================
 
 Steady-state QSDsan unit operations — QSDsan-native units without dynamic state equations. They may include sanitation-specific design, costing, construction, TEA, LCA, or ``WasteStream`` behavior.
 
@@ -12,7 +12,6 @@ All classes are also importable directly from :mod:`qsdsan.unit_operations`.
    ActivatedSludgeProcess
    anaerobic_reactor
    biogenic_refinery
-   clarifier
    combustion
    CropApplication
    eco_san
@@ -24,7 +23,6 @@ All classes are also importable directly from :mod:`qsdsan.unit_operations`.
    InternalCirculationRx
    Lagoon
    MembraneDistillation
-   MembraneGasExtraction
    non_reactive
    PolishingFilter
    pumping
@@ -34,7 +32,6 @@ All classes are also importable directly from :mod:`qsdsan.unit_operations`.
    Sedimentation
    SepticTank
    sludge_thickening
-   sludge_treatment
    SludgePasteurization
    toilet
    treatment_bed
@@ -69,13 +66,6 @@ Biogenic Refinery
 :class:`~qsdsan.unit_operations.BiogenicRefineryScrewPress`,
 :class:`~qsdsan.unit_operations.BiogenicRefineryStruvitePrecipitation`
 
-Clarifiers
-----------
-:class:`~qsdsan.unit_operations.FlatBottomCircularClarifier`,
-:class:`~qsdsan.unit_operations.IdealClarifier`,
-:class:`~qsdsan.unit_operations.PrimaryClarifier`,
-:class:`~qsdsan.unit_operations.PrimaryClarifierBSM2`
-
 Combustion
 ----------
 :class:`~qsdsan.unit_operations.BiogasCombustion`,
@@ -99,12 +89,12 @@ Eco-San
 
 Electrochemical Cell
 --------------------
-:class:`~qsdsan.unit_operations.ElectrochemicalCell`
+:class:`~qsdsan.unit_operations.ElectrochemicalCell`,
+:class:`~qsdsan.unit_operations.ElectrochemicalStrippingAdsorptionPrecipitation`
 
 Excretion
 ---------
-:class:`~qsdsan.unit_operations.Excretion`,
-:class:`~qsdsan.unit_operations.ExcretionmASM2d`
+:class:`~qsdsan.unit_operations.Excretion`
 
 G2RT
 ----
@@ -149,13 +139,7 @@ Lagoon
 
 Membrane
 --------
-:class:`~qsdsan.unit_operations.MembraneDistillation`,
-:class:`~qsdsan.unit_operations.GasExtractionMembrane`,
-:class:`~qsdsan.unit_operations.MembraneGasExtraction`
-
-Metal Dosage
-------------
-:class:`~qsdsan.unit_operations.MetalDosage`
+:class:`~qsdsan.unit_operations.MembraneDistillation`
 
 Non-Reactive
 ------------
@@ -207,12 +191,6 @@ Sludge Thickening
 :class:`~qsdsan.unit_operations.BeltThickener`,
 :class:`~qsdsan.unit_operations.SludgeCentrifuge`,
 :class:`~qsdsan.unit_operations.SludgeSeparator`
-
-Sludge Treatment
-----------------
-:class:`~qsdsan.unit_operations.Thickener`,
-:class:`~qsdsan.unit_operations.Centrifuge`,
-:class:`~qsdsan.unit_operations.Incinerator`
 
 Toilets
 -------

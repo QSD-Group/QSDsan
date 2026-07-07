@@ -13,10 +13,6 @@ from ._biogenic_refinery import (
     BiogenicRefineryOHX, BiogenicRefineryPollutionControl,
     BiogenicRefineryScrewPress, BiogenicRefineryStruvitePrecipitation,
 )
-from ._clarifier import (
-    FlatBottomCircularClarifier, IdealClarifier,
-    PrimaryClarifierBSM2, PrimaryClarifier,
-)
 from ._combustion import BiogasCombustion, CombinedHeatPower
 from ._crop_application import CropApplication
 from ._eco_san import (
@@ -24,10 +20,10 @@ from ._eco_san import (
     EcoSanECR, EcoSanMBR, EcoSanPrimary, EcoSanSolar, EcoSanSystem,
 )
 from ._electrochemical_cell import (
-    ElectrochemicalCell, ESAPRecovery, ESAPEffluent, ESAP,
+    ElectrochemicalCell,
     ElectrochemicalStrippingAdsorptionPrecipitation,
 )
-from ._excretion import Excretion, ExcretionmASM2d
+from ._excretion import Excretion
 from ._g2rt import (
     FWMixer, G2RTBeltSeparation, G2RTControls, G2RTExcretion,
     G2RThomogenizer, G2RTHousing, G2RTLiquidsTank, G2RTReverseOsmosis,
@@ -41,8 +37,6 @@ from ._hydrothermal import CatalyticHydrothermalGasification, HydrothermalLiquef
 from ._internal_circulation_rx import InternalCirculationRx
 from ._lagoon import Lagoon
 from ._membrane_distillation import MembraneDistillation
-from ._membrane_gas_extraction import GasExtractionMembrane, MembraneGasExtraction
-from ._metal_dosage import MetalDosage
 from ._non_reactive import Copier, LumpedCost
 from ._polishing_filter import PolishingFilter
 from ._pumping import WWTpump, SludgePump, wwtpump
@@ -58,7 +52,6 @@ from ._sludge_pasteurization import SludgePasteurization
 from ._sludge_thickening import (
     SludgeThickening, BeltThickener, SludgeCentrifuge, SludgeSeparator,
 )
-from ._sludge_treatment import Thickener, Centrifuge, Incinerator
 from ._toilet import Toilet, ReinventedToilet, MURT, SURT, PitLatrine, UDDT
 from ._treatment_bed import DryingBed, LiquidTreatmentBed
 from ._trucking import Trucking
@@ -72,15 +65,13 @@ __all__ = (
     'BiogenicRefineryHousing', 'BiogenicRefineryIonExchange',
     'BiogenicRefineryOHX', 'BiogenicRefineryPollutionControl',
     'BiogenicRefineryScrewPress', 'BiogenicRefineryStruvitePrecipitation',
-    'FlatBottomCircularClarifier', 'IdealClarifier',
-    'PrimaryClarifierBSM2', 'PrimaryClarifier',
     'BiogasCombustion', 'CombinedHeatPower',
     'CropApplication',
     'EcoSanAerobic', 'EcoSanAnaerobic', 'EcoSanAnoxic', 'EcoSanBioCost',
     'EcoSanECR', 'EcoSanMBR', 'EcoSanPrimary', 'EcoSanSolar', 'EcoSanSystem',
-    'ElectrochemicalCell', 'ESAPRecovery', 'ESAPEffluent', 'ESAP',
+    'ElectrochemicalCell',
     'ElectrochemicalStrippingAdsorptionPrecipitation',
-    'Excretion', 'ExcretionmASM2d',
+    'Excretion',
     'FWMixer', 'G2RTBeltSeparation', 'G2RTControls', 'G2RTExcretion',
     'G2RThomogenizer', 'G2RTHousing', 'G2RTLiquidsTank', 'G2RTReverseOsmosis',
     'G2RTSolidsSeparation', 'G2RTSolidsTank', 'G2RTUltrafiltration',
@@ -92,8 +83,6 @@ __all__ = (
     'InternalCirculationRx',
     'Lagoon',
     'MembraneDistillation',
-    'GasExtractionMembrane', 'MembraneGasExtraction',
-    'MetalDosage',
     'Copier', 'LumpedCost',
     'PolishingFilter',
     'WWTpump', 'SludgePump', 'wwtpump',
@@ -105,7 +94,6 @@ __all__ = (
     'SepticTank',
     'SludgePasteurization',
     'SludgeThickening', 'BeltThickener', 'SludgeCentrifuge', 'SludgeSeparator',
-    'Thickener', 'Centrifuge', 'Incinerator',
     'Toilet', 'ReinventedToilet', 'MURT', 'SURT', 'PitLatrine', 'UDDT',
     'DryingBed', 'LiquidTreatmentBed',
     'Trucking',

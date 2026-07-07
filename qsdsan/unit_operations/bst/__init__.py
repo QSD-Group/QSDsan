@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """BioSTEAM-inherited unit operations for QSDsan."""
 
-from ._abstract import Mixer, Splitter, FakeSplitter, ReversedSplitter
+from ._abstract import FakeSplitter, ReversedSplitter
 from ._compressor import IsothermalCompressor
 from ._distillation import (
     BinaryDistillation,
@@ -12,7 +12,6 @@ from ._distillation import (
 from ._facilities import ProcessWaterCenter
 from ._flash import Flash
 from ._heat_exchanging import HeatExchangerNetwork, HXprocess, HXutility
-from ._pumping import Pump
 from ._tank import Tank, MixTank, StorageTank
 
 # Raw BioSTEAM units that QSDsan does not subclass (no QSDsan-specific behavior to
@@ -34,8 +33,6 @@ from biosteam import (
     )
 
 __all__ = (
-    'Mixer',
-    'Splitter',
     'FakeSplitter',
     'ReversedSplitter',
     'IsothermalCompressor',
@@ -48,7 +45,6 @@ __all__ = (
     'HeatExchangerNetwork',
     'HXprocess',
     'HXutility',
-    'Pump',
     'Tank',
     'MixTank',
     'StorageTank',

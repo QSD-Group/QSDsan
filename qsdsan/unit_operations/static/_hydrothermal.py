@@ -19,7 +19,8 @@ from biosteam.units.decorators import cost
 from qsdsan import SanUnit, Stream, CEPCI_by_year
 from qsdsan.utils import auom
 from ._reactor import Reactor
-from ..bst import HXutility, Pump
+from ..bst import HXutility
+from ..dynamic import Pump
 
 __all__ = (
     'CatalyticHydrothermalGasification',

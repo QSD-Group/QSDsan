@@ -18,6 +18,10 @@ https://github.com/BioSTEAMDevelopmentGroup/biosteam
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
+
+Note: `unit_operations/dynamic/_pumping.py` is a separate module holding the
+dynamic-capable `Pump` wrapper; this module holds the WWT-specific `WWTpump`/
+`SludgePump` built on top of it.
 '''
 
 import qsdsan as qs
@@ -28,7 +32,7 @@ from biosteam.units.design_tools.mechanical import (
     )
 from ... import SanUnit, Construction
 from ...utils import auom, select_pipe, format_str
-from ..bst import Pump
+from ..dynamic import Pump
 
 __all__ = ('WWTpump', 'SludgePump', 'wwtpump',)
 

@@ -18,6 +18,10 @@ https://github.com/BioSTEAMDevelopmentGroup/biosteam
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
+
+Note: `unit_operations/static/_pumping.py` is a separate module holding the
+WWT-specific `WWTpump`/`SludgePump`, which are built on the `Pump` wrapper
+defined here.
 '''
 
 from biosteam.units import Pump as BSTPump

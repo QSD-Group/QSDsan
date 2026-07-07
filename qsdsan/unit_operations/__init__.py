@@ -44,9 +44,16 @@ def dydt_cstr(QC_ins, QC, V, _dstate):
     _dstate[:-1] = (Q_ins @ C_ins - sum(Q_ins)*QC[:-1])/V
 
 #%%
+# `dynamic` must be imported before `static`: several static units (e.g. WWTpump,
+# InternalCirculationRx) use the dynamic-capable Mixer/Splitter/Pump wrappers as
+# base/component classes, while a few dynamic units (e.g. FlatBottomCircularClarifier,
+# ExcretionmASM2d) in turn need specific static leaf modules (WWTpump, Excretion).
+# Importing `dynamic` first means its self-contained leaf modules (Mixer/Splitter/Pump)
+# are fully defined before anything in `static` can trigger a nested, half-finished
+# import of `dynamic`.
 from .bst import *
-from .static import *
 from .dynamic import *
+from .static import *
 
 from . import bst, static, dynamic
 

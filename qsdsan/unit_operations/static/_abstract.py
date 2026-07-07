@@ -12,19 +12,20 @@ This module is developed by:
 
     Jianan Feng <jiananf2@illinois.edu>
 
-Part of this module is based on the biosteam package:
-https://github.com/BioSTEAMDevelopmentGroup/biosteam
-
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
+
+Note: `unit_operations/bst/_abstract.py` and `unit_operations/dynamic/_abstract.py`
+are unrelated modules that happen to share this filename; each holds a different
+set of unit classes.
 '''
 
 import thermosteam as tmo
 from warnings import warn
 from collections.abc import Iterable
+from biosteam.units import Splitter as BSTSplitter
 from ... import SanUnit
-from ..bst import Splitter
 
 __all__ = (
     'PhaseChanger',
@@ -160,7 +161,7 @@ class ComponentSplitter(SanUnit):
 
     _ins_size_is_fixed = False
     _outs_size_is_fixed = False
-    _graphics = Splitter._graphics
+    _graphics = BSTSplitter._graphics
 
 
     def _run(self):
