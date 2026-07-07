@@ -11,6 +11,8 @@ This document records notable changes to `QSDsan <https://github.com/QSD-Group/Q
 - Restyled the :ref:`Systems & Publications <systems>` page with a platform-and-methodology introduction (QSD, QSDsan, DMsan) and, for every entry, the full citation plus Read Paper / Source Code buttons; added a :ref:`Learning <learning>` page (workshops) and an :ref:`App <app>` page (web-app gallery).
 - Added theme-adaptive (light/dark) navigation-card icons, a "Home" entry in the sidebar, footer links (GitHub, PyPI, YouTube, email, and the QSDsan Google Group), and a note on joining the Google Group for updates.
 
+- Took the NJ Bioenergy web app's live demo offline: the always-on ECS/ALB backend re-hosted above cost far more than its actual (rare) usage justified, so it was decommissioned. The app page's Launch button was replaced with a note that the demo is temporarily unavailable.
+
 
 `1.5.3`_
 --------
