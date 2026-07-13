@@ -50,9 +50,9 @@ class Excretion(SanUnit):
     >>> U1.simulate()
     >>> urine, feces = U1.outs
     >>> round(urine.TN, 1)  # total nitrogen in urine, mg/L
-    4277.9
+    4278.1
     >>> round(feces.COD, 1)  # COD in feces, mg/L
-    123224.0
+    123314.0
 
     See `bwaise systems <https://github.com/QSD-Group/EXPOsan/blob/main/exposan/bwaise/systems.py>`_
     for use in a complete sanitation system.

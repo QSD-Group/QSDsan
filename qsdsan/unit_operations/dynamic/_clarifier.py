@@ -1051,14 +1051,14 @@ class PrimaryClarifierBSM2(SanUnit):
         WasteStream-specific properties:
          pH         : 7.0
          Alkalinity : 2.5 mmol/L
-         COD        : 23873.0 mg/L
-         BOD        : 14963.2 mg/L
-         TC         : 8298.3 mg/L
-         TOC        : 8298.3 mg/L
-         TN         : 20363.2 mg/L
-         TP         : 367.6 mg/L
-         TK         : 68.3 mg/L
-         TSS        : 11124.4 mg/L
+         COD        : 23916.5 mg/L
+         BOD        : 14990.5 mg/L
+         TC         : 8313.4 mg/L
+         TOC        : 8313.4 mg/L
+         TN         : 20400.3 mg/L
+         TP         : 368.3 mg/L
+         TK         : 68.4 mg/L
+         TSS        : 11144.7 mg/L
     outs...
     [0] eff
     phase: 'l', T: 298.15 K, P: 101325 Pa
@@ -1068,14 +1068,14 @@ class PrimaryClarifierBSM2(SanUnit):
                     H2O    9.93e+05
         WasteStream-specific properties:
          pH         : 7.0
-         COD        : 15436.7 mg/L
-         BOD        : 10190.8 mg/L
-         TC         : 5208.2 mg/L
-         TOC        : 5208.2 mg/L
-         TN         : 19890.1 mg/L
-         TP         : 206.9 mg/L
+         COD        : 15448.1 mg/L
+         BOD        : 10198.3 mg/L
+         TC         : 5212.0 mg/L
+         TOC        : 5212.0 mg/L
+         TN         : 19904.9 mg/L
+         TP         : 207.0 mg/L
          TK         : 27.8 mg/L
-         TSS        : 4531.6 mg/L
+         TSS        : 4535.0 mg/L
     [1] sludge
     phase: 'l', T: 298.15 K, P: 101325 Pa
     flow (g/hr): S_F    70
@@ -1084,14 +1084,14 @@ class PrimaryClarifierBSM2(SanUnit):
                     H2O    7e+03
         WasteStream-specific properties:
          pH         : 7.0
-         COD        : 693717.5 mg/L
-         BOD        : 393895.7 mg/L
-         TC         : 253653.4 mg/L
-         TOC        : 253653.4 mg/L
-         TN         : 57923.7 mg/L
-         TP         : 13132.3 mg/L
-         TK         : 3282.0 mg/L
-         TSS        : 534594.0 mg/L
+         COD        : 760116.6 mg/L
+         BOD        : 431597.3 mg/L
+         TC         : 277931.8 mg/L
+         TOC        : 277931.8 mg/L
+         TN         : 63467.8 mg/L
+         TP         : 14389.2 mg/L
+         TK         : 3596.2 mg/L
+         TSS        : 585762.5 mg/L
    
     References
     ----------
@@ -1272,47 +1272,47 @@ class PrimaryClarifier(IdealClarifier):
         WasteStream-specific properties:
          pH         : 7.0
          Alkalinity : 2.5 mmol/L
-         COD        : 23873.0 mg/L
-         BOD        : 14963.2 mg/L
-         TC         : 8298.3 mg/L
-         TOC        : 8298.3 mg/L
-         TN         : 20363.2 mg/L
-         TP         : 367.6 mg/L
-         TK         : 68.3 mg/L
-         TSS        : 11124.4 mg/L
+         COD        : 23916.5 mg/L
+         BOD        : 14990.5 mg/L
+         TC         : 8313.4 mg/L
+         TOC        : 8313.4 mg/L
+         TN         : 20400.3 mg/L
+         TP         : 368.3 mg/L
+         TK         : 68.4 mg/L
+         TSS        : 11144.7 mg/L
     outs...
     [0] effluent
     phase: 'l', T: 298.15 K, P: 101325 Pa
     flow (g/hr): S_F    7e+03
                     S_NH4  1.4e+04
                     X_OHO  4.2e+03
-                    H2O    7.04e+05
+                    H2O    7.03e+05
         WasteStream-specific properties:
          pH         : 7.0
-         COD        : 15278.7 mg/L
-         BOD        : 10093.4 mg/L
-         TC         : 5152.8 mg/L
-         TOC        : 5152.8 mg/L
-         TN         : 19776.2 mg/L
-         TP         : 204.4 mg/L
-         TK         : 27.3 mg/L
-         TSS        : 4449.8 mg/L
+         COD        : 15306.5 mg/L
+         BOD        : 10111.7 mg/L
+         TC         : 5162.1 mg/L
+         TOC        : 5162.1 mg/L
+         TN         : 19812.2 mg/L
+         TP         : 204.7 mg/L
+         TK         : 27.4 mg/L
+         TSS        : 4457.9 mg/L
     [1] sludge
     phase: 'l', T: 298.15 K, P: 101325 Pa
     flow (g/hr): S_F    3e+03
                     S_NH4  6e+03
                     X_OHO  1.08e+04
-                    H2O    2.96e+05
+                    H2O    2.97e+05
         WasteStream-specific properties:
          pH         : 7.0
-         COD        : 43926.3 mg/L
-         BOD        : 26326.2 mg/L
-         TC         : 15637.8 mg/L
-         TOC        : 15637.8 mg/L
-         TN         : 21732.8 mg/L
-         TP         : 748.7 mg/L
-         TK         : 163.9 mg/L
-         TSS        : 26698.6 mg/L
+         COD        : 44006.3 mg/L
+         BOD        : 26374.2 mg/L
+         TC         : 15666.3 mg/L
+         TOC        : 15666.3 mg/L
+         TN         : 21772.4 mg/L
+         TP         : 750.0 mg/L
+         TK         : 164.2 mg/L
+         TSS        : 26747.2 mg/L
     
     References
     ----------

@@ -884,41 +884,41 @@ class PFR(SanUnit):
                  X_BH   3.94e+06
                  X_BA   2.3e+05
                  X_P    6.95e+05
-                 S_O    770
+                 S_O    769
                  S_NO   1.6e+04
                  S_NH   2.68e+03
                  S_ND   1.06e+03
                  X_ND   5.42e+03
                  S_ALK  7.65e+04
-                 S_N2   2.11e+04
+                 S_N2   2.12e+04
                  H2O    1.53e+09
      WasteStream-specific properties:
       pH         : 7.0
       Alkalinity : 2.5 mmol/L
-      COD        : 4389.0 mg/L
-      BOD        : 1563.3 mg/L
-      TC         : 1599.8 mg/L
-      TOC        : 1550.1 mg/L
-      TN         : 329.0 mg/L
-      TP         : 68.2 mg/L
+      COD        : 4391.5 mg/L
+      BOD        : 1564.1 mg/L
+      TC         : 1600.7 mg/L
+      TOC        : 1550.9 mg/L
+      TN         : 329.1 mg/L
+      TP         : 68.3 mg/L
       TK         : 15.1 mg/L
-      TSS        : 3268.3 mg/L
+      TSS        : 3270.1 mg/L
      Component concentrations (mg/L):
       S_I    29.9
       S_S    1.5
-      X_I    1150.0
+      X_I    1150.6
       X_S    49.3
-      X_BH   2557.0
-      X_BA   149.5
-      X_P    451.9
+      X_BH   2558.4
+      X_BA   149.6
+      X_P    452.1
       S_O    0.5
       S_NO   10.4
       S_NH   1.7
       S_ND   0.7
       X_ND   3.5
       S_ALK  49.7
-      S_N2   13.7
-      H2O    994138.1
+      S_N2   13.8
+      H2O    994623.2
   
     See Also
     --------
@@ -1363,7 +1363,7 @@ class AerobicDigester(CSTR):
                     X_ND   135
                     S_ALK  175
                     S_N2   52.1
-                    H2O    1.99e+06
+                    H2O    2.01e+06
         WasteStream-specific properties:
          pH         : 7.0
          Alkalinity : 2.5 mmol/L
@@ -1391,7 +1391,7 @@ class AerobicDigester(CSTR):
                     S_ND  0.975
                     X_ND  8.74
                     S_N2  2.51e+03
-                    H2O   2e+06
+                    H2O   1.97e+06
         WasteStream-specific properties:
          pH         : 7.0
          Alkalinity : 2.5 mmol/L

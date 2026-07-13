@@ -118,31 +118,31 @@ class Thickener(SanUnit):
         WasteStream-specific properties:
          pH         : 7.0
          Alkalinity : 2.5 mmol/L
-         COD        : 23873.0 mg/L
-         BOD        : 14963.2 mg/L
-         TC         : 8298.3 mg/L
-         TOC        : 8298.3 mg/L
-         TN         : 20363.2 mg/L
-         TP         : 367.6 mg/L
-         TK         : 68.3 mg/L
-         TSS        : 11124.4 mg/L
+         COD        : 23916.5 mg/L
+         BOD        : 14990.5 mg/L
+         TC         : 8313.4 mg/L
+         TOC        : 8313.4 mg/L
+         TN         : 20400.3 mg/L
+         TP         : 368.3 mg/L
+         TK         : 68.4 mg/L
+         TSS        : 11144.7 mg/L
     outs...
     [0] sludge
     phase: 'l', T: 298.15 K, P: 101325 Pa
     flow (g/hr): S_F    1.56e+03
-                    S_NH4  3.11e+03
+                    S_NH4  3.12e+03
                     X_OHO  1.47e+04
                     H2O    1.56e+05
         WasteStream-specific properties:
          pH         : 7.0
-         COD        : 95050.4 mg/L
-         BOD        : 55228.4 mg/L
-         TC         : 34369.6 mg/L
-         TOC        : 34369.6 mg/L
-         TN         : 24354.4 mg/L
-         TP         : 1724.0 mg/L
-         TK         : 409.8 mg/L
-         TSS        : 66748.0 mg/L
+         COD        : 95948.4 mg/L
+         BOD        : 55752.4 mg/L
+         TC         : 34693.6 mg/L
+         TOC        : 34693.6 mg/L
+         TN         : 24614.1 mg/L
+         TP         : 1740.2 mg/L
+         TK         : 413.6 mg/L
+         TSS        : 67366.9 mg/L
     [1] effluent
     phase: 'l', T: 298.15 K, P: 101325 Pa
     flow (g/hr): S_F    8.44e+03
@@ -151,14 +151,14 @@ class Thickener(SanUnit):
                     H2O    8.44e+05
         WasteStream-specific properties:
          pH         : 7.0
-         COD        : 9978.2 mg/L
-         BOD        : 7102.9 mg/L
-         TC         : 3208.8 mg/L
-         TOC        : 3208.8 mg/L
-         TN         : 19584.1 mg/L
+         COD        : 9978.8 mg/L
+         BOD        : 7103.3 mg/L
+         TC         : 3209.0 mg/L
+         TOC        : 3209.0 mg/L
+         TN         : 19584.9 mg/L
          TP         : 102.9 mg/L
          TK         : 1.6 mg/L
-         TSS        : 265.9 mg/L
+         TSS        : 266.0 mg/L
 
     References
     ----------
@@ -511,14 +511,14 @@ class Incinerator(SanUnit):
         WasteStream-specific properties:
          pH         : 7.0
          Alkalinity : 2.5 mmol/L
-         COD        : 23873.0 mg/L
-         BOD        : 14963.2 mg/L
-         TC         : 8298.3 mg/L
-         TOC        : 8298.3 mg/L
-         TN         : 20363.2 mg/L
-         TP         : 367.6 mg/L
-         TK         : 68.3 mg/L
-         TSS        : 11124.4 mg/L
+         COD        : 23916.5 mg/L
+         BOD        : 14990.5 mg/L
+         TC         : 8313.4 mg/L
+         TOC        : 8313.4 mg/L
+         TN         : 20400.3 mg/L
+         TP         : 368.3 mg/L
+         TK         : 68.4 mg/L
+         TSS        : 11144.7 mg/L
     [1] air
     phase: 'g', T: 298.15 K, P: 101325 Pa
     flow (g/hr): S_O2  2.1e+05

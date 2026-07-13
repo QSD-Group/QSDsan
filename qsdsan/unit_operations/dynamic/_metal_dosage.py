@@ -187,7 +187,7 @@ class MetalDosage(SanUnit):
         >>> MD.simulate()
         >>> eff, = MD.outs
         >>> eff.iconc['S_F', 'X_S', 'S_I', 'X_I', 'X_FeOH', 'X_FePO4']
-        array([137.998, 214.598,   9.105,  68.295,  26.583,  33.047])
+        array([138.001, 214.602,   9.105,  68.296,  26.583,  33.048])
         
         """
         if not isinstance(model, mASM2d):
