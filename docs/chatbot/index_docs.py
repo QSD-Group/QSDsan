@@ -15,10 +15,11 @@ import code_adapter
 import embeddings
 
 
-# Pages indexed from the built docs: the tutorials / API / FAQ subtrees plus the
-# homepage (index.html), which carries the install and overview content. Read the
-# Docs build scaffolding is skipped.
-_INDEXED_DIRS = ("tutorials", "api", "faq")
+# Pages indexed from the built docs: the tutorials / API / FAQ / Systems &
+# Publications / Learning / App subtrees plus the homepage (index.html), which
+# carries the install and overview content. Read the Docs build scaffolding is
+# skipped.
+_INDEXED_DIRS = ("tutorials", "api", "faq", "systems", "learning", "app")
 _INDEXED_ROOT_PAGES = ("index.html",)
 _SKIP_PAGES = {"genindex.html", "search.html", "py-modindex.html", "404.html"}
 
@@ -32,6 +33,8 @@ def _page_type(rel_path: str) -> str:
         return "api"
     if head == "faq":
         return "faq"
+    if head in ("systems", "learning", "app"):
+        return head
     return "guide"
 
 
@@ -39,8 +42,8 @@ def build_qsdsan_chunks(html_dir: str, base_url: str | None = None) -> list[dict
     """Walk a built Sphinx HTML tree and chunk each page by heading.
 
     Citation URL = readthedocs base + page path relative to html_dir + #anchor.
-    Indexes the tutorials/, api/, and faq/ subtrees plus the homepage; skips Read
-    the Docs build scaffolding (search, genindex, ...).
+    Indexes the tutorials/, api/, faq/, systems/, learning/, and app/ subtrees plus
+    the homepage; skips Read the Docs build scaffolding (search, genindex, ...).
     """
     base_url = base_url or config.QSDSAN_DOCS_BASE
     chunks: list[dict] = []

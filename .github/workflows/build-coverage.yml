@@ -42,7 +42,7 @@ jobs:
         mkdir -p tmps
         pytest -m "not integration" -n 2 --dist loadfile --basetemp=tmps/pytest-${{ github.run_id }}-${{ github.run_attempt }} --cov=./ --cov-report=xml
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v6
+      uses: codecov/codecov-action@v7
       continue-on-error: true
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
@@ -89,7 +89,7 @@ jobs:
     - name: Upload integration coverage to Codecov
       # Merged with the `build` job's report by Codecov (per-commit) so EXPOsan-
       # exercised qsdsan code still counts toward total coverage, without gating.
-      uses: codecov/codecov-action@v6
+      uses: codecov/codecov-action@v7
       continue-on-error: true
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
