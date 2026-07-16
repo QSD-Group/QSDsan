@@ -6,6 +6,9 @@ This document records notable changes to `QSDsan <https://github.com/QSD-Group/Q
 
 `1.6.0`_
 --------
+- Generalized :class:`~.unit_operations.HydrothermalLiquefaction` and :class:`~.unit_operations.Hydroprocessing` per `#125 <https://github.com/QSD-Group/QSDsan/issues/125>`_, also fixed some bugs.
+- Added a platform-wide test that any ``SanUnit`` declaring ``auxiliary_unit_names`` actually assigns every declared name, to catch this bug class generally. Original ``HydrothermalLiquefaction``, ``Hydrotreating``, and ``Hydrocracking`` were moved to ``exposan.htl`` as they are specific to that implementation.
+
 - Re-hosted the NJ Bioenergy web app under group-owned infrastructure: frontend at ``https://nj-bioenergy.apps.qsdsan.com`` (group Vercel) and backend at ``https://nj-bioenergy-api.apps.qsdsan.com`` (four AWS Lambda functions behind CloudFront). The old ``qsdsan.app`` address 301-redirects to the new frontend while the domain registration lapses.
 - Consolidated the standalone Jekyll website (formerly served at ``qsdsan.com``) into the Sphinx documentation, which now serves as the single canonical site.
 - Restyled the :ref:`Systems & Publications <systems>` page with a platform-and-methodology introduction (QSD, QSDsan, DMsan) and, for every entry, the full citation plus Read Paper / Source Code buttons; added a :ref:`Learning <learning>` page (workshops) and an :ref:`App <app>` page (web-app gallery).

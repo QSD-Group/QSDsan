@@ -121,8 +121,7 @@ G2RT
 
 Hydroprocessing
 ---------------
-:class:`~qsdsan.unit_operations.Hydrocracking`,
-:class:`~qsdsan.unit_operations.Hydrotreating`
+:class:`~qsdsan.unit_operations.Hydroprocessing`
 
 Hydrothermal
 ------------

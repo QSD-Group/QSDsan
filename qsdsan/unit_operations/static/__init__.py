@@ -32,8 +32,8 @@ from ._g2rt import (
     UFMixer, VolumeReductionCombustor, VolumeReductionFilterPress,
     VRConcentrator, VRdryingtunnel, VRpasteurization,
 )
-from ._hydroprocessing import Hydrocracking, Hydrotreating
-from ._hydrothermal import CatalyticHydrothermalGasification, HydrothermalLiquefaction
+from ._hydroprocessing import Hydroprocessing
+from ._hydrothermal import CatalyticHydrothermalGasification, HydrothermalLiquefaction, KnockOutDrum
 from ._internal_circulation_rx import InternalCirculationRx
 from ._lagoon import Lagoon
 from ._membrane_distillation import MembraneDistillation
@@ -78,8 +78,8 @@ __all__ = (
     'mSCWOConcentratorModule', 'mSCWOGasModule', 'mSCWOReactorModule',
     'UFMixer', 'VolumeReductionCombustor', 'VolumeReductionFilterPress',
     'VRConcentrator', 'VRdryingtunnel', 'VRpasteurization',
-    'Hydrocracking', 'Hydrotreating',
-    'CatalyticHydrothermalGasification', 'HydrothermalLiquefaction',
+    'Hydroprocessing',
+    'CatalyticHydrothermalGasification', 'HydrothermalLiquefaction', 'KnockOutDrum',
     'InternalCirculationRx',
     'Lagoon',
     'MembraneDistillation',
