@@ -29,9 +29,8 @@ HeatExchangerNetwork,bst,No,:class:`bst/heat_exchanging/HeatExchangerNetwork <qs
 HXprocess,bst,No,:class:`bst/heat_exchanging/HXprocess <qsdsan.unit_operations.bst._heat_exchanging.HXprocess>`
 HXutility,bst,No,:class:`bst/heat_exchanging/HXutility <qsdsan.unit_operations.bst._heat_exchanging.HXutility>`
 HydraulicDelay,dynamic,Yes,:class:`dynamic/abstract/HydraulicDelay <qsdsan.unit_operations.dynamic._abstract.HydraulicDelay>`
-Hydrocracking,static,No,:class:`static/hydroprocessing/Hydrocracking <qsdsan.unit_operations.static._hydroprocessing.Hydrocracking>`
 HydrothermalLiquefaction,static,No,:class:`static/hydrothermal/HydrothermalLiquefaction <qsdsan.unit_operations.static._hydrothermal.HydrothermalLiquefaction>`
-Hydrotreating,static,No,:class:`static/hydroprocessing/Hydrotreating <qsdsan.unit_operations.static._hydroprocessing.Hydrotreating>`
+Hydroprocessing,static,No,:class:`static/hydroprocessing/Hydroprocessing <qsdsan.unit_operations.static._hydroprocessing.Hydroprocessing>`
 IdealClarifier,static,No,:class:`dynamic/clarifier/IdealClarifier <qsdsan.unit_operations.dynamic._clarifier.IdealClarifier>`
 IsothermalCompressor,bst,No,:class:`bst/compressor/IsothermalCompressor <qsdsan.unit_operations.bst._compressor.IsothermalCompressor>`
 Junction,dynamic,Yes,:class:`dynamic/junction/Junction <qsdsan.unit_operations.dynamic._junction.Junction>`
