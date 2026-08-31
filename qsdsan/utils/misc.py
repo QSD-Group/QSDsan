@@ -4,6 +4,7 @@
 QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
 
 This module is developed by:
+
     Yalin Li <mailto.yalin.li@gmail.com>
 
 This module is under the University of Illinois/NCSA Open Source License.
@@ -12,13 +13,12 @@ for license details.
 '''
 
 from datetime import timedelta
-try: from biosteam.utils import Timer
-except: from biosteam.utils import TicToc as Timer
+from warnings import warn
+from .._compat import Timer
 
 __all__ = (
     'clear_lca_registries',
     'copy_attr',
-    'ords',
     'price_ratio',
     'register_with_prefix',
     'time_printer',
@@ -30,6 +30,11 @@ def clear_lca_registries(print_msg=False):
     Clear registries related to LCA, including instances of
     :class:`~.ImpactIndicator`, :class:`~.ImpactItem`, :class:`~.Construction`,
     and :class:`~.Transportation`
+
+    .. deprecated::
+        Use ``qs.main_flowsheet.clear()`` to reset the current flowsheet,
+        or ``qs.main_flowsheet.set_flowsheet('name')`` to switch to an
+        isolated flowsheet. This function will be removed in a future release.
 
     Parameters
     ----------
@@ -45,6 +50,14 @@ def clear_lca_registries(print_msg=False):
     All construction activities have been removed from the registry.
     All transportation activities have been removed from the registry.
     '''
+    warn(
+        "clear_lca_registries() is deprecated. Use `qs.main_flowsheet.clear()` "
+        "to reset the current flowsheet, or switch flowsheets with "
+        "`qs.main_flowsheet.set_flowsheet('name')` for isolation. "
+        "This function will be removed in a future release.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     # Only import when this function is called to avoid circular import during package initialization
     from qsdsan import ImpactIndicator, ImpactItem, Construction, Transportation
     for lca_cls in (ImpactIndicator, ImpactItem, Construction, Transportation):
@@ -91,21 +104,6 @@ def copy_attr(new, original, skip=(), same=(), slots=None):
                     new_value = value
             setattr(new, slot, new_value)
     return new
-
-
-def ords(string):
-    '''
-    Return the sum of Unicode of a string, more for fun.
-
-    Examples
-    --------
-    >>> from qsdsan.utils import ords
-    >>> ords('QSDsan')
-    554
-    '''
-    string = str(string)
-    added = sum(ord(i) for i in string)
-    return added
 
 
 def price_ratio(default_price_ratio=1):

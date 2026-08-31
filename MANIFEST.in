@@ -1,4 +1,4 @@
-include LICENSE.txt CODE_OF_CONDUCT.md AUTHORS.rst README.rst CONTRIBUTING.rst CHANGELOG.rst pytest.ini 
+include LICENSE.txt AUTHORS.rst README.rst CONTRIBUTING.rst pytest.ini
 global-exclude **/*tmp*
 global-exclude .spyproject
 global-exclude tests/.spyproject/*

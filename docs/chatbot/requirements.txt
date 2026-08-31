@@ -1,0 +1,9 @@
+fastapi>=0.110
+uvicorn[standard]>=0.29
+anthropic>=0.40
+voyageai>=0.3
+numpy>=1.26
+requests>=2.31
+beautifulsoup4>=4.12
+pydantic>=2.6
+pyyaml>=6.0

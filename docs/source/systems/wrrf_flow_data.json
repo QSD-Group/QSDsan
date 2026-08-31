@@ -1,0 +1,2166 @@
+{
+  "B1": {
+    "RWW": {
+      "id": "RWW",
+      "q_m3d": 37854.12,
+      "tss_kgd": 6260.92,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "reject": {
+      "id": "reject",
+      "q_m3d": 992.9,
+      "tss_kgd": 765.97,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "PE": {
+      "id": "PE",
+      "q_m3d": 38597.18,
+      "tss_kgd": 2792.68,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "PS": {
+      "id": "PS",
+      "q_m3d": 249.84,
+      "tss_kgd": 4234.26,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws3": {
+      "id": "ws3",
+      "q_m3d": 162.77,
+      "tss_kgd": 275.86,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "thickened_PS": {
+      "id": "thickened_PS",
+      "q_m3d": 87.06,
+      "tss_kgd": 3958.15,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "RAS": {
+      "id": "RAS",
+      "q_m3d": 25362.26,
+      "tss_kgd": 122804.85,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "treated": {
+      "id": "treated",
+      "q_m3d": 63959.44,
+      "tss_kgd": 127217.48,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "SE": {
+      "id": "SE",
+      "q_m3d": 37840.1,
+      "tss_kgd": 746.82,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "WAS": {
+      "id": "WAS",
+      "q_m3d": 757.08,
+      "tss_kgd": 3665.8,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws6": {
+      "id": "ws6",
+      "q_m3d": 679.1,
+      "tss_kgd": 164.41,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "thickened_WAS": {
+      "id": "thickened_WAS",
+      "q_m3d": 77.98,
+      "tss_kgd": 3501.43,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws8": {
+      "id": "ws8",
+      "q_m3d": 165.04,
+      "tss_kgd": 7459.57,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws9": {
+      "id": "ws9",
+      "q_m3d": 165.04,
+      "tss_kgd": 6219.38,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "biogas": {
+      "id": "biogas",
+      "q_m3d": 5.99,
+      "tss_kgd": null,
+      "is_gas": true,
+      "phase": "g"
+    },
+    "digestate": {
+      "id": "digestate",
+      "q_m3d": 165.04,
+      "tss_kgd": 3675.76,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws13": {
+      "id": "ws13",
+      "q_m3d": 165.04,
+      "tss_kgd": 3715.38,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws14": {
+      "id": "ws14",
+      "q_m3d": 144.68,
+      "tss_kgd": 325.7,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "cake": {
+      "id": "cake",
+      "q_m3d": 20.37,
+      "tss_kgd": 3390.51,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws16": {
+      "id": "ws16",
+      "q_m3d": 986.55,
+      "tss_kgd": 765.97,
+      "is_gas": false,
+      "phase": "l"
+    }
+  },
+  "B2": {
+    "RWW": {
+      "id": "RWW",
+      "q_m3d": 37854.12,
+      "tss_kgd": 6260.92,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "reject": {
+      "id": "reject",
+      "q_m3d": 999.49,
+      "tss_kgd": 559.2,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "PE": {
+      "id": "PE",
+      "q_m3d": 38603.77,
+      "tss_kgd": 2710.51,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "PS": {
+      "id": "PS",
+      "q_m3d": 249.84,
+      "tss_kgd": 4109.66,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws19": {
+      "id": "ws19",
+      "q_m3d": 162.77,
+      "tss_kgd": 267.74,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "thickened_PS": {
+      "id": "thickened_PS",
+      "q_m3d": 87.06,
+      "tss_kgd": 3841.67,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "RAS": {
+      "id": "RAS",
+      "q_m3d": 25362.26,
+      "tss_kgd": 118247.21,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "treated": {
+      "id": "treated",
+      "q_m3d": 63966.03,
+      "tss_kgd": 122519.67,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "SE": {
+      "id": "SE",
+      "q_m3d": 37846.69,
+      "tss_kgd": 742.71,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "WAS": {
+      "id": "WAS",
+      "q_m3d": 757.08,
+      "tss_kgd": 3529.76,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws22": {
+      "id": "ws22",
+      "q_m3d": 681.37,
+      "tss_kgd": 158.84,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "thickened_WAS": {
+      "id": "thickened_WAS",
+      "q_m3d": 75.71,
+      "tss_kgd": 3371.01,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "digestate": {
+      "id": "digestate",
+      "q_m3d": 162.77,
+      "tss_kgd": 1442.19,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws25": {
+      "id": "ws25",
+      "q_m3d": 149.68,
+      "tss_kgd": 132.62,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "cake": {
+      "id": "cake",
+      "q_m3d": 13.1,
+      "tss_kgd": 1309.84,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws27": {
+      "id": "ws27",
+      "q_m3d": 993.82,
+      "tss_kgd": 559.2,
+      "is_gas": false,
+      "phase": "l"
+    }
+  },
+  "B3": {
+    "RWW": {
+      "id": "RWW",
+      "q_m3d": 37854.12,
+      "tss_kgd": 6260.92,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "reject": {
+      "id": "reject",
+      "q_m3d": 972.02,
+      "tss_kgd": 1022.08,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "PE": {
+      "id": "PE",
+      "q_m3d": 38576.3,
+      "tss_kgd": 2894.46,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "PS": {
+      "id": "PS",
+      "q_m3d": 249.84,
+      "tss_kgd": 4388.6,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws30": {
+      "id": "ws30",
+      "q_m3d": 162.77,
+      "tss_kgd": 285.92,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "thickened_PS": {
+      "id": "thickened_PS",
+      "q_m3d": 87.06,
+      "tss_kgd": 4102.42,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "RAS": {
+      "id": "RAS",
+      "q_m3d": 25362.26,
+      "tss_kgd": 123234.24,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "treated": {
+      "id": "treated",
+      "q_m3d": 63938.56,
+      "tss_kgd": 127659.35,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "SE": {
+      "id": "SE",
+      "q_m3d": 37819.22,
+      "tss_kgd": 746.47,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "WAS": {
+      "id": "WAS",
+      "q_m3d": 757.08,
+      "tss_kgd": 3678.62,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws33": {
+      "id": "ws33",
+      "q_m3d": 682.89,
+      "tss_kgd": 165.91,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "thickened_WAS": {
+      "id": "thickened_WAS",
+      "q_m3d": 74.19,
+      "tss_kgd": 3512.53,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws35": {
+      "id": "ws35",
+      "q_m3d": 161.26,
+      "tss_kgd": 7615.42,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws36": {
+      "id": "ws36",
+      "q_m3d": 120.75,
+      "tss_kgd": 570.24,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "cake": {
+      "id": "cake",
+      "q_m3d": 40.5,
+      "tss_kgd": 7044.42,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws38": {
+      "id": "ws38",
+      "q_m3d": 966.42,
+      "tss_kgd": 1022.09,
+      "is_gas": false,
+      "phase": "l"
+    }
+  },
+  "C1": {
+    "RWW": {
+      "id": "RWW",
+      "q_m3d": 37854.12,
+      "tss_kgd": 6260.92,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "RAS": {
+      "id": "RAS",
+      "q_m3d": 25362.26,
+      "tss_kgd": 149319.94,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "reject": {
+      "id": "reject",
+      "q_m3d": 1188.66,
+      "tss_kgd": 627.83,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "treated": {
+      "id": "treated",
+      "q_m3d": 64405.04,
+      "tss_kgd": 156760.05,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "SE": {
+      "id": "SE",
+      "q_m3d": 37831.45,
+      "tss_kgd": 308.41,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "WAS": {
+      "id": "WAS",
+      "q_m3d": 1211.33,
+      "tss_kgd": 7131.69,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws40": {
+      "id": "ws40",
+      "q_m3d": 1053.86,
+      "tss_kgd": 310.23,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "thickened_WAS": {
+      "id": "thickened_WAS",
+      "q_m3d": 157.47,
+      "tss_kgd": 6821.33,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws42": {
+      "id": "ws42",
+      "q_m3d": 157.47,
+      "tss_kgd": 5557.11,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "biogas": {
+      "id": "biogas",
+      "q_m3d": 4.61,
+      "tss_kgd": null,
+      "is_gas": true,
+      "phase": "g"
+    },
+    "digestate": {
+      "id": "digestate",
+      "q_m3d": 157.47,
+      "tss_kgd": 3711.87,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws46": {
+      "id": "ws46",
+      "q_m3d": 157.47,
+      "tss_kgd": 3732.17,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws47": {
+      "id": "ws47",
+      "q_m3d": 134.0,
+      "tss_kgd": 317.59,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "cake": {
+      "id": "cake",
+      "q_m3d": 23.47,
+      "tss_kgd": 3414.71,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws49": {
+      "id": "ws49",
+      "q_m3d": 1187.86,
+      "tss_kgd": 627.83,
+      "is_gas": false,
+      "phase": "l"
+    }
+  },
+  "C2": {
+    "RWW": {
+      "id": "RWW",
+      "q_m3d": 37854.12,
+      "tss_kgd": 6260.92,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "RAS": {
+      "id": "RAS",
+      "q_m3d": 25362.26,
+      "tss_kgd": 144142.1,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "reject": {
+      "id": "reject",
+      "q_m3d": 1197.58,
+      "tss_kgd": 431.91,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "treated": {
+      "id": "treated",
+      "q_m3d": 64413.96,
+      "tss_kgd": 151332.34,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "SE": {
+      "id": "SE",
+      "q_m3d": 37840.36,
+      "tss_kgd": 305.86,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "WAS": {
+      "id": "WAS",
+      "q_m3d": 1211.33,
+      "tss_kgd": 6884.39,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws51": {
+      "id": "ws51",
+      "q_m3d": 1056.13,
+      "tss_kgd": 300.12,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "thickened_WAS": {
+      "id": "thickened_WAS",
+      "q_m3d": 155.2,
+      "tss_kgd": 6584.2,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "digestate": {
+      "id": "digestate",
+      "q_m3d": 155.2,
+      "tss_kgd": 1447.45,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws54": {
+      "id": "ws54",
+      "q_m3d": 141.31,
+      "tss_kgd": 131.79,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "cake": {
+      "id": "cake",
+      "q_m3d": 13.89,
+      "tss_kgd": 1315.45,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws56": {
+      "id": "ws56",
+      "q_m3d": 1197.44,
+      "tss_kgd": 431.91,
+      "is_gas": false,
+      "phase": "l"
+    }
+  },
+  "C3": {
+    "RWW": {
+      "id": "RWW",
+      "q_m3d": 37854.12,
+      "tss_kgd": 6260.92,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "RAS": {
+      "id": "RAS",
+      "q_m3d": 25362.26,
+      "tss_kgd": 140632.76,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "reject": {
+      "id": "reject",
+      "q_m3d": 1169.83,
+      "tss_kgd": 759.52,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "treated": {
+      "id": "treated",
+      "q_m3d": 64386.21,
+      "tss_kgd": 147653.2,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "SE": {
+      "id": "SE",
+      "q_m3d": 37812.62,
+      "tss_kgd": 303.65,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "WAS": {
+      "id": "WAS",
+      "q_m3d": 1211.33,
+      "tss_kgd": 6716.78,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws58": {
+      "id": "ws58",
+      "q_m3d": 1059.92,
+      "tss_kgd": 293.86,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "thickened_WAS": {
+      "id": "thickened_WAS",
+      "q_m3d": 151.42,
+      "tss_kgd": 6423.08,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws60": {
+      "id": "ws60",
+      "q_m3d": 109.78,
+      "tss_kgd": 465.68,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "cake": {
+      "id": "cake",
+      "q_m3d": 41.64,
+      "tss_kgd": 5957.33,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws62": {
+      "id": "ws62",
+      "q_m3d": 1169.69,
+      "tss_kgd": 759.52,
+      "is_gas": false,
+      "phase": "l"
+    }
+  },
+  "E2": {
+    "RWW": {
+      "id": "RWW",
+      "q_m3d": 37854.12,
+      "tss_kgd": 6260.92,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "RAS": {
+      "id": "RAS",
+      "q_m3d": 25362.26,
+      "tss_kgd": 114910.77,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "reject": {
+      "id": "reject",
+      "q_m3d": 1236.84,
+      "tss_kgd": 361.44,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "treated": {
+      "id": "treated",
+      "q_m3d": 64453.22,
+      "tss_kgd": 120860.82,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "SE": {
+      "id": "SE",
+      "q_m3d": 37841.77,
+      "tss_kgd": 290.29,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "WAS": {
+      "id": "WAS",
+      "q_m3d": 1249.19,
+      "tss_kgd": 5659.8,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws64": {
+      "id": "ws64",
+      "q_m3d": 1116.7,
+      "tss_kgd": 252.98,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "thickened_WAS": {
+      "id": "thickened_WAS",
+      "q_m3d": 132.49,
+      "tss_kgd": 5406.83,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "digestate": {
+      "id": "digestate",
+      "q_m3d": 132.49,
+      "tss_kgd": 1197.54,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws67": {
+      "id": "ws67",
+      "q_m3d": 120.0,
+      "tss_kgd": 108.47,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "cake": {
+      "id": "cake",
+      "q_m3d": 12.49,
+      "tss_kgd": 1088.91,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws69": {
+      "id": "ws69",
+      "q_m3d": 1236.69,
+      "tss_kgd": 361.44,
+      "is_gas": false,
+      "phase": "l"
+    }
+  },
+  "E2P": {
+    "RWW": {
+      "id": "RWW",
+      "q_m3d": 37854.12,
+      "tss_kgd": 6260.92,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "reject": {
+      "id": "reject",
+      "q_m3d": 876.78,
+      "tss_kgd": 748.06,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "PE": {
+      "id": "PE",
+      "q_m3d": 38450.78,
+      "tss_kgd": 2783.32,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "PS": {
+      "id": "PS",
+      "q_m3d": 280.12,
+      "tss_kgd": 4225.66,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws72": {
+      "id": "ws72",
+      "q_m3d": 193.06,
+      "tss_kgd": 291.23,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "thickened_PS": {
+      "id": "thickened_PS",
+      "q_m3d": 87.06,
+      "tss_kgd": 3934.23,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "RAS": {
+      "id": "RAS",
+      "q_m3d": 25362.26,
+      "tss_kgd": 132458.34,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "treated": {
+      "id": "treated",
+      "q_m3d": 63813.04,
+      "tss_kgd": 135979.33,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "SE": {
+      "id": "SE",
+      "q_m3d": 37833.76,
+      "tss_kgd": 298.49,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "WAS": {
+      "id": "WAS",
+      "q_m3d": 617.02,
+      "tss_kgd": 3222.48,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws75": {
+      "id": "ws75",
+      "q_m3d": 545.1,
+      "tss_kgd": 142.34,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "thickened_WAS": {
+      "id": "thickened_WAS",
+      "q_m3d": 71.92,
+      "tss_kgd": 3080.03,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "digestate": {
+      "id": "digestate",
+      "q_m3d": 158.99,
+      "tss_kgd": 3763.18,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws78": {
+      "id": "ws78",
+      "q_m3d": 132.87,
+      "tss_kgd": 314.49,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "cake": {
+      "id": "cake",
+      "q_m3d": 26.12,
+      "tss_kgd": 3448.72,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws80": {
+      "id": "ws80",
+      "q_m3d": 871.02,
+      "tss_kgd": 748.06,
+      "is_gas": false,
+      "phase": "l"
+    }
+  },
+  "F1": {
+    "RWW": {
+      "id": "RWW",
+      "q_m3d": 37854.12,
+      "tss_kgd": 6260.92,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "reject": {
+      "id": "reject",
+      "q_m3d": 881.66,
+      "tss_kgd": 756.02,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "PE": {
+      "id": "PE",
+      "q_m3d": 38455.66,
+      "tss_kgd": 2786.48,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "PS": {
+      "id": "PS",
+      "q_m3d": 280.12,
+      "tss_kgd": 4230.45,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws83": {
+      "id": "ws83",
+      "q_m3d": 181.7,
+      "tss_kgd": 274.41,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "thickened_PS": {
+      "id": "thickened_PS",
+      "q_m3d": 98.42,
+      "tss_kgd": 3956.02,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "RAS": {
+      "id": "RAS",
+      "q_m3d": 25362.26,
+      "tss_kgd": 134505.87,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "treated": {
+      "id": "treated",
+      "q_m3d": 63817.92,
+      "tss_kgd": 138081.12,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "SE": {
+      "id": "SE",
+      "q_m3d": 37838.63,
+      "tss_kgd": 302.93,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "WAS": {
+      "id": "WAS",
+      "q_m3d": 617.02,
+      "tss_kgd": 3272.3,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws86": {
+      "id": "ws86",
+      "q_m3d": 542.83,
+      "tss_kgd": 143.94,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "thickened_WAS": {
+      "id": "thickened_WAS",
+      "q_m3d": 74.19,
+      "tss_kgd": 3128.19,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws88": {
+      "id": "ws88",
+      "q_m3d": 172.61,
+      "tss_kgd": 7084.22,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws89": {
+      "id": "ws89",
+      "q_m3d": 172.61,
+      "tss_kgd": 6037.28,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "biogas": {
+      "id": "biogas",
+      "q_m3d": 5.14,
+      "tss_kgd": null,
+      "is_gas": true,
+      "phase": "g"
+    },
+    "digestate": {
+      "id": "digestate",
+      "q_m3d": 172.61,
+      "tss_kgd": 3825.99,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws93": {
+      "id": "ws93",
+      "q_m3d": 172.61,
+      "tss_kgd": 3865.77,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws94": {
+      "id": "ws94",
+      "q_m3d": 150.77,
+      "tss_kgd": 337.66,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "cake": {
+      "id": "cake",
+      "q_m3d": 21.84,
+      "tss_kgd": 3527.91,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws96": {
+      "id": "ws96",
+      "q_m3d": 875.3,
+      "tss_kgd": 756.02,
+      "is_gas": false,
+      "phase": "l"
+    }
+  },
+  "G1": {
+    "RWW": {
+      "id": "RWW",
+      "q_m3d": 37854.12,
+      "tss_kgd": 6260.92,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "reject": {
+      "id": "reject",
+      "q_m3d": 770.5,
+      "tss_kgd": 966.32,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "PE": {
+      "id": "PE",
+      "q_m3d": 38344.5,
+      "tss_kgd": 2869.93,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "PS": {
+      "id": "PS",
+      "q_m3d": 280.12,
+      "tss_kgd": 4357.3,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws99": {
+      "id": "ws99",
+      "q_m3d": 181.7,
+      "tss_kgd": 282.64,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "thickened_PS": {
+      "id": "thickened_PS",
+      "q_m3d": 98.42,
+      "tss_kgd": 4074.64,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws101": {
+      "id": "ws101",
+      "q_m3d": 30675.6,
+      "tss_kgd": 2295.94,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws102": {
+      "id": "ws102",
+      "q_m3d": 7668.9,
+      "tss_kgd": 573.99,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "carbon": {
+      "id": "carbon",
+      "q_m3d": 2.17,
+      "tss_kgd": 0.0,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "RAS": {
+      "id": "RAS",
+      "q_m3d": 15141.65,
+      "tss_kgd": 158073.47,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws103": {
+      "id": "ws103",
+      "q_m3d": 15143.82,
+      "tss_kgd": 157864.23,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws105": {
+      "id": "ws105",
+      "q_m3d": 45819.42,
+      "tss_kgd": 156711.47,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "intr": {
+      "id": "intr",
+      "q_m3d": 152823.77,
+      "tss_kgd": 467746.27,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws107": {
+      "id": "ws107",
+      "q_m3d": 206312.09,
+      "tss_kgd": 628222.4,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws109": {
+      "id": "ws109",
+      "q_m3d": 206312.09,
+      "tss_kgd": 629990.47,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws111": {
+      "id": "ws111",
+      "q_m3d": 206312.09,
+      "tss_kgd": 632067.49,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "treated": {
+      "id": "treated",
+      "q_m3d": 53488.32,
+      "tss_kgd": 163711.2,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "SE": {
+      "id": "SE",
+      "q_m3d": 37835.64,
+      "tss_kgd": 302.97,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "WAS": {
+      "id": "WAS",
+      "q_m3d": 511.03,
+      "tss_kgd": 5334.97,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws115": {
+      "id": "ws115",
+      "q_m3d": 419.8,
+      "tss_kgd": 219.13,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "thickened_WAS": {
+      "id": "thickened_WAS",
+      "q_m3d": 91.23,
+      "tss_kgd": 5115.94,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws117": {
+      "id": "ws117",
+      "q_m3d": 189.65,
+      "tss_kgd": 9190.56,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws118": {
+      "id": "ws118",
+      "q_m3d": 189.65,
+      "tss_kgd": 8348.93,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "biogas": {
+      "id": "biogas",
+      "q_m3d": 5.3,
+      "tss_kgd": null,
+      "is_gas": true,
+      "phase": "g"
+    },
+    "digestate": {
+      "id": "digestate",
+      "q_m3d": 189.65,
+      "tss_kgd": 5537.81,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws122": {
+      "id": "ws122",
+      "q_m3d": 189.65,
+      "tss_kgd": 5418.9,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws123": {
+      "id": "ws123",
+      "q_m3d": 162.58,
+      "tss_kgd": 464.54,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "cake": {
+      "id": "cake",
+      "q_m3d": 27.07,
+      "tss_kgd": 4955.11,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws126": {
+      "id": "ws126",
+      "q_m3d": 764.09,
+      "tss_kgd": 966.32,
+      "is_gas": false,
+      "phase": "l"
+    }
+  },
+  "G2": {
+    "RWW": {
+      "id": "RWW",
+      "q_m3d": 37854.12,
+      "tss_kgd": 6260.92,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "reject": {
+      "id": "reject",
+      "q_m3d": 785.2,
+      "tss_kgd": 767.25,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "PE": {
+      "id": "PE",
+      "q_m3d": 38359.2,
+      "tss_kgd": 2790.89,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "PS": {
+      "id": "PS",
+      "q_m3d": 280.12,
+      "tss_kgd": 4237.28,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws129": {
+      "id": "ws129",
+      "q_m3d": 181.7,
+      "tss_kgd": 274.85,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "thickened_PS": {
+      "id": "thickened_PS",
+      "q_m3d": 98.42,
+      "tss_kgd": 3962.4,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "RAS": {
+      "id": "RAS",
+      "q_m3d": 15141.65,
+      "tss_kgd": 154940.24,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "carbon": {
+      "id": "carbon",
+      "q_m3d": 2.17,
+      "tss_kgd": 0.0,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "treated": {
+      "id": "treated",
+      "q_m3d": 53503.02,
+      "tss_kgd": 160510.88,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "SE": {
+      "id": "SE",
+      "q_m3d": 37846.56,
+      "tss_kgd": 303.05,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "WAS": {
+      "id": "WAS",
+      "q_m3d": 514.82,
+      "tss_kgd": 5268.01,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws132": {
+      "id": "ws132",
+      "q_m3d": 425.1,
+      "tss_kgd": 217.5,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "thickened_WAS": {
+      "id": "thickened_WAS",
+      "q_m3d": 89.71,
+      "tss_kgd": 5050.23,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "digestate": {
+      "id": "digestate",
+      "q_m3d": 188.13,
+      "tss_kgd": 2993.51,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws135": {
+      "id": "ws135",
+      "q_m3d": 172.77,
+      "tss_kgd": 274.91,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "cake": {
+      "id": "cake",
+      "q_m3d": 15.37,
+      "tss_kgd": 2718.9,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws137": {
+      "id": "ws137",
+      "q_m3d": 779.57,
+      "tss_kgd": 767.25,
+      "is_gas": false,
+      "phase": "l"
+    }
+  },
+  "G3": {
+    "RWW": {
+      "id": "RWW",
+      "q_m3d": 37854.12,
+      "tss_kgd": 6260.92,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "reject": {
+      "id": "reject",
+      "q_m3d": 776.68,
+      "tss_kgd": 1075.97,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "PE": {
+      "id": "PE",
+      "q_m3d": 38350.67,
+      "tss_kgd": 2913.47,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "PS": {
+      "id": "PS",
+      "q_m3d": 280.12,
+      "tss_kgd": 4423.4,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws140": {
+      "id": "ws140",
+      "q_m3d": 181.7,
+      "tss_kgd": 286.92,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "thickened_PS": {
+      "id": "thickened_PS",
+      "q_m3d": 98.42,
+      "tss_kgd": 4136.46,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws142": {
+      "id": "ws142",
+      "q_m3d": 30680.54,
+      "tss_kgd": 2330.78,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws143": {
+      "id": "ws143",
+      "q_m3d": 7670.13,
+      "tss_kgd": 582.69,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "carbon": {
+      "id": "carbon",
+      "q_m3d": 0.77,
+      "tss_kgd": 0.0,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "RAS": {
+      "id": "RAS",
+      "q_m3d": 15141.65,
+      "tss_kgd": 115489.65,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws144": {
+      "id": "ws144",
+      "q_m3d": 15142.41,
+      "tss_kgd": 115691.94,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws146": {
+      "id": "ws146",
+      "q_m3d": 45822.95,
+      "tss_kgd": 115076.36,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "intr": {
+      "id": "intr",
+      "q_m3d": 152837.39,
+      "tss_kgd": 342384.41,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws148": {
+      "id": "ws148",
+      "q_m3d": 206330.48,
+      "tss_kgd": 460708.77,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws150": {
+      "id": "ws150",
+      "q_m3d": 206330.48,
+      "tss_kgd": 462096.51,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws152": {
+      "id": "ws152",
+      "q_m3d": 206330.48,
+      "tss_kgd": 462798.01,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "treated": {
+      "id": "treated",
+      "q_m3d": 53493.09,
+      "tss_kgd": 119834.55,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "SE": {
+      "id": "SE",
+      "q_m3d": 37821.48,
+      "tss_kgd": 302.76,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "WAS": {
+      "id": "WAS",
+      "q_m3d": 529.96,
+      "tss_kgd": 4042.15,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws156": {
+      "id": "ws156",
+      "q_m3d": 461.82,
+      "tss_kgd": 176.12,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "thickened_WAS": {
+      "id": "thickened_WAS",
+      "q_m3d": 68.14,
+      "tss_kgd": 3866.16,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws158": {
+      "id": "ws158",
+      "q_m3d": 166.56,
+      "tss_kgd": 8002.59,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws159": {
+      "id": "ws159",
+      "q_m3d": 127.57,
+      "tss_kgd": 612.93,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "cake": {
+      "id": "cake",
+      "q_m3d": 38.99,
+      "tss_kgd": 7389.63,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws161": {
+      "id": "ws161",
+      "q_m3d": 771.09,
+      "tss_kgd": 1075.97,
+      "is_gas": false,
+      "phase": "l"
+    }
+  },
+  "H1": {
+    "RWW": {
+      "id": "RWW",
+      "q_m3d": 37854.12,
+      "tss_kgd": 6260.92,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws162": {
+      "id": "ws162",
+      "q_m3d": 37854.12,
+      "tss_kgd": 7379.59,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "reject": {
+      "id": "reject",
+      "q_m3d": 642.54,
+      "tss_kgd": 904.32,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "PE": {
+      "id": "PE",
+      "q_m3d": 38216.53,
+      "tss_kgd": 3289.45,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "PS": {
+      "id": "PS",
+      "q_m3d": 280.12,
+      "tss_kgd": 4994.44,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws165": {
+      "id": "ws165",
+      "q_m3d": 181.7,
+      "tss_kgd": 323.96,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "thickened_PS": {
+      "id": "thickened_PS",
+      "q_m3d": 98.42,
+      "tss_kgd": 4670.46,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "RAS": {
+      "id": "RAS",
+      "q_m3d": 15141.65,
+      "tss_kgd": 151535.65,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "carbon": {
+      "id": "carbon",
+      "q_m3d": 1.1,
+      "tss_kgd": 0.0,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "treated": {
+      "id": "treated",
+      "q_m3d": 53359.28,
+      "tss_kgd": 155627.0,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "SE": {
+      "id": "SE",
+      "q_m3d": 37839.09,
+      "tss_kgd": 302.98,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "WAS": {
+      "id": "WAS",
+      "q_m3d": 378.54,
+      "tss_kgd": 3788.38,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws168": {
+      "id": "ws168",
+      "q_m3d": 312.41,
+      "tss_kgd": 156.33,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "thickened_WAS": {
+      "id": "thickened_WAS",
+      "q_m3d": 66.13,
+      "tss_kgd": 3632.0,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws170": {
+      "id": "ws170",
+      "q_m3d": 164.55,
+      "tss_kgd": 8302.46,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws171": {
+      "id": "ws171",
+      "q_m3d": 164.55,
+      "tss_kgd": 7272.15,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "biogas": {
+      "id": "biogas",
+      "q_m3d": 5.44,
+      "tss_kgd": null,
+      "is_gas": true,
+      "phase": "g"
+    },
+    "digestate": {
+      "id": "digestate",
+      "q_m3d": 164.55,
+      "tss_kgd": 4934.94,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws175": {
+      "id": "ws175",
+      "q_m3d": 164.55,
+      "tss_kgd": 4952.23,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws176": {
+      "id": "ws176",
+      "q_m3d": 140.89,
+      "tss_kgd": 424.02,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "cake": {
+      "id": "cake",
+      "q_m3d": 23.66,
+      "tss_kgd": 4528.48,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws178": {
+      "id": "ws178",
+      "q_m3d": 635.0,
+      "tss_kgd": 904.31,
+      "is_gas": false,
+      "phase": "l"
+    }
+  },
+  "I1": {
+    "RWW": {
+      "id": "RWW",
+      "q_m3d": 37854.12,
+      "tss_kgd": 6260.92,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "RAS": {
+      "id": "RAS",
+      "q_m3d": 25362.26,
+      "tss_kgd": 143955.08,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "reject": {
+      "id": "reject",
+      "q_m3d": 1046.53,
+      "tss_kgd": 582.62,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "treated": {
+      "id": "treated",
+      "q_m3d": 64262.91,
+      "tss_kgd": 150308.74,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "SE": {
+      "id": "SE",
+      "q_m3d": 37835.06,
+      "tss_kgd": 305.4,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "WAS": {
+      "id": "WAS",
+      "q_m3d": 1065.59,
+      "tss_kgd": 6048.24,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws180": {
+      "id": "ws180",
+      "q_m3d": 966.04,
+      "tss_kgd": 274.16,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "thickened_WAS": {
+      "id": "thickened_WAS",
+      "q_m3d": 99.56,
+      "tss_kgd": 5774.32,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws182": {
+      "id": "ws182",
+      "q_m3d": 99.56,
+      "tss_kgd": 5168.75,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "biogas": {
+      "id": "biogas",
+      "q_m3d": 2.71,
+      "tss_kgd": null,
+      "is_gas": true,
+      "phase": "g"
+    },
+    "digestate": {
+      "id": "digestate",
+      "q_m3d": 99.56,
+      "tss_kgd": 3878.24,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws186": {
+      "id": "ws186",
+      "q_m3d": 99.56,
+      "tss_kgd": 3841.35,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws187": {
+      "id": "ws187",
+      "q_m3d": 79.95,
+      "tss_kgd": 308.47,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "cake": {
+      "id": "cake",
+      "q_m3d": 19.61,
+      "tss_kgd": 3533.02,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws189": {
+      "id": "ws189",
+      "q_m3d": 1045.99,
+      "tss_kgd": 582.63,
+      "is_gas": false,
+      "phase": "l"
+    }
+  },
+  "I2": {
+    "RWW": {
+      "id": "RWW",
+      "q_m3d": 37854.12,
+      "tss_kgd": 6260.92,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "RAS": {
+      "id": "RAS",
+      "q_m3d": 25362.26,
+      "tss_kgd": 138321.88,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "reject": {
+      "id": "reject",
+      "q_m3d": 1056.18,
+      "tss_kgd": 393.6,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "treated": {
+      "id": "treated",
+      "q_m3d": 64272.56,
+      "tss_kgd": 144436.06,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "SE": {
+      "id": "SE",
+      "q_m3d": 37844.7,
+      "tss_kgd": 302.6,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "WAS": {
+      "id": "WAS",
+      "q_m3d": 1065.59,
+      "tss_kgd": 5811.56,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws191": {
+      "id": "ws191",
+      "q_m3d": 954.3,
+      "tss_kgd": 260.23,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "thickened_WAS": {
+      "id": "thickened_WAS",
+      "q_m3d": 111.29,
+      "tss_kgd": 5551.3,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "digestate": {
+      "id": "digestate",
+      "q_m3d": 111.29,
+      "tss_kgd": 1458.66,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws194": {
+      "id": "ws194",
+      "q_m3d": 101.75,
+      "tss_kgd": 133.36,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "cake": {
+      "id": "cake",
+      "q_m3d": 9.54,
+      "tss_kgd": 1325.42,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws196": {
+      "id": "ws196",
+      "q_m3d": 1056.05,
+      "tss_kgd": 393.59,
+      "is_gas": false,
+      "phase": "l"
+    }
+  },
+  "I3": {
+    "RWW": {
+      "id": "RWW",
+      "q_m3d": 37854.12,
+      "tss_kgd": 6260.92,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "RAS": {
+      "id": "RAS",
+      "q_m3d": 25362.26,
+      "tss_kgd": 143740.78,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "reject": {
+      "id": "reject",
+      "q_m3d": 1034.07,
+      "tss_kgd": 688.92,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "treated": {
+      "id": "treated",
+      "q_m3d": 64250.45,
+      "tss_kgd": 150085.17,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "SE": {
+      "id": "SE",
+      "q_m3d": 37822.6,
+      "tss_kgd": 305.12,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "WAS": {
+      "id": "WAS",
+      "q_m3d": 1065.59,
+      "tss_kgd": 6039.24,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws198": {
+      "id": "ws198",
+      "q_m3d": 949.38,
+      "tss_kgd": 269.03,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "thickened_WAS": {
+      "id": "thickened_WAS",
+      "q_m3d": 116.21,
+      "tss_kgd": 5770.12,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws200": {
+      "id": "ws200",
+      "q_m3d": 84.57,
+      "tss_kgd": 419.91,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "cake": {
+      "id": "cake",
+      "q_m3d": 31.65,
+      "tss_kgd": 5351.0,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws202": {
+      "id": "ws202",
+      "q_m3d": 1033.95,
+      "tss_kgd": 688.93,
+      "is_gas": false,
+      "phase": "l"
+    }
+  },
+  "N1": {
+    "RWW": {
+      "id": "RWW",
+      "q_m3d": 37854.12,
+      "tss_kgd": 6260.92,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "reject": {
+      "id": "reject",
+      "q_m3d": 906.9,
+      "tss_kgd": 1926.03,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "PE": {
+      "id": "PE",
+      "q_m3d": 38480.9,
+      "tss_kgd": 3251.12,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "PS": {
+      "id": "PS",
+      "q_m3d": 280.12,
+      "tss_kgd": 4935.83,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "carbon": {
+      "id": "carbon",
+      "q_m3d": 6.39,
+      "tss_kgd": 0.0,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "RAS": {
+      "id": "RAS",
+      "q_m3d": 151416.48,
+      "tss_kgd": 1611048.16,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws205": {
+      "id": "ws205",
+      "q_m3d": 189903.77,
+      "tss_kgd": 1618097.36,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "SE": {
+      "id": "SE",
+      "q_m3d": 37843.77,
+      "tss_kgd": 40.27,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws206": {
+      "id": "ws206",
+      "q_m3d": 152060.0,
+      "tss_kgd": 1617895.1,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws208": {
+      "id": "ws208",
+      "q_m3d": 151416.48,
+      "tss_kgd": 1611048.14,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "WAS": {
+      "id": "WAS",
+      "q_m3d": 643.52,
+      "tss_kgd": 6846.95,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws209": {
+      "id": "ws209",
+      "q_m3d": 743.83,
+      "tss_kgd": 1423.35,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "thickened_sludge": {
+      "id": "thickened_sludge",
+      "q_m3d": 179.81,
+      "tss_kgd": 10359.61,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws211": {
+      "id": "ws211",
+      "q_m3d": 179.81,
+      "tss_kgd": 9307.8,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "biogas": {
+      "id": "biogas",
+      "q_m3d": 6.47,
+      "tss_kgd": null,
+      "is_gas": true,
+      "phase": "g"
+    },
+    "digestate": {
+      "id": "digestate",
+      "q_m3d": 179.81,
+      "tss_kgd": 5994.02,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws215": {
+      "id": "ws215",
+      "q_m3d": 179.81,
+      "tss_kgd": 5881.3,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws216": {
+      "id": "ws216",
+      "q_m3d": 153.69,
+      "tss_kgd": 502.7,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "cake": {
+      "id": "cake",
+      "q_m3d": 26.12,
+      "tss_kgd": 5378.66,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws218": {
+      "id": "ws218",
+      "q_m3d": 897.52,
+      "tss_kgd": 1926.04,
+      "is_gas": false,
+      "phase": "l"
+    }
+  },
+  "N2": {
+    "RWW": {
+      "id": "RWW",
+      "q_m3d": 37854.12,
+      "tss_kgd": 6260.92,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "carbon": {
+      "id": "carbon",
+      "q_m3d": 5.11,
+      "tss_kgd": 0.0,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "RAS": {
+      "id": "RAS",
+      "q_m3d": 151416.48,
+      "tss_kgd": 1287802.72,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "reject": {
+      "id": "reject",
+      "q_m3d": 1128.93,
+      "tss_kgd": 685.53,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws219": {
+      "id": "ws219",
+      "q_m3d": 190404.64,
+      "tss_kgd": 1297552.13,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "SE": {
+      "id": "SE",
+      "q_m3d": 37852.53,
+      "tss_kgd": 32.19,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws220": {
+      "id": "ws220",
+      "q_m3d": 152552.1,
+      "tss_kgd": 1297461.21,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws222": {
+      "id": "ws222",
+      "q_m3d": 151416.48,
+      "tss_kgd": 1287802.72,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "WAS": {
+      "id": "WAS",
+      "q_m3d": 1135.62,
+      "tss_kgd": 9658.49,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws223": {
+      "id": "ws223",
+      "q_m3d": 992.16,
+      "tss_kgd": 421.92,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "thickened_WAS": {
+      "id": "thickened_WAS",
+      "q_m3d": 143.47,
+      "tss_kgd": 9236.79,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "digestate": {
+      "id": "digestate",
+      "q_m3d": 143.47,
+      "tss_kgd": 2897.68,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws226": {
+      "id": "ws226",
+      "q_m3d": 130.52,
+      "tss_kgd": 263.61,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "cake": {
+      "id": "cake",
+      "q_m3d": 12.95,
+      "tss_kgd": 2634.8,
+      "is_gas": false,
+      "phase": "l"
+    },
+    "ws228": {
+      "id": "ws228",
+      "q_m3d": 1122.68,
+      "tss_kgd": 685.53,
+      "is_gas": false,
+      "phase": "l"
+    }
+  }
+}

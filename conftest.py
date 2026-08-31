@@ -1,18 +1,22 @@
-# -*- coding: utf-8 -*-
-'''
-QSDsan: Quantitative Sustainable Design for sanitation and resource recovery systems
-
-This module is developed by:
-    Joy Zhang <joycheung1994@gmail.com>
-
-This module is under the University of Illinois/NCSA Open Source License.
-Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
-for license details.
-'''
 import pytest
-import numpy as np
+
 
 @pytest.fixture(autouse=True)
-def set_np_legacy_mode():
-    try: np.set_printoptions(legacy='1.25')
-    except: pass
+def _reset_doctest_state(request):
+    """Isolate doctests from each other's global state. Clears the LCA registries,
+    resets the auto-ID ticket counters, AND resets the default flowsheet so each
+    doctest starts clean.
+
+    The flowsheet reset matters under ``pytest-xdist``: doctests that read the
+    default flowsheet (e.g. ``qsdsan._lca.LCA``, via ``create_example_system`` +
+    ``Flowsheet.flowsheet.default.unit.M1``) would otherwise pick up units/streams
+    left behind by another test sharing the worker, giving wrong impacts."""
+    if not isinstance(request.node, pytest.DoctestItem):
+        yield
+        return
+    import qsdsan as qs
+    # `qs.default()` resets to a fresh 'default' flowsheet (clearing units/streams/
+    # systems and the LCA registries), the utilities (incl. PowerUtility.price) and
+    # CEPCI, and the auto-ID ticket counters (native + LCA).
+    qs.default()
+    yield

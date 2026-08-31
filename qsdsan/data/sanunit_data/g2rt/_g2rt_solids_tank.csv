@@ -1,0 +1,8 @@
+﻿parameter,name (if diff),unit,expected,low,high,distribution
+solids_tank_polyethylene_weight,,kg,8,6.3,11.7,uniform
+solids_tank_polycarbonate_weight,,kg,1,0.7,1.3,uniform
+solids_tank_cost,,USD,102.22,71.554,132.886,uniform
+solids_tank_piping,,USD,50.89,35.623,66.157,uniform
+labor_tank_cleaning,,hr/yr,6,4.2,7.8,uniform
+wages,,USD/h,3.64,1.82,5.46,uniform
+miscellaneous_cost_ratio,,fraction,0.169,0.1183,0.2197,uniform

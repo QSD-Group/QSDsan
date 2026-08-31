@@ -1,0 +1,256 @@
+/* QSDsan docs chatbot widget. Uses Furo CSS variables so it follows light/dark.
+   Anchored bottom-LEFT to stay clear of the readthedocs version flyout (bottom-right). */
+.qsd-chat-button {
+  position: fixed;
+  left: 1.25rem;
+  bottom: 1.25rem;
+  z-index: 1000;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.05rem;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+  background: var(--color-brand-primary, #2b8a3e);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
+}
+.qsd-chat-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.34);
+  filter: brightness(1.05);
+}
+.qsd-chat-button svg {
+  flex: none;
+}
+.qsd-btn-label {
+  white-space: nowrap;
+}
+
+.qsd-chat-panel {
+  position: fixed;
+  left: 1.25rem;
+  bottom: 5rem;
+  z-index: 1000;
+  width: min(400px, 92vw);
+  height: min(560px, 72vh);
+  display: flex;
+  flex-direction: column;
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--color-background-primary, #fff);
+  color: var(--color-foreground-primary, #1a1a1a);
+  border: 1px solid var(--color-background-border, #d0d0d0);
+  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.32);
+}
+.qsd-hidden {
+  display: none;
+}
+
+.qsd-chat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.7rem 0.9rem;
+  font-weight: 600;
+  color: #fff;
+  background: var(--color-brand-primary, #2b8a3e);
+}
+.qsd-head-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+.qsd-close {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.85;
+}
+.qsd-close:hover {
+  opacity: 1;
+}
+
+.qsd-chat-log {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  background: var(--color-background-primary, #fff);
+}
+
+.qsd-msg {
+  position: relative;
+  max-width: 100%;
+}
+.qsd-msg-body {
+  line-height: 1.5;
+  font-size: 0.92rem;
+  overflow-wrap: anywhere;
+}
+.qsd-user {
+  align-self: flex-end;
+  max-width: 85%;
+}
+.qsd-user .qsd-msg-body {
+  display: inline-block;
+  background: var(--color-brand-primary, #2b8a3e);
+  color: #fff;
+  padding: 0.5rem 0.7rem;
+  border-radius: 12px 12px 2px 12px;
+}
+.qsd-bot {
+  align-self: flex-start;
+  max-width: 92%;
+}
+.qsd-bot .qsd-msg-body {
+  background: var(--color-background-secondary, #f3f3f3);
+  padding: 0.6rem 0.75rem;
+  border-radius: 12px 12px 12px 2px;
+}
+.qsd-intro .qsd-msg-body {
+  background: transparent;
+  padding: 0.1rem 0;
+  opacity: 0.85;
+  font-size: 0.88rem;
+}
+
+.qsd-msg-body p {
+  margin: 0 0 0.5rem;
+}
+.qsd-msg-body p:last-child {
+  margin-bottom: 0;
+}
+.qsd-msg-body h1,
+.qsd-msg-body h2,
+.qsd-msg-body h3,
+.qsd-h {
+  margin: 0.6rem 0 0.35rem;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+.qsd-msg-body ul,
+.qsd-msg-body ol {
+  margin: 0.3rem 0 0.5rem;
+  padding-left: 1.25rem;
+}
+.qsd-msg-body li {
+  margin: 0.15rem 0;
+}
+.qsd-msg-body code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.85em;
+  background: var(--color-code-background, rgba(0, 0, 0, 0.06));
+  padding: 0.1em 0.35em;
+  border-radius: 5px;
+}
+.qsd-msg-body pre {
+  background: var(--color-code-background, #f5f5f5);
+  padding: 0.7rem;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 0.4rem 0;
+}
+.qsd-msg-body pre code {
+  background: none;
+  padding: 0;
+  font-size: 0.82rem;
+}
+.qsd-msg-body a {
+  color: var(--color-brand-content, #2b8a3e);
+  text-decoration: underline;
+}
+
+.qsd-cite-label {
+  margin-top: 0.55rem;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.6;
+  font-weight: 700;
+}
+.qsd-citations {
+  margin: 0.2rem 0 0;
+  padding-left: 1.1rem;
+  font-size: 0.82rem;
+}
+.qsd-citations li {
+  margin: 0.1rem 0;
+}
+.qsd-src {
+  opacity: 0.65;
+}
+
+.qsd-copy {
+  margin-top: 0.35rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: none;
+  border: 1px solid var(--color-background-border, #ccc);
+  color: var(--color-foreground-secondary, #666);
+  border-radius: 7px;
+  padding: 0.2rem 0.5rem;
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+.qsd-copy:hover {
+  color: var(--color-foreground-primary, #111);
+  border-color: var(--color-foreground-muted, #999);
+}
+
+.qsd-typing {
+  opacity: 0.7;
+  font-style: italic;
+}
+.qsd-error {
+  color: #c0392b;
+}
+
+.qsd-chat-form {
+  display: flex;
+  gap: 0.4rem;
+  padding: 0.6rem;
+  border-top: 1px solid var(--color-background-border, #e0e0e0);
+  background: var(--color-background-primary, #fff);
+}
+.qsd-chat-input {
+  flex: 1;
+  padding: 0.5rem 0.6rem;
+  border-radius: 9px;
+  border: 1px solid var(--color-background-border, #ccc);
+  background: var(--color-background-primary, #fff);
+  color: inherit;
+  font: inherit;
+  font-size: 0.9rem;
+}
+.qsd-chat-input:focus {
+  outline: 2px solid var(--color-brand-primary, #2b8a3e);
+  outline-offset: -1px;
+}
+.qsd-chat-form button[type="submit"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.7rem;
+  border: none;
+  border-radius: 9px;
+  cursor: pointer;
+  background: var(--color-brand-primary, #2b8a3e);
+  color: #fff;
+}
+.qsd-chat-form button[type="submit"]:hover {
+  filter: brightness(1.06);
+}
