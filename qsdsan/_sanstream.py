@@ -402,14 +402,14 @@ class SanStream(Stream):
         >>> s.show() # doctest: +ELLIPSIS
         Stream: s
          phase: 'l', T: 298.15 K, P: 101325 Pa
-         flow...H2O
+         flow...
         >>> s.price
         5.0
         >>> ss = qs.SanStream.from_stream(stream=s, ID='ss', T=350, price=10)
         >>> ss.show() # doctest: +ELLIPSIS
         SanStream: ss
          phase: 'l', T: 350 K, P: 101325 Pa
-         flow...H2O
+         flow...
         >>> ss.price
         10.0
         '''
@@ -475,14 +475,14 @@ class SanStream(Stream):
         >>> ss.show() # doctest: +ELLIPSIS
         SanStream: ss
          phase: 'l', T: 298.15 K, P: 101325 Pa
-         flow...H2O
+         flow...
         >>> ss.price
         5.0
         >>> s = ss.to_stream(ID='s', T=350, price=10)
         >>> s.show() # doctest: +ELLIPSIS
         Stream: s
          phase: 'l', T: 350 K, P: 101325 Pa
-         flow...H2O
+         flow...
         >>> s.price
         10.0
         '''        

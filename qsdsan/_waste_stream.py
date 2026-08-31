@@ -374,14 +374,14 @@ class WasteStream(SanStream):
         >>> s.show() # doctest: +ELLIPSIS
         Stream: s
          phase: 'l', T: 298.15 K, P: 101325 Pa
-         flow...H2O
+         flow...
         >>> s.price
         5.0
         >>> ws = qs.WasteStream.from_stream(stream=s, ID='ws', T=250, price=8)
         >>> ws.show() # doctest: +ELLIPSIS
         WasteStream: ws
          phase: 'l', T: 250 K, P: 101325 Pa
-         flow...H2O
+         flow...
          WasteStream-specific properties:
           pH         : 7.0
          Component concentrations (mg/L):

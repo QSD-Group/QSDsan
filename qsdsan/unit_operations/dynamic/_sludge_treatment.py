@@ -527,7 +527,7 @@ class Incinerator(SanUnit):
         WasteStream-specific properties: None for non-liquid waste streams
     [2] nat_gas
     phase: 'g', T: 298.15 K, P: 101325 Pa
-    flow...S_CH4
+    flow...
         WasteStream-specific properties: None for non-liquid waste streams
     outs...
     [0] flu_gas
@@ -538,7 +538,7 @@ class Incinerator(SanUnit):
         WasteStream-specific properties: None for non-liquid waste streams
     [1] ash
     phase: 's', T: 298.15 K, P: 101325 Pa
-    flow...X_Ig_ISS
+    flow...
         WasteStream-specific properties: None for non-liquid waste streams
     
     References
