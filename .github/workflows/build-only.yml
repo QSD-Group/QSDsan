@@ -66,6 +66,9 @@ jobs:
         pip install "exposan[complete] @ git+https://github.com/QSD-Group/EXPOsan.git"
         pip install --no-deps --force-reinstall git+https://github.com/BioSTEAMDevelopmentGroup/thermosteam.git@master
         pip install --no-deps --force-reinstall git+https://github.com/BioSTEAMDevelopmentGroup/biosteam.git@master
+        # biosteam >= 2.54 moved heat exchanger network synthesis into the hensmith
+        # package (a hard biosteam dependency); --no-deps above skips it, so install it explicitly.
+        pip install --no-deps --force-reinstall git+https://github.com/BioSTEAMDevelopmentGroup/hensmith.git@master
     - name: Test with pytest
       run: |
         pytest
