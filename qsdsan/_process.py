@@ -1250,6 +1250,7 @@ class CompiledProcesses(Processes):
         for proc, stch in zip(self.tuple, self._stoichiometry):
             proc.reaction = proc.reaction     # refreshes stoichiometry for individual reaction 
             stch[:] = proc._stoichiometry
+        self.__dict__['_stoichio_lambdified'] = None
 
     @property
     def parameters(self):

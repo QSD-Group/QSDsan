@@ -187,7 +187,16 @@ def test_process():
     assert p1.dynamic_parameters['f_SI'] is p1._dyn_params['f_SI']
 
     pc.create_adm1_cmps()
-    pc.create_asm1_cmps()
+    
+    import numpy as np
+    cmps_asm1 = pc.create_asm1_cmps()
+    asm1 = pc.ASM1()
+    cmps_asm1.X_BH.i_N = cmps_asm1.X_BA.i_N = cmps_asm1.X_P.i_N = 0.07
+    cmps_asm1.refresh_constants()
+    assert not np.allclose(np.dot(cmps_asm1.i_N, asm1.stoichio_eval().T), 0, rtol=1e-12)
+    asm1.refresh_stoichiometry()
+    assert np.allclose(np.dot(cmps_asm1.i_N, asm1.stoichio_eval().T), 0, rtol=1e-12)    
+    
     pc.create_asm2d_cmps()
         
 
