@@ -125,9 +125,13 @@ html_theme_options = {
 	'sidebar_hide_name': True,
 	'top_of_page_button': 'edit', # only edit or None is supported
     'announcement': (
-        '📣 Stay in the loop: join the '
-        '<a href="https://groups.google.com/g/qsdsan" target="_blank" rel="noopener">'
-        'QSDsan Google Group</a> for updates.'
+        '📣 '
+        '<a href="https://go.rutgers.edu/qsdsansurvey" target="_blank" rel="noopener">'
+        'Join us </a>'
+        ' for the virtual QSDsan workshop this October.'
+        # 'Stay in the loop: join the '
+        # '<a href="https://groups.google.com/g/qsdsan" target="_blank" rel="noopener">'
+        # 'QSDsan Google Group</a> for updates.'
     ),
     'footer_icons': [
         {
