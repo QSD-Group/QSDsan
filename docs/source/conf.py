@@ -126,7 +126,7 @@ html_theme_options = {
 	'top_of_page_button': 'edit', # only edit or None is supported
     'announcement': (
         '📣 '
-        '<a href="https://go.rutgers.edu/qsdsansurvey" target="_blank" rel="noopener">'
+        '<a href="https://go.rutgers.edu/qsdsanworkshop" target="_blank" rel="noopener">'
         'Join us </a>'
         ' for the virtual QSDsan workshop this October.'
         # 'Stay in the loop: join the '
