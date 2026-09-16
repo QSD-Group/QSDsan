@@ -36,8 +36,8 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
-    "thermosteam>=0.53.5",
-    "biosteam>=2.53.11",
+    "thermosteam>=0.54.1",
+    "biosteam>=2.54.0",
     "SALib>=1.4.5",
     "seaborn",
     "sympy>=1.8",
