@@ -126,9 +126,9 @@ html_theme_options = {
 	'top_of_page_button': 'edit', # only edit or None is supported
     'announcement': (
         '📣 '
-        '<a href="https://go.rutgers.edu/qsdsanworkshop" target="_blank" rel="noopener">'
-        'Join us </a>'
-        ' for the virtual QSDsan workshop this October.'
+        'The virtual QSDsan workshop will be held 12-2 pm ET on October 20 and 27. '
+        '<a href="https://rutgers.zoom.us/j/93736052113?pwd=3QahzavfwimcwY0CuJoSedCIaEoe7A.1" target="_blank" rel="noopener">'
+        'Join on Zoom</a>.'
         # 'Stay in the loop: join the '
         # '<a href="https://groups.google.com/g/qsdsan" target="_blank" rel="noopener">'
         # 'QSDsan Google Group</a> for updates.'
