@@ -1,2 +1,2 @@
-thermosteam==0.53.5
-biosteam==2.53.11
+thermosteam==0.54.2
+biosteam==2.54.0
