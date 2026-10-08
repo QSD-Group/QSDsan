@@ -104,6 +104,7 @@ SYSTEMS = {
 # modules currently uncovered by test_exposan.
 KNOWN_SKIP = {
     'new_generator': 'NDA-protected system, no public entry point',
+    'biobinder_ml': 'ML-based biobinder variant under active development; import currently fails (KeyError: PCEPI in _process_settings)',
 }
 
 
