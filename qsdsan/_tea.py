@@ -33,13 +33,8 @@ default_kwargs = dict(
     finance_interest=0,
     finance_years=0,
     finance_fraction=0,
+    inflation_rate=0,
     )
-# Newer BioSTEAM reads `self.inflation_rate` during cashflow analysis, but the
-# slot does not exist on older releases (e.g. 2.53.11 on PyPI). Default it only
-# when supported so QSDsan stays compatible with both; `setattr` to a missing
-# slot would otherwise raise during TEA construction.
-if 'inflation_rate' in BSTTEA.__slots__:
-    default_kwargs['inflation_rate'] = 0
 
 
 class TEA(BSTTEA):
