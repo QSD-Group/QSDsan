@@ -13,7 +13,17 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
-__all__ = ('test_sanunit',)
+__all__ = ('test_sanunit', 'test_sanunit_has_all_unit_attributes')
+
+def test_sanunit_has_all_unit_attributes():
+    # ``SanUnit.__init__`` does not call ``Unit.__init__``, so attributes that
+    # BioSTEAM adds to ``Unit.__init__`` must be mirrored in ``SanUnit``.
+    import biosteam as bst, qsdsan as qs
+    qs.set_thermo(qs.Components.load_default())
+    bst_attrs = set(vars(bst.Unit('U_bst')))
+    san_attrs = set(vars(qs.SanUnit('U_san')))
+    missing = bst_attrs - san_attrs
+    assert not missing, f'SanUnit is missing attributes set by biosteam.Unit.__init__: {sorted(missing)}'
 
 def test_sanunit():
     from numpy.testing import assert_allclose
@@ -58,3 +68,4 @@ def test_sanunit():
 
 if __name__ == '__main__':
     test_sanunit()
+    test_sanunit_has_all_unit_attributes()

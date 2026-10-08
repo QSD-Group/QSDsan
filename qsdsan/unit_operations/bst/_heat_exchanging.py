@@ -248,6 +248,7 @@ class HXutility(SanUnit, HXU):
             dP=None,
             estimate_pressure_drop=False,
             furnace_pressure=None,  # [Pa] equivalent to 500 psig
+            utility_agent=None,
             ):
             SanUnit.__init__(self, ID, ins, outs, thermo,
                              init_with=init_with, F_BM_default=F_BM_default,
@@ -292,6 +293,9 @@ class HXutility(SanUnit, HXU):
             #: Optional[float] Internal pressure of combustion gas. Defaults
             #: 500 psig (equivalent to 3548325.0 Pa)
             self.furnace_pressure = 500 if furnace_pressure is None else furnace_pressure
+
+            #: Optional[UtilityAgent] Utility agent providing heating/cooling duty.
+            self.utility_agent = utility_agent
 
     def _design(self, duty=None):
         HXU._design(self)

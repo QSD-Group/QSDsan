@@ -24,6 +24,7 @@ for license details.
 import numpy as np, biosteam as bst
 from collections import defaultdict
 from collections.abc import Iterable
+from copy import copy
 from warnings import warn
 from biosteam.utils import (
     AbstractMethod,
@@ -190,22 +191,87 @@ class SanUnit(Unit, isabstract=True):
         self._init_ins(ins, init_with)
         self._init_outs(outs, init_with)
         
-        #: All heat utilities associated to unit. Cooling and heating requirements 
+        # ``Unit.__init__`` is not called, so the attributes it sets are mirrored
+        # here (``tests/test_sanunit.py::test_sanunit_has_all_unit_attributes``
+        # catches ones added to BioSTEAM later).
+        #: All heat utilities associated to unit. Cooling and heating requirements
         #: are stored here (including auxiliary requirements).
-        self.heat_utilities: tuple[HeatUtility, ...] = \
-            tuple([HeatUtility() for i in range(getattr(self, '_N_heat_utilities', 0))])
-        
+        self.heat_utilities: list[HeatUtility, ...] = \
+            [HeatUtility for i in range(getattr(self, '_N_heat_utilities', 0))]
+
         #: Electric utility associated to unit (including auxiliary requirements).
         self.power_utility: PowerUtility = PowerUtility()
 
-        self._init_utils()
-        self._init_results()
+        ### Initialize design/cost/LCA results
+
+        try:
+            #: All bare-module factors for each purchase cost. Defaults to values in
+            #: the class attribute :attr:`~Unit._F_BM_default`.
+            self.F_BM: dict[str, float] = self._F_BM_default.copy()
+        except AttributeError:
+            self.F_BM = {}
+
+        #: All design factors for each purchase cost item in :attr:`~Unit.baseline_purchase_costs`.
+        self.F_D: dict[str, float] = {}
+
+        #: All pressure factors for each purchase cost item in :attr:`~Unit.baseline_purchase_costs`.
+        self.F_P: dict[str, float] = {}
+
+        #: All material factors for each purchase cost item in :attr:`~Unit.baseline_purchase_costs`.
+        self.F_M: dict[str, float] = {}
+
+        #: All design requirements excluding utility requirements and detailed
+        #: auxiliary unit requirements.
+        self.design_results: dict[str, object] = {}
+
+        #: All baseline purchase costs without accounting for design,
+        #: pressure, and material factors.
+        self.baseline_purchase_costs: dict[str, float] = {}
+
+        #: Itemized purchase costs (including auxiliary units)
+        #: accounting for design, pressure, and material factors (i.e.,
+        #: :attr:`~Unit.F_D`, :attr:`~Unit.F_P`, :attr:`~Unit.F_M`).
+        #: Items here are automatically updated at the end of unit simulation.
+        self.purchase_costs: dict[str, float] = {}
+
+        #: All installed costs accounting for bare module, design,
+        #: pressure, and material factors. Items here are automatically updated
+        #: at the end of unit simulation.
+        self.installed_costs: dict[str, float] = {}
+
+        #: Indices of additional utilities given by inlet streams.
+        self._inlet_utility_indices: dict[str, int] = {}
+
+        #: Indices of additional utilities given by outlet streams.
+        self._outlet_utility_indices: dict[str, int] = {}
+
+        #: Indices of additional credits/fees given by inlet streams.
+        self._inlet_cost_indices: dict[str, int] = {}
+
+        #: Indices of additional credits/fees given by outlet streams.
+        self._outlet_revenue_indices: dict[str, int] = {}
+
+        #: Fractions of stream flow rates that receive fees or credits.
+        self._flow_fractions: dict[str, float] = {}
+
+        try:
+            #: Lifetime of equipment. Defaults to values in the class attribute
+            #: :attr:`~Unit._default_equipment_lifetime`. Use an integer to specify the
+            #: lifetime for all items in the unit purchase costs. Use a dictionary to
+            #: specify the lifetime of each purchase cost item.
+            self.equipment_lifetime: int|dict[str, int] = copy(self._default_equipment_lifetime)
+        except AttributeError:
+            self.equipment_lifetime = {}
+
         self._init_specifications()
         #: Whether to prioritize unit operation specification within recycle loop (if any).
         self.prioritize: bool = False
         
         #: Safety toggle to prevent infinite recursion
         self._active_specifications: set[ProcessSpecification] = set()
+
+        #: Auxiliary unit operation names.
+        self.auxiliary_unit_names = list(self.auxiliary_unit_names)
 
         #: Name-number pairs of baseline purchase costs and auxiliary unit 
         #: operations in parallel. Use 'self' to refer to the main unit. Capital 
@@ -348,10 +414,6 @@ class SanUnit(Unit, isabstract=True):
         _outs = self._outs = Outlets(self, self._N_outs, converted, self._thermo,
                                      self._outs_size_is_fixed, self._stacklevel)
         _replace_missing_streams(_outs, missing)
-
-    def _init_results(self):
-        super()._init_results()
-        self.add_OPEX = {}
 
     def __repr__(self):
         return f'<{type(self).__name__}: {self.ID}>'
