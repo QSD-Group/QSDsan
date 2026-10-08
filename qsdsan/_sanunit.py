@@ -641,9 +641,10 @@ class SanUnit(Unit, isabstract=True):
         super().reset_cache()
         if self.hasode or dynamic_system:
             self._init_dynamic()
+            # Outs linked to a feed share its data; emptying them would clear the feed
+            feed_imols = {id(i._imol) for i in self.ins}
             for s in self.outs:
-                #!!! temporary fix to avoid rewriting feed streams
-                s.unlink()
+                if id(s._imol) in feed_imols: continue
                 s.empty()
 
     def get_retained_mass(self, biomass_IDs):
