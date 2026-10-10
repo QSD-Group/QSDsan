@@ -101,7 +101,7 @@ def _calib_SF_iN(components, concentrations, STKN):
     other_stkn = SN - SF_N - SNOx_N
     SF_N = STKN - other_stkn
     if SF_N < 0:
-        raise ValueError("Negative N content {SF_N} for S_F was estimated.")
+        raise ValueError(f"Negative N content {SF_N} for S_F was estimated.")
     return SF_N/concentrations['S_F']
 
 def _calib_XBsub_iN(components, concentrations, XTKN):
