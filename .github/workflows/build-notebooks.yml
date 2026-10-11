@@ -62,6 +62,9 @@ jobs:
         python -m pip install --upgrade pip
         pip install -c .github/requirements-release.txt -e ".[ci]"
         pip install "exposan[complete] @ git+https://github.com/QSD-Group/EXPOsan.git"
+        # EXPOsan pins an exact released qsdsan, which replaces the editable install above,
+        # so put this checkout back to test the tutorials against the current source.
+        pip install --no-deps -e .
     - name: Run tutorial notebooks
       # -o addopts="" drops the package-wide --doctest-modules so this job runs
       # only the notebooks. --current-env ignores each notebook's named kernelspec
