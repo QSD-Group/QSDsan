@@ -1572,7 +1572,7 @@ def plot_sobol_results(result_dct, metric, ax=None,
         for (p1, p2) in s2_df.index:
             if not (p1 in hmap_df.index and p2 in hmap_df.index):
                 continue
-            hmap_df[p1][p2] = hmap_df[p2][p1] = s2_df.S2[(p1, p2)]
+            hmap_df.loc[p2, p1] = hmap_df.loc[p1, p2] = s2_df.S2[(p1, p2)]
 
         if kind_upper == 'S2': # only S2, only heat map
             ax_s2 = _plot_heatmap(hmap_df, annot=annotate_heatmap)
