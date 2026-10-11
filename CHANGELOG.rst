@@ -18,6 +18,8 @@ This document records notable changes to `QSDsan <https://github.com/QSD-Group/Q
 
 - Reclassified several ``qsdsan.unit_operations`` units (e.g. clarifiers, ``Mixer``/``Splitter``/``Pump``) into the ``dynamic`` submodule by simulation capability rather than file history; top-level imports are unaffected.
 
+- The ``WasteStream`` influent models (e.g., :meth:`~.WasteStream.codstates_inf_model`) take a new ``calibrate`` argument. The default (``'components'``) keeps the previous behavior but now warns when matching TKN, TP, or BOD changes shared component properties used by existing streams; ``calibrate='soluble'`` solves ``S_NH4`` and ``S_PO4`` instead and leaves the components unchanged.
+
 
 `1.5.3`_
 --------

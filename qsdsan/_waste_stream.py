@@ -132,6 +132,89 @@ def _calib_XBsub_fBODCOD(components, concentrations, substrate_IDs, BOD):
     return fbodtocod_sub
 
 
+_calibrate_keys = ('N', 'P', 'BOD')
+
+def _parse_calibrate(calibrate):
+    if isinstance(calibrate, dict):
+        unknown = set(calibrate) - set(_calibrate_keys)
+        if unknown:
+            raise ValueError(f"`calibrate` can only have keys {_calibrate_keys}, not {sorted(unknown)}.")
+        opts = {k: calibrate.get(k, 'components') for k in _calibrate_keys}
+    else:
+        opts = dict.fromkeys(_calibrate_keys, calibrate)
+        if calibrate == 'soluble': opts['BOD'] = 'components' # no soluble option for BOD
+    for k, v in opts.items():
+        if v not in ('components', 'soluble', None) or (k == 'BOD' and v == 'soluble'):
+            raise ValueError(f"Invalid `calibrate` setting {v!r} for {k}, "
+                             "use 'components' or None (also 'soluble' for N and P).")
+    return opts
+
+def _calib_soluble(components, concentrations, ID, element, total):
+    # solve the concentration of S_NH4 (N) or S_PO4 (P) for the total to match,
+    # without changing any component property
+    i_X = getattr(components, 'i_'+element)
+    cmp_c = np.asarray([v for v in concentrations.values()])
+    mask = components.s + components.c + components.x if element == 'N' else 1
+    other = (cmp_c * i_X * mask).sum() - concentrations[ID] * getattr(components[ID], 'i_'+element)
+    if element == 'N': # nitrite and nitrate are not part of TKN
+        other -= sum(concentrations[i] * components[i].i_N for i in ('S_NO2', 'S_NO3'))
+    conc = (total - other)/getattr(components[ID], 'i_'+element)
+    if conc < 0:
+        raise ValueError(f"{ID} would be negative ({conc:.4g} mg/L) to match the requested "
+                         f"{'TKN' if element == 'N' else 'TP'}={total:.4g}, which is lower than the "
+                         f"{element} already in the other components ({other:.4g}).")
+    return conc
+
+def _calibrate_N_P_BOD(new, cmps, cmp_dct, calibrate, TKN, TP, iSNH_STKN, BOD=None, sub_IDs=()):
+    """
+    Match TKN, TP (and BOD if given) of the influent model, `cmp_dct` is updated in place
+    for the 'soluble' setting, while the 'components' setting updates the (shared) component properties.
+    """
+    opts = _parse_calibrate(calibrate)
+    changes = {} # (component ID, property) -> new value
+    hint = (" Change the requested value or the related inputs ({inputs}), "
+            "or set `calibrate={{'{key}': 'soluble'}}` to solve {ID} instead "
+            "of changing component properties.")
+
+    S_NH4 = cmp_dct['S_NH4']
+    if opts['N'] == 'components':
+        try:
+            if S_NH4 > 0 and cmp_dct['S_F'] > 0:
+                changes[('S_F', 'i_N')] = _calib_SF_iN(cmps, cmp_dct, S_NH4/iSNH_STKN)
+            changes[('X_B_Subst', 'i_N')] = _calib_XBsub_iN(cmps, cmp_dct, TKN - S_NH4/iSNH_STKN)
+        except ValueError as e:
+            raise ValueError(str(e) + hint.format(inputs='TKN, S_NH4', key='N', ID='S_NH4')) from None
+    elif opts['N'] == 'soluble':
+        cmp_dct['S_NH4'] = _calib_soluble(cmps, cmp_dct, 'S_NH4', 'N', TKN)
+
+    if opts['P'] == 'components':
+        try:
+            changes[('X_B_Subst', 'i_P')] = _calib_XBsub_iP(cmps, cmp_dct, TP)
+        except ValueError as e:
+            raise ValueError(str(e) + hint.format(inputs='TP, S_PO4', key='P', ID='S_PO4')) from None
+    elif opts['P'] == 'soluble':
+        cmp_dct['S_PO4'] = _calib_soluble(cmps, cmp_dct, 'S_PO4', 'P', TP)
+
+    if BOD is not None and opts['BOD'] == 'components':
+        fbodtocod_sub = _calib_XBsub_fBODCOD(cmps, cmp_dct, sub_IDs, BOD)
+        for i in sub_IDs: changes[(i, 'f_BOD5_COD')] = fbodtocod_sub
+
+    moved = [k for k, v in changes.items()
+             if not np.isclose(getattr(cmps[k[0]], k[1]), v, rtol=1e-6, atol=1e-12)]
+    if moved:
+        # Components are shared by all streams using them
+        others = [s.ID for s in new.registry if s is not new
+                  and getattr(s, 'components', None) is cmps and s.F_mass > 0]
+        if others:
+            if len(others) > 5: others = others[:5] + ['...']
+            warn('Matching the requested TKN, TP, or BOD changed the properties of '
+                 f'shared components {sorted(set(".".join(k) for k in moved))}, '
+                 f'so the N, P, or BOD of existing stream(s) {others} also changed. '
+                 "Use the `calibrate` argument (e.g., `calibrate='soluble'`) "
+                 'to leave component properties unchanged.', stacklevel=3)
+        for (cmp_ID, prop), v in changes.items(): setattr(cmps[cmp_ID], prop, v)
+        cmps.refresh_constants()
+
 # Indexer for nicer display
 @property
 def group_conc_compositions(self):
@@ -1290,7 +1373,8 @@ class WasteStream(SanStream):
                             frXGAO_Gly=0., frXPAO_Gly=0., frXU_OHO_E=0., frXU_PAO_E=0.,
                             X_FePO4=0., X_AlPO4=0., X_FeOH=0., X_AlOH=0.,
                             X_MAP=0., X_HAP=0., X_HDP=0., X_PAO_PP=0.,
-                            X_MgCO3=0., X_CaCO3=0., DO=0., S_H2=0., S_CH4=0.):
+                            X_MgCO3=0., X_CaCO3=0., DO=0., S_H2=0., S_CH4=0.,
+                           calibrate='components'):
         '''
         Create a waste stream using the COD states influent characterization model,
         requires the default component set (can be created by :func:`~.Components.load_default`)
@@ -1305,6 +1389,22 @@ class WasteStream(SanStream):
             Total flowrates.
         units : tuple(str, str)
             Unit of the flowrate and component concentrations.
+        calibrate : str, dict, or None
+            How to match the requested TKN and TP, defaults to 'components'.
+
+            - 'components': change the N and P content of the components ``S_F`` and ``X_B_Subst``.
+              Components are shared by all streams that use the same set of components,
+              so this also changes the N, P of streams created earlier (a warning is issued when that happens).
+            - 'soluble': solve the concentrations of ``S_NH4`` (for TKN) and ``S_PO4`` (for TP) instead,
+              any ``S_NH4`` and ``S_PO4`` you pass in are overwritten and ``iSNH_STKN`` is not used.
+              Component properties are not changed.
+            - None: do not match the requested values, and no component properties are changed.
+            - dict: choose for each of 'N', 'P' separately, e.g., ``{'N': 'soluble', 'P': 'components'}``,
+              unspecified keys use 'components'.
+
+            If the requested values cannot be matched (e.g., TKN is lower than the N already in the other components),
+            an error is raised that tells which input to change.
+            See the examples of :meth:`~.WasteStream.codstates_inf_model`.
 
         Examples
         --------
@@ -1366,6 +1466,28 @@ class WasteStream(SanStream):
         Hydromantis Environmental Software Solutions, Inc. 2019.
         https://www.hydromantis.com/help/GPS-X/docs/8.0/Technical/index.html
 
+
+        The requested TKN and TP are matched by changing component properties by default,
+        so they apply to every stream that uses the same components:
+
+        >>> ws1 = WasteStream.codstates_inf_model('ws1', flow_tot=100, TKN=40, TP=10)
+        >>> round(ws1.TN, 1), round(ws1.TP, 1)
+        (40.0, 10.0)
+        >>> ws2 = WasteStream.codstates_inf_model('ws2', flow_tot=100, TKN=30, TP=8, calibrate='soluble')
+        >>> round(ws2.TN, 1), round(ws2.TP, 1) # matched by solving S_NH4 and S_PO4
+        (30.0, 8.0)
+        >>> round(ws2.iconc['S_NH4'], 1), round(ws2.iconc['S_PO4'], 1)
+        (15.0, 6.0)
+        >>> round(ws1.TN, 1), round(ws1.TP, 1) # ws1 is not affected
+        (40.0, 10.0)
+        >>> ws3 = WasteStream.codstates_inf_model('ws3', flow_tot=100, TKN=50, TP=13) # with a warning
+        >>> round(ws1.TN, 1), round(ws1.TP, 1) # now ws1 is changed
+        (50.0, 13.0)
+
+        When the requested values cannot be matched, the error message tells which input to change:
+
+        >>> WasteStream.codstates_inf_model('ws4', flow_tot=100, TKN=20, calibrate='soluble') # doctest: +SKIP
+        ValueError: S_NH4 would be negative (-5 mg/L) to match the requested TKN=20, which is lower than the N already in the other components (25).
         '''
         if thermo: cmps = thermo.chemicals
         else:
@@ -1480,15 +1602,7 @@ class WasteStream(SanStream):
         del bad_vars
 
         #************ calibrate XB_subst, SF's N, P content *************
-        if S_NH4 > 0 and cmp_dct['S_F'] > 0:
-            SFi_N = _calib_SF_iN(cmps, cmp_dct, S_NH4/iSNH_STKN)
-        XB_Substi_N = _calib_XBsub_iN(cmps, cmp_dct, TKN - S_NH4/iSNH_STKN)
-        XB_Substi_P = _calib_XBsub_iP(cmps, cmp_dct, TP)
-
-        if S_NH4 > 0 and cmp_dct['S_F'] > 0: cmps.S_F.i_N = SFi_N
-        cmps.X_B_Subst.i_N = XB_Substi_N
-        cmps.X_B_Subst.i_P = XB_Substi_P
-        cmps.refresh_constants()
+        _calibrate_N_P_BOD(new, cmps, cmp_dct, calibrate, TKN, TP, iSNH_STKN)
 
         #************ convert concentrations to flow rates *************
         cmp_dct.pop('H2O', None) # avoid warning related to H2O as the bulk liquid
@@ -1513,7 +1627,8 @@ class WasteStream(SanStream):
                            X_PRO=0., X_ACO=0., X_HMO=0., X_MEOLO=0., X_FO=0.,
                            X_FePO4=0., X_AlPO4=0., X_FeOH=0., X_AlOH=0.,
                            X_MAP=0., X_HAP=0., X_HDP=0., X_PAO_PP=0.,
-                           X_MgCO3=0., X_CaCO3=0., DO=0., S_H2=0., S_CH4=0.):
+                           X_MgCO3=0., X_CaCO3=0., DO=0., S_H2=0., S_CH4=0.,
+                           calibrate='components'):
         '''
         Create a waste stream using the COD-based influent characterization model,
         requires the default component set (can be created by :func:`~.Components.load_default`)
@@ -1528,6 +1643,22 @@ class WasteStream(SanStream):
             Total flowrates.
         units : tuple(str, str)
             Unit of the flowrate and component concentrations.
+        calibrate : str, dict, or None
+            How to match the requested TKN, TP, and BOD, defaults to 'components'.
+
+            - 'components': change the N and P content of the components ``S_F`` and ``X_B_Subst`` and the BOD5-to-COD ratios of the substrate components.
+              Components are shared by all streams that use the same set of components,
+              so this also changes the N, P, and BOD of streams created earlier (a warning is issued when that happens).
+            - 'soluble': solve the concentrations of ``S_NH4`` (for TKN) and ``S_PO4`` (for TP) instead,
+              any ``S_NH4`` and ``S_PO4`` you pass in are overwritten and ``iSNH_STKN`` is not used.
+              Component properties are not changed, except for the BOD5-to-COD ratios, which have no soluble option.
+            - None: do not match the requested values, and no component properties are changed.
+            - dict: choose for each of 'N', 'P', and 'BOD' separately, e.g., ``{'N': 'soluble', 'P': 'components'}``,
+              unspecified keys use 'components'.
+
+            If the requested values cannot be matched (e.g., TKN is lower than the N already in the other components),
+            an error is raised that tells which input to change.
+            See the examples of :meth:`~.WasteStream.codstates_inf_model`.
 
         Examples
         --------
@@ -1704,20 +1835,9 @@ class WasteStream(SanStream):
         del bad_vars
 
         #************ calibrate XB_subst, SF's N, P content *************
-        if S_NH4 > 0 and cmp_dct['S_F'] > 0:
-            SFi_N = _calib_SF_iN(cmps, cmp_dct, S_NH4/iSNH_STKN)
-        XB_Substi_N = _calib_XBsub_iN(cmps, cmp_dct, TKN - S_NH4/iSNH_STKN)
-        XB_Substi_P = _calib_XBsub_iP(cmps, cmp_dct, TP)
-
         BOD = COD * iBOD_COD
         sub_IDs = ('X_B_Subst', 'X_OHO_PHA', 'X_GAO_PHA', 'X_PAO_PHA', 'X_GAO_Gly', 'X_PAO_Gly')
-        fbodtocod_sub = _calib_XBsub_fBODCOD(cmps, cmp_dct, sub_IDs, BOD)
-
-        if S_NH4 > 0 and cmp_dct['S_F'] > 0: cmps.S_F.i_N = SFi_N
-        cmps.X_B_Subst.i_N = XB_Substi_N
-        cmps.X_B_Subst.i_P = XB_Substi_P
-        for i in sub_IDs: cmps[i].f_BOD5_COD = fbodtocod_sub
-        cmps.refresh_constants()
+        _calibrate_N_P_BOD(new, cmps, cmp_dct, calibrate, TKN, TP, iSNH_STKN, BOD, sub_IDs)
 
         #************ convert concentrations to flow rates *************
         cmp_dct.pop('H2O', None) # avoid warning related to H2O as the bulk liquid
@@ -1742,7 +1862,8 @@ class WasteStream(SanStream):
                            X_PRO=0., X_ACO=0., X_HMO=0., X_MEOLO=0., X_FO=0.,
                            X_FePO4=0., X_AlPO4=0., X_FeOH=0., X_AlOH=0.,
                            X_MAP=0., X_HAP=0., X_HDP=0., X_PAO_PP=0.,
-                           X_MgCO3=0., X_CaCO3=0., DO=0., S_H2=0., S_CH4=0.):
+                           X_MgCO3=0., X_CaCO3=0., DO=0., S_H2=0., S_CH4=0.,
+                           calibrate='components'):
         '''
         Create a waste stream using the BOD influent characterization model,
         requires the default component set (can be created by :func:`~.Components.load_default`)
@@ -1757,6 +1878,22 @@ class WasteStream(SanStream):
             Total flowrates.
         units : tuple(str, str)
             Unit of the flowrate and component concentrations.
+        calibrate : str, dict, or None
+            How to match the requested TKN, TP, and BOD, defaults to 'components'.
+
+            - 'components': change the N and P content of the components ``S_F`` and ``X_B_Subst`` and the BOD5-to-COD ratios of the substrate components.
+              Components are shared by all streams that use the same set of components,
+              so this also changes the N, P, and BOD of streams created earlier (a warning is issued when that happens).
+            - 'soluble': solve the concentrations of ``S_NH4`` (for TKN) and ``S_PO4`` (for TP) instead,
+              any ``S_NH4`` and ``S_PO4`` you pass in are overwritten and ``iSNH_STKN`` is not used.
+              Component properties are not changed, except for the BOD5-to-COD ratios, which have no soluble option.
+            - None: do not match the requested values, and no component properties are changed.
+            - dict: choose for each of 'N', 'P', and 'BOD' separately, e.g., ``{'N': 'soluble', 'P': 'components'}``,
+              unspecified keys use 'components'.
+
+            If the requested values cannot be matched (e.g., TKN is lower than the N already in the other components),
+            an error is raised that tells which input to change.
+            See the examples of :meth:`~.WasteStream.codstates_inf_model`.
 
         Examples
         --------
@@ -1934,20 +2071,9 @@ class WasteStream(SanStream):
         del bad_vars
 
         #************ calibrate XB_subst, SF's N, P content *************
-        if S_NH4 > 0 and cmp_dct['S_F'] > 0:
-            SFi_N = _calib_SF_iN(cmps, cmp_dct, S_NH4/iSNH_STKN)
-        XB_Substi_N = _calib_XBsub_iN(cmps, cmp_dct, TKN - S_NH4/iSNH_STKN)
-        XB_Substi_P = _calib_XBsub_iP(cmps, cmp_dct, TP)
-
         BOD = COD * iBOD_COD
         sub_IDs = ('X_B_Subst', 'X_OHO_PHA', 'X_GAO_PHA', 'X_PAO_PHA', 'X_GAO_Gly', 'X_PAO_Gly')
-        fbodtocod_sub = _calib_XBsub_fBODCOD(cmps, cmp_dct, sub_IDs, BOD)
-
-        if S_NH4 > 0 and cmp_dct['S_F'] > 0: cmps.S_F.i_N = SFi_N
-        cmps.X_B_Subst.i_N = XB_Substi_N
-        cmps.X_B_Subst.i_P = XB_Substi_P
-        for i in sub_IDs: cmps[i].f_BOD5_COD = fbodtocod_sub
-        cmps.refresh_constants()
+        _calibrate_N_P_BOD(new, cmps, cmp_dct, calibrate, TKN, TP, iSNH_STKN, BOD, sub_IDs)
 
         #************ convert concentrations to flow rates *************
         cmp_dct.pop('H2O', None) # avoid warning related to H2O as the bulk liquid
@@ -1974,7 +2100,8 @@ class WasteStream(SanStream):
                          frSCH3OH_scCOD=0., frSAc_scCOD=0., frSProp_scCOD=0.,
                          S_NO2=0., S_NO3=0., X_PAO_PP=0., X_FeOH=0., X_AlOH=0.,
                          X_FePO4=0., X_AlPO4=0., X_MAP=0., X_HAP=0., X_HDP=0.,
-                         X_MgCO3=0., X_CaCO3=0., DO=0., S_H2=0., S_CH4=0.):
+                         X_MgCO3=0., X_CaCO3=0., DO=0., S_H2=0., S_CH4=0.,
+                         calibrate='components'):
         '''
         Create a waste stream using the sludge influent characterization model,
         requires the default component set (can be created by :func:`~.Components.load_default`)
@@ -1989,6 +2116,22 @@ class WasteStream(SanStream):
             Total flowrates.
         units : tuple(str, str)
             Unit of the flowrate and component concentrations.
+        calibrate : str, dict, or None
+            How to match the requested TKN and TP, defaults to 'components'.
+
+            - 'components': change the N and P content of the components ``S_F`` and ``X_B_Subst``.
+              Components are shared by all streams that use the same set of components,
+              so this also changes the N, P of streams created earlier (a warning is issued when that happens).
+            - 'soluble': solve the concentrations of ``S_NH4`` (for TKN) and ``S_PO4`` (for TP) instead,
+              any ``S_NH4`` and ``S_PO4`` you pass in are overwritten and ``iSNH_STKN`` is not used.
+              Component properties are not changed.
+            - None: do not match the requested values, and no component properties are changed.
+            - dict: choose for each of 'N', 'P' separately, e.g., ``{'N': 'soluble', 'P': 'components'}``,
+              unspecified keys use 'components'.
+
+            If the requested values cannot be matched (e.g., TKN is lower than the N already in the other components),
+            an error is raised that tells which input to change.
+            See the examples of :meth:`~.WasteStream.codstates_inf_model`.
 
         Examples
         --------
@@ -2164,15 +2307,7 @@ class WasteStream(SanStream):
         del bad_vars
 
         #************ calibrate XB_subst, SF's N, P content *************
-        if S_NH4 > 0 and cmp_dct['S_F'] > 0:
-            SFi_N = _calib_SF_iN(cmps, cmp_dct, S_NH4/iSNH_STKN)
-        XB_Substi_N = _calib_XBsub_iN(cmps, cmp_dct, TKN - S_NH4/iSNH_STKN)
-        XB_Substi_P = _calib_XBsub_iP(cmps, cmp_dct, TP)
-
-        if S_NH4 > 0 and cmp_dct['S_F'] > 0: cmps.S_F.i_N = SFi_N
-        cmps.X_B_Subst.i_N = XB_Substi_N
-        cmps.X_B_Subst.i_P = XB_Substi_P
-        cmps.refresh_constants()
+        _calibrate_N_P_BOD(new, cmps, cmp_dct, calibrate, TKN, TP, iSNH_STKN)
 
         #************ convert concentrations to flow rates *************
         cmp_dct.pop('H2O', None) # avoid warning related to H2O as the bulk liquid
