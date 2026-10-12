@@ -168,7 +168,7 @@ def rhos_asm2d(state_arr, params):
     S_O2, S_N2, S_NH4, S_NO3, S_PO4, S_F, S_A, S_I, S_ALK, \
         X_I, X_S, X_H, X_PAO, X_PP, X_PHA, X_AUT, X_MeOH, X_MeP = state_arr[:18]
       
-    _rhos[:19] = 0.
+    _rhos[:] = 0. # rates 19-20 are only set below when X_MeOH/X_MeP > 0
     if X_H > 0:
         K_h = params['K_h']
         K_O2 = params['K_O2']
