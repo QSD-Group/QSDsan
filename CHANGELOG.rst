@@ -18,6 +18,8 @@ This document records notable changes to `QSDsan <https://github.com/QSD-Group/Q
 
 - Reclassified several ``qsdsan.unit_operations`` units (e.g. clarifiers, ``Mixer``/``Splitter``/``Pump``) into the ``dynamic`` submodule by simulation capability rather than file history; top-level imports are unaffected.
 
+- Fixed :class:`~.process_models.ASM2d` carrying stale precipitation/redissolution rates between calls: ``rhos_asm2d`` reset only the first 19 rates, so a state without metal hydroxide or phosphate (X_MeOH = X_MeP = 0) kept whatever rate an earlier call (e.g., an ODE solver's Jacobian probe) had written.
+
 
 `1.5.3`_
 --------
