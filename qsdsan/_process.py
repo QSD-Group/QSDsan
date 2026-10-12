@@ -270,8 +270,8 @@ class MultiKinetics:
     def _collect_kinetics(self):
         pcs = self.processes
         if any([pc.rate_function == None for pc in pcs]): return None
-        rho_arr = np.empty(len(pcs))
         def f(state_arr, params):
+            rho_arr = np.empty(len(pcs))
             rho_arr[:] = [p.rate_function.function(state_arr,
                                                    {**p.rate_function.params, **params})
                           for p in pcs]

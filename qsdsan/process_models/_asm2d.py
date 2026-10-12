@@ -163,12 +163,11 @@ def create_masm2d_cmps(set_thermo=True, adjust_MW_to_measured_as=True):
 
 
 #%%
-_rhos = np.zeros(21)
 def rhos_asm2d(state_arr, params):
     S_O2, S_N2, S_NH4, S_NO3, S_PO4, S_F, S_A, S_I, S_ALK, \
         X_I, X_S, X_H, X_PAO, X_PP, X_PHA, X_AUT, X_MeOH, X_MeP = state_arr[:18]
-      
-    _rhos[:] = 0. # rates 19-20 are only set below when X_MeOH/X_MeP > 0
+
+    _rhos = np.zeros(21) # fresh array per call, rates not set below stay 0
     if X_H > 0:
         K_h = params['K_h']
         K_O2 = params['K_O2']
@@ -557,8 +556,6 @@ def solve_pH(state_arr, Ka, unit_conversion):
                xtol=1e-12, maxiter=100)
     return h
 
-# rhos = np.zeros(19+7+2) # 19 biological processes, 7 precipitation/dissociation, 2 gas stripping
-rhos = np.zeros(19+7) # 19 biological processes, 7 precipitation/dissociation
 def _rhos_masm2d(state_arr, params, acceptor_dependent_decay=True, h=None):
     if 'ks' not in params:
         k_h, mu_H, mu_PAO, mu_AUT, \
@@ -619,6 +616,8 @@ def _rhos_masm2d(state_arr, params, acceptor_dependent_decay=True, h=None):
                 X_AlOH, X_AlPO4, X_FeOH, X_FePO4, S_Na, S_Cl \
                     = state_arr[:30]
     
+    rhos = np.zeros(19+7) # 19 biological processes, 7 precipitation/dissociation
+
     ############# biological processes ###############
     nutrients = Monod(S_NH4, Ks_nh4) * Monod(S_PO4, Ks_po4)
 

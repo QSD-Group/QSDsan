@@ -212,7 +212,6 @@ def Hill_inhibit(H_ion, ul, ll):
     K = 10**(-(ul+ll)/2)
     return 1/(1+(H_ion/K) ** n)
 
-rhos = np.zeros(22) # 22 kinetic processes
 Cs = np.empty(19)
 
 def solve_pH(state_arr, Ka, unit_conversion):
@@ -271,6 +270,7 @@ def _rhos_adm1(state_arr, params, h=None):
     biogas_S = state_arr[7:10].copy()
     biogas_p = R * T_op * state_arr[27:30]
 
+    rhos = np.zeros(22) # 22 kinetic processes
     rhos[:-3] = ks * Cs
     Monod = substr_inhibit(substrates, Ks)
     rhos[4:12] *= Monod

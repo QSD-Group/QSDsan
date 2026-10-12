@@ -98,7 +98,6 @@ def acid_base_rxn(h_ion, weak_acids_tot, Kas):
     nh3, hpo4, hco3, ac, pro, bu, va = Kas[1:] * weak_acids_tot[4:] / (Kas[1:] + h_ion)
     return S_cat + S_K + 2*S_Mg + h_ion + (S_IN - nh3) - S_an - oh_ion - hco3 - ac - pro - bu - va - 2*hpo4 - (S_IP - hpo4)
 
-rhos = np.zeros(28) # 28 kinetic processes (25 as defined in modified ADM1 + 3 for gases)
 Cs = np.empty(25) # 25 processes as defined in modified ADM1
 
 def solve_pH(state_arr, Ka, unit_conversion):
@@ -195,6 +194,7 @@ def _rhos_adm1_p_extension(state_arr, params, h=None):
         Ka = params['Ka']
         KH = params['KH']
 
+    rhos = np.zeros(28) # 28 kinetic processes (25 as defined in modified ADM1 + 3 for gases)
     rhos[:-3] = ks * Cs
     rhos[3:11] *= substr_inhibit(substrates, Ks[:8])
     if S_va > 0: rhos[6] *= 1/(1+S_bu/S_va)
@@ -635,7 +635,6 @@ def adm1p_solve_pH(state_arr, Ka, unit_conversion):
                xtol=1e-12, maxiter=100)
     return h
 
-rhos_p = np.zeros(35) # 28 kinetic processes (25 as defined in modified ADM1 + 7 mmp + 3 for gases)
 Cs_p = np.empty(25) # 25 processes as defined in modified ADM1
 
 rhos_adm1p = lambda state_arr, params: _rhos_adm1p(state_arr, params, h=None)
@@ -730,6 +729,7 @@ def _rhos_adm1p(state_arr, params, h=None):
         Ka = params['Ka']
         KH = params['KH']
 
+    rhos_p = np.zeros(35) # 25 as defined in modified ADM1 + 7 mmp + 3 for gases
     rhos_p[:25] = ks * Cs_p
     rhos_p[3:11] *= substr_inhibit(substrates, Ks[:8])
     if S_va > 0: rhos_p[6] *= 1/(1+S_bu/S_va)
