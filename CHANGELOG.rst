@@ -20,6 +20,8 @@ This document records notable changes to `QSDsan <https://github.com/QSD-Group/Q
 
 - The ``WasteStream`` influent models (e.g., :meth:`~.WasteStream.codstates_inf_model`) take a new ``calibrate`` argument. The default (``'components'``) keeps the previous behavior but now warns when matching TKN, TP, or BOD changes shared component properties used by existing streams; ``calibrate='soluble'`` solves ``S_NH4`` and ``S_PO4`` instead and leaves the components unchanged.
 
+- Fixed :class:`~.process_models.ASM2d` carrying stale precipitation/redissolution rates between calls: ``rhos_asm2d`` reset only the first 19 rates, so a state without metal hydroxide or phosphate (X_MeOH = X_MeP = 0) kept whatever rate an earlier call (e.g., an ODE solver's Jacobian probe) had written.
+
 
 `1.5.3`_
 --------
