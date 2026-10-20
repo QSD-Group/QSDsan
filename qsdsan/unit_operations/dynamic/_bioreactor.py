@@ -463,14 +463,14 @@ class BatchExperiment(SanUnit):
     ...     if v != 0:
     ...         print(f'{k}{" "*(7-len(k))}{v:.2f}')
     S_S    0.93
-    X_S    446.16
-    X_BH   25.66
-    X_P    39.25
+    X_S    446.11
+    X_BH   25.72
+    X_P    39.24
     S_O    -0.00
     S_NO   -0.00
     S_NH   2.12
     S_ND   0.00
-    X_ND   36.47
+    X_ND   36.46
     S_ALK  85.82
     S_N2   0.00
     
@@ -884,7 +884,7 @@ class PFR(SanUnit):
                  X_BH   3.94e+06
                  X_BA   2.3e+05
                  X_P    6.95e+05
-                 S_O    769
+                 S_O    ...
                  S_NO   1.6e+04
                  S_NH   2.68e+03
                  S_ND   1.06e+03
@@ -911,14 +911,14 @@ class PFR(SanUnit):
       X_BH   2558.4
       X_BA   149.6
       X_P    452.1
-      S_O    0.5
+      S_O    ...
       S_NO   10.4
       S_NH   1.7
       S_ND   0.7
       X_ND   3.5
       S_ALK  49.7
       S_N2   13.8
-      H2O    994623.2
+      H2O    994617.9
   
     See Also
     --------
@@ -1385,7 +1385,7 @@ class AerobicDigester(CSTR):
                     X_BH  9.6e+03
                     X_BA  1.59e+03
                     X_P   2.77e+04
-                    S_O   2.08
+                    S_O   ...
                     S_NO  4.17e+03
                     S_NH  0.101
                     S_ND  0.975
@@ -1395,14 +1395,14 @@ class AerobicDigester(CSTR):
         WasteStream-specific properties:
          pH         : 7.0
          Alkalinity : 2.5 mmol/L
-         COD        : 40987.6 mg/L
-         BOD        : 15416.1 mg/L
-         TC         : 13985.1 mg/L
-         TOC        : 13985.1 mg/L
+         COD        : 40986.7 mg/L
+         BOD        : 15415.3 mg/L
+         TC         : 13984.9 mg/L
+         TOC        : 13984.9 mg/L
          TN         : 3534.1 mg/L
          TP         : 458.2 mg/L
          TK         : 89.3 mg/L
-         TSS        : 17813.2 mg/L
+         TSS        : 17813.3 mg/L
     
     """
     def __init__(self, ID='', ins=None, outs=(), thermo=None,
