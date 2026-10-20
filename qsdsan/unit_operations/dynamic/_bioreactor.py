@@ -296,6 +296,10 @@ class CSTR(SanUnit):
     def _update_state(self):
         arr = self._state
         arr[arr < 1e-16] = 0.
+        # With a fixed DO, the ODE holds DO at the target without integrating it,
+        # so the state (and the effluent) must carry the target, not the solver's value
+        aer = self._aeration
+        if isinstance(aer, (float, int)): arr[self.components.index(self._DO_ID)] = aer
         arr[-1] = sum(ws.state[-1] for ws in self.ins)
         if self.split is None: self._outs[0].state = arr
         else:
@@ -884,7 +888,7 @@ class PFR(SanUnit):
                  X_BH   3.94e+06
                  X_BA   2.3e+05
                  X_P    6.95e+05
-                 S_O    ...
+                 S_O    769
                  S_NO   1.6e+04
                  S_NH   2.68e+03
                  S_ND   1.06e+03
@@ -911,14 +915,14 @@ class PFR(SanUnit):
       X_BH   2558.4
       X_BA   149.6
       X_P    452.1
-      S_O    ...
+      S_O    0.5
       S_NO   10.4
       S_NH   1.7
       S_ND   0.7
       X_ND   3.5
       S_ALK  49.7
       S_N2   13.8
-      H2O    994617.9
+      H2O    994623.2
   
     See Also
     --------
@@ -1179,6 +1183,12 @@ class PFR(SanUnit):
         out, = self.outs
         ncol = self._ncol
         self._state[self._state < 1e-16] = 0.
+        # DO in aerated tanks is held at the setpoint by the ODE without being
+        # integrated, so the state (and the effluent) must carry the setpoint
+        DO = self.DO_setpoints
+        if any(DO):
+            aerated = DO > 0
+            self._state.reshape((self.N_tanks_in_series, ncol))[aerated, self.components.index(self.DO_ID)] = DO[aerated]
         self._state[self._Qs_idx] = self._Qs
         if out.state is None: out.state = np.zeros(ncol)
         out.state[:-1] = self._state[-ncol:-1]
@@ -1385,7 +1395,7 @@ class AerobicDigester(CSTR):
                     X_BH  9.6e+03
                     X_BA  1.59e+03
                     X_P   2.77e+04
-                    S_O   ...
+                    S_O   2.08
                     S_NO  4.17e+03
                     S_NH  0.101
                     S_ND  0.975
