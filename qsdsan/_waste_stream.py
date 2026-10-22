@@ -1350,6 +1350,9 @@ class WasteStream(SanStream):
 
     def _state2flows(self):
         Q = self.state[-1] # m3/d
+        if Q == 0: # no flow (e.g., a splitter with all flow to the other outlet), concentrations are meaningless
+            self.empty()
+            return
         if self.phase == 'l':
             Cs = dict(zip(self.components.IDs, self.state[:-1]))
             Cs.pop('H2O', None)

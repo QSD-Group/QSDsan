@@ -17,7 +17,7 @@ Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
 '''
 
-__all__ = ('test_dyn_sys', 'test_dynamic_influent_noncyclic')
+__all__ = ('test_dyn_sys', 'test_dynamic_influent_noncyclic', 'test_dynamic_zero_flow_stream')
 
 def test_dyn_sys():
     from qsdsan import process_models as pc, unit_operations as su, set_thermo, System
@@ -66,5 +66,23 @@ def test_dynamic_influent_noncyclic(tmp_path):
     sys.simulate(t_span=(0, 10), t_eval=np.linspace(0, 10, 11))
 
 
+def test_dynamic_zero_flow_stream():
+    '''A stream with exactly zero flow (here, the second outlet of a splitter with all
+    flow to the first) used to fail when writing the dynamic state back to the stream
+    (``RuntimeError: <WasteStream> is empty``), after the simulation had finished.
+    '''
+    from qsdsan import process_models as pc, unit_operations as su, System
+
+    pc.create_asm1_cmps()
+    DI = su.DynamicInfluent('Dyn_Inf_zero')
+    S1 = su.Splitter('Split_zero', ins=DI-0, split=1.0, init_with='WasteStream')
+    M1 = su.Mixer('Mix_zero', ins=(S1-0, S1-1), outs='Dyn_Eff_zero')
+    sys = System('zero_flow_sys', path=(DI, S1, M1))
+    sys.simulate(t_span=(0, 0.5), method='RK23')
+    assert S1.outs[1].isempty()
+    assert S1.outs[0].F_vol > 0
+
+
 if __name__ == '__main__':
     test_dyn_sys()
+    test_dynamic_zero_flow_stream()
