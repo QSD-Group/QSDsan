@@ -15,6 +15,8 @@ for license details.
 
 from ... import SanUnit, WasteStream
 import numpy as np
+import thermosteam as tmo
+from chemicals.elements import periodic_table, molecular_weight
 from ..static._pumping import WWTpump
 from warnings import warn
 from ..static._pumping import (
@@ -471,15 +473,50 @@ class Incinerator(SanUnit):
     outs : class:`WasteStream`
         Flue gas and ash. 
     process_efficiency : float
-        The process efficiency of the incinerator unit. Expected value between 0 and 1. 
-    calorific_value_sludge : float 
-        The calorific value of influent sludge in KJ/kg. The default value used is 12000 KJ/kg.
-    calorific_value_fuel : float 
-        The calorific value of fuel employed for combustion in KJ/kg. 
-        The default fuel is natural gas with calorific value of 50000 KJ/kg.
-        
+        The process efficiency of the incinerator unit. Expected value between 0 and 1.
+    calorific_value_sludge : float, optional
+        The calorific value of the dry sludge in KJ/kg. If None (default),
+        calculated from the properties of the components.
+    calorific_value_fuel : float, optional
+        The calorific value of the fuel in KJ/kg. If None (default),
+        calculated from the properties of the components.
+    heating_value_basis : str
+        Basis of the heats of combustion, 'LHV' (lower heating value, default)
+        or 'HHV' (higher heating value).
+    ash_component_ID, nitrogen_ID, water_ID, carbon_dioxide_ID, oxygen_ID : str
+        IDs of the ash, N2, H2O, CO2, and O2 components.
+
+    Notes
+    -----
+    Complete combustion is assumed and calculated with BioSTEAM reactions
+    (:class:`thermosteam.reaction.ParallelReaction`, see `combustion_reactions`)
+    on the mole flows of all influents, i.e., C becomes CO2, H becomes H2O,
+    and N becomes N2. As the flows of components with `measured_as` are in the
+    measured-as unit, moles are from their real mass (`i_mass`), which is correct
+    with or without adjusting the components' MW to the measured-as unit. The O2 needed is taken from the air and the excess is
+    in the flue gas (a warning is raised if the air is not enough). Mineral
+    solids and other elements go to the ash, and water, N2, CO2, and O2 pass through.
+
+    For each component, BioSTEAM's combustion reaction (from its formula) is used
+    when it is defined with the components of the system (and, for organic components,
+    its O2 demand agrees with the component's COD). Otherwise (e.g., ASM
+    state variables with no formula, or components with P and metals), the
+    reaction is from the component's composition: the formula, or for components
+    with no formula, the C and N contents together with the mass and COD (to solve
+    for H and O); non-organic components with no formula go to the ash.
+
+    The energy balance (in kJ/hr, after simulation), similar to BioSTEAM's
+    :class:`biosteam.facilities.BoilerTurbogenerator`, uses the heating values of
+    the components (their LHV/HHV if neutral and available, otherwise estimated
+    from the O2 consumed by their combustion with Thornton's rule, i.e., 13.1 MJ of
+    net heat per kg of O2 [3, 4]):
+    `heat_sludge`, `heat_fuel`, and their sum `heat_combustion`; `heat_air` is the
+    sensible heat of the air above 298.15 K; `heat_flue_gas` is `process_efficiency`
+    times the heat input, and `heat_loss` is the rest. `heat_evaporation` is the
+    energy to heat the water in the sludge to boiling and evaporate it, for reference.
+
     Examples
-    --------    
+    --------
     >>> import qsdsan as qs
     >>> cmps = qs.Components.load_default()
     >>> CO2 = qs.Component.from_chemical('S_CO2', chemical='CO2',
@@ -493,10 +530,10 @@ class Incinerator(SanUnit):
     >>> qs.set_thermo(cmps_test)
     >>> ws = qs.WasteStream('ws', S_F=10, S_NH4=20, X_OHO=15, H2O=1000)
     >>> natural_gas = qs.WasteStream('nat_gas', phase='g', S_CH4=1000)
-    >>> air = qs.WasteStream('air', phase='g', S_O2=210, S_N2=780, S_H2=10)
+    >>> air = qs.WasteStream('air', phase='g', S_O2=1500, S_N2=4900)
     >>> from qsdsan.unit_operations import Incinerator
-    >>> Inc = Incinerator(ID='Inc', ins= (ws, air, natural_gas), 
-    ...                   outs=('flu_gas', 'ash'), 
+    >>> Inc = Incinerator(ID='Inc', ins= (ws, air, natural_gas),
+    ...                   outs=('flu_gas', 'ash'),
     ...                   isdynamic=False)
     >>> Inc.simulate()
     >>> Inc.show() # doctest: +ELLIPSIS
@@ -521,26 +558,45 @@ class Incinerator(SanUnit):
          TSS        : 11144.7 mg/L
     [1] air
     phase: 'g', T: 298.15 K, P: 101325 Pa
-    flow (g/hr): S_O2  2.1e+05
-                    S_N2  7.8e+05
-                    S_H2  1e+04
+    flow (g/hr): S_O2  1.5e+06
+                    S_N2  4.9e+06
         WasteStream-specific properties: None for non-liquid waste streams
     [2] nat_gas
     phase: 'g', T: 298.15 K, P: 101325 Pa
-    flow...
+    flow (g/hr): S_CH4  1e+06
         WasteStream-specific properties: None for non-liquid waste streams
     outs...
     [0] flu_gas
     phase: 'g', T: 298.15 K, P: 101325 Pa
-    flow (g/hr): H2O    1e+06
-                    S_N2   7.8e+05
-                    S_CO2  2.67e+05
+    flow (g/hr): H2O    1.62e+06
+                    S_O2   4.29e+05
+                    S_N2   4.92e+06
+                    S_CO2  7.2e+05
         WasteStream-specific properties: None for non-liquid waste streams
     [1] ash
     phase: 's', T: 298.15 K, P: 101325 Pa
-    flow...
+    flow (g/hr): X_Ig_ISS  2.05e+03
         WasteStream-specific properties: None for non-liquid waste streams
-    
+
+    The energy balance [kJ/hr] (rounded here to thousands):
+
+    >>> [round(i, -3) for i in (Inc.heat_sludge, Inc.heat_fuel, Inc.heat_flue_gas, Inc.heat_loss)]
+    [926000.0, 12541000.0, 12120000.0, 1347000.0]
+    >>> round(Inc.heat_evaporation, -3)
+    2570000.0
+
+    In a dynamic system, the unit's algebraic equations give the same flows as static simulation:
+
+    >>> Inc_dyn = Incinerator(ID='Inc_dyn', outs=('flu_gas_dyn', 'ash_dyn'), isdynamic=True,
+    ...                       ins=(ws.copy('ws_dyn'), air.copy('air_dyn'), natural_gas.copy('gas_dyn')))
+    >>> sys = qs.System('sys', path=(Inc_dyn,))
+    >>> sys.simulate(t_span=(0, 1), method='BDF')
+    >>> flue_gas, ash = Inc_dyn.outs
+    >>> [round(flue_gas.imass[i], 1) for i in ('S_CO2', 'S_N2', 'H2O', 'S_O2')]
+    [719.5, 4921.3, 1620.9, 429.3]
+    >>> round(ash.imass['X_Ig_ISS'], 1)
+    2.1
+
     References
     ----------
     [1] Khuriati, A., P. Purwanto, H. S. Huboyo, Suryono Sumariyah, S. Suryono, and A. B. Putranto. 
@@ -549,18 +605,24 @@ class Incinerator(SanUnit):
     
     [2] Omari, Arthur, Karoli N. Njau, Geoffrey R. John, Joseph H. Kihedu, and Peter L. Mtui. 
     "Mass And Energy Balance For Fixed Bed Incinerators A case of a locally designed incinerator in Tanzania."
+
+    [3] Thornton, W. M. "The relation of oxygen to the heat of combustion of organic compounds."
+    Philosophical Magazine and Journal of Science, 6th series, vol. 33, pp. 196-203, 1917.
+
+    [4] Huggett, C. "Estimation of rate of heat release by means of oxygen consumption measurements."
+    Fire and Materials, vol. 4, no. 2, pp. 61-65, 1980 (13.1 MJ/kg O2, +/-5%).
     """
 
     #These are class attributes
     _N_ins = 3
     _N_outs = 2   
-    Cp_air = 1 #(Cp = 1 kJ/kg for air)
     
     def __init__(self, ID='', ins=None, outs=(), thermo=None, isdynamic=False, 
                   init_with='WasteStream', F_BM_default=None, process_efficiency=0.90, 
-                  calorific_value_sludge=12000, calorific_value_fuel=50000, 
+                  calorific_value_sludge=None, calorific_value_fuel=None, 
+                  heating_value_basis='LHV', 
                   ash_component_ID='X_Ig_ISS', nitrogen_ID='S_N2', water_ID='H2O',
-                  carbon_dioxide_ID='S_CO2', **kwargs):
+                  carbon_dioxide_ID='S_CO2', oxygen_ID='S_O2', **kwargs):
         SanUnit.__init__(self, ID, ins, outs, thermo, isdynamic=isdynamic, 
                          init_with=init_with, F_BM_default=F_BM_default)
         
@@ -571,12 +633,18 @@ class Incinerator(SanUnit):
         self.nitrogen_ID = nitrogen_ID
         self.water_ID = water_ID
         self.carbon_dioxide_ID = carbon_dioxide_ID
-        self.Heat_air = None 
-        self.Heat_fuel = None
-        self.Heat_sludge = None
-        self.Heat_flue_gas = None
-        self.Heat_loss = None
-    
+        self.oxygen_ID = oxygen_ID
+        self.heating_value_basis = heating_value_basis
+        self._combustion_data = None
+        self.combustion_reactions = None
+        self.heat_sludge = None
+        self.heat_fuel = None
+        self.heat_combustion = None
+        self.heat_air = None
+        self.heat_evaporation = None
+        self.heat_flue_gas = None
+        self.heat_loss = None
+
     @property
     def process_efficiency(self):
         '''Process efficiency of incinerator.'''
@@ -593,78 +661,233 @@ class Incinerator(SanUnit):
             
     @property
     def calorific_value_sludge(self):
-        '''Calorific value of sludge in KJ/kg.'''
+        '''[float or NoneType] Calorific value of the dry sludge in KJ/kg, None to calculate from component properties.'''
         return self._calorific_value_sludge
 
     @calorific_value_sludge.setter
     def calorific_value_sludge(self, calorific_value_sludge):
-        if calorific_value_sludge is not None: 
-            self._calorific_value_sludge = calorific_value_sludge
-        else: 
-            raise ValueError('Calorific value of sludge expected from user')
+        self._calorific_value_sludge = calorific_value_sludge
             
     @property
     def calorific_value_fuel(self):
-        '''Calorific value of fuel in KJ/kg.'''
+        '''[float or NoneType] Calorific value of the fuel in KJ/kg, None to calculate from component properties.'''
         return self._calorific_value_fuel
 
     @calorific_value_fuel.setter
     def calorific_value_fuel(self, calorific_value_fuel):
-        if calorific_value_fuel is not None: 
-            self._calorific_value_fuel = calorific_value_fuel
-        else: 
-            raise ValueError('Calorific value of fuel expected from user')
+        self._calorific_value_fuel = calorific_value_fuel
+
+    @property
+    def heating_value_basis(self):
+        '''[str] Basis of the heats of combustion, 'LHV' (lower heating value) or 'HHV' (higher heating value).'''
+        return self._heating_value_basis
+    @heating_value_basis.setter
+    def heating_value_basis(self, basis):
+        if basis not in ('LHV', 'HHV'):
+            raise ValueError(f"heating_value_basis must be 'LHV' or 'HHV', not {basis!r}")
+        self._heating_value_basis = basis
         
+    _atomic_mass = {el: periodic_table[el].MW for el in 'CHON'} # g/mol
+    heat_per_O2 = 13.1e6 # J/kg O2 consumed, net heat of combustion of organics (Thornton's rule [3], [4])
+    cp_air = 1.005 # kJ/kg/K, the heat capacities of dissolved gas components are not for gases
+    T_ref = 298.15 # K, reference temperature for the sensible heat of air
+
+    @staticmethod
+    def _get_real_mass_per_mol(cmp):
+        # Components with a formula have their molecular weight, others (e.g., ASM
+        # state variables) have MW as the measured-as mass and i_mass as the real mass
+        return cmp.chem_MW if cmp.formula else cmp.i_mass * cmp.MW
+
+    def _get_composition_reaction(self, cmp, use_formula=True):
+        """
+        Return a :class:`thermosteam.reaction.Reaction` for the complete combustion
+        of a component from its composition, for components whose
+        combustion is not defined by BioSTEAM (no formula, or products that are
+        not components, e.g., P4O10 and Ash for P and metals).
+
+        C becomes CO2, H becomes H2O, N becomes N2, and the O already bound in the
+        component reduces the O2 needed. Mineral solids and elements other than
+        C, H, O, and N go to the ash.
+
+        - Components with a formula are split into elements by their formula
+          (unless `use_formula` is False).
+        - Non-organic components without a formula (e.g., X_Ig_ISS) go to the ash.
+        - Organic components without a formula use their C and N contents, and H
+          and O are solved from the real mass and COD (COD = 2.664 C + 7.937 H - O).
+        """
+        cmps = self.components
+        M = self._atomic_mass
+        real = self._get_real_mass_per_mol(cmp) # real mass per mol
+        measured = real / cmp.i_mass # measured-as mass per mol (MW if no formula)
+        atoms = cmp.atoms if (cmp.formula and use_formula) else {}
+        O2_per_C = 2*M['O']/M['C'] # g O2 per g C (to CO2)
+        O2_per_H = molecular_weight({'O': 2})/(4*M['H']) # g O2 per g H (to H2O)
+        if atoms:
+            C, H, O, N = (atoms.get(el, 0) * M[el] for el in 'CHON') # g per mol
+            ash = max(cmp.chem_MW - C - H - O - N, 0.)
+        elif not cmp.organic:
+            C = H = O = N = 0.
+            ash = real
+        else:
+            C, N = cmp.i_C * measured, cmp.i_N * measured
+            iss = real*(1-cmp.f_Vmass_Totmass) if cmp.particle_size == 'Particulate' else 0.
+            metals = (cmp.i_P + cmp.i_K + cmp.i_Mg + cmp.i_Ca) * measured
+            ash = min(max(real - C - N, 0.), iss + metals)
+            volatile = max(real - C - N - ash, 0.)
+            H = min(max((cmp.i_COD*measured + volatile - O2_per_C*C)/(O2_per_H+1), 0.), volatile)
+            O = volatile - H
+        ash_cmp = cmps[self.ash_component_ID]
+        stoichiometry = {cmp.ID: -1.}
+        for ID, mol in ((self.carbon_dioxide_ID, C/M['C']),
+                        (self.water_ID, H/(2*M['H'])),
+                        (self.nitrogen_ID, N/(2*M['N'])),
+                        (self.oxygen_ID, -(C/M['C'] + H/(4*M['H']) - O/(2*M['O']))),
+                        (self.ash_component_ID, ash/self._get_real_mass_per_mol(ash_cmp))):
+            stoichiometry[ID] = stoichiometry.get(ID, 0.) + mol
+        return tmo.reaction.Reaction(stoichiometry, cmp.ID, 1., cmps)
+
+    def _compile_combustion(self):
+        """
+        Compile the combustion reactions (`combustion_reactions`) of all components,
+        their linear operator on the mole flows, and the heating values [J/mol].
+
+        Water, N2, CO2, O2, and the ash component pass through. BioSTEAM's
+        combustion reaction of the component is used when available, otherwise
+        the reaction is from the component's composition.
+        """
+        cmps = self.components
+        n = len(cmps)
+        pass_through = {cmps.index(i) for i in (self.water_ID, self.nitrogen_ID,
+                                                self.carbon_dioxide_ID, self.oxygen_ID,
+                                                self.ash_component_ID)}
+        i_o2 = cmps.index(self.oxygen_ID)
+        M_O2 = molecular_weight({'O': 2})
+        reactions = []
+        for j, cmp in enumerate(cmps):
+            if j in pass_through: continue
+            rxn = None
+            use_formula = True
+            if cmp.formula:
+                try: rxn = cmp.get_combustion_reaction(cmps)
+                except Exception: rxn = None # products that are not components
+            if rxn is not None and cmp.organic and cmp.i_COD > 0:
+                # The COD of organic components must equal their O2 demand; BioSTEAM's
+                # reaction can differ for ions (e.g., acetate), whose formula has no counter ion
+                mol = np.zeros(n)
+                mol[j] = 1.
+                rxn.force_reaction(mol)
+                cod = cmp.i_COD * self._get_real_mass_per_mol(cmp) / cmp.i_mass # g COD per mol
+                if abs(-mol[i_o2]*M_O2 - cod) > 0.01*cod: rxn, use_formula = None, False
+            if rxn is None: rxn = self._get_composition_reaction(cmp, use_formula)
+            reactions.append(rxn)
+        self.combustion_reactions = rxns = tmo.reaction.ParallelReaction(reactions)
+        # All conversions are 100% and each component is the reactant of at most one
+        # reaction, so the reactions are a linear operator on the mole flows
+        operator = np.zeros((n, n))
+        for j in range(n):
+            mol = np.zeros(n)
+            mol[j] = 1.
+            rxns.force_reaction(mol)
+            operator[:, j] = mol
+
+        # Heating values [J/mol]: component LHV/HHV for neutral components that have it,
+        # otherwise Thornton's rule (net heat per mass of O2 consumed) for the combustion reaction
+        i_o2, i_h2o = cmps.index(self.oxygen_ID), cmps.index(self.water_ID)
+        Hvap_water = cmps[self.water_ID].Hvap(self.T_ref)
+        heat_per_mol_O2 = self.heat_per_O2 * molecular_weight({'O': 2}) / 1000 # J/mol O2
+        hhv, lhv = np.zeros(n), np.zeros(n)
+        for j, cmp in enumerate(cmps):
+            if j in pass_through: continue
+            if cmp.formula and not cmp.i_charge and (cmp.HHV or 0) > 0 and (cmp.LHV or 0) > 0:
+                hhv[j], lhv[j] = cmp.HHV, cmp.LHV
+            else:
+                lhv[j] = heat_per_mol_O2 * max(-operator[i_o2, j], 0.)
+                hhv[j] = lhv[j] + Hvap_water * max(operator[i_h2o, j], 0.)
+        # Flows are in the `measured_as` unit of each component, so the moles are from the
+        # real mass (i_mass), which is correct whether or not the component's MW was
+        # adjusted to the measured-as unit when compiling the components
+        real_mass_per_mol = np.array([self._get_real_mass_per_mol(i) for i in cmps])
+        i_mass = np.asarray(cmps.i_mass, dtype=float)
+        self._combustion_data = dict(
+            operator=operator, hv=dict(HHV=hhv, LHV=lhv),
+            i_mass=i_mass, real_mass_per_mol=real_mass_per_mol,
+            to_mol=i_mass/real_mass_per_mol, to_mass=real_mass_per_mol/i_mass,
+            indices=tuple(cmps.index(i) for i in (self.ash_component_ID, self.carbon_dioxide_ID,
+                                                  self.nitrogen_ID, self.water_ID, self.oxygen_ID)),
+            )
+
+    def _get_balance(self, mass):
+        """
+        Return the (ash, CO2, N2, H2O, O2) masses after complete combustion,
+        in the same mass unit as the input, from the total mass of each
+        component in all influents (array).
+        """
+        if self._combustion_data is None: self._compile_combustion()
+        data = self._combustion_data
+        out = (data['operator'] @ (mass*data['to_mol'])) * data['to_mass']
+        return tuple(out[i] for i in data['indices'])
+
     def _run(self):
-        
         sludge, air, fuel = self.ins
         flue_gas, ash = self.outs
         flue_gas.phase = 'g'
         ash.phase = 's'
-        cmps = self.components
-        nitrogen_ID = self.nitrogen_ID
-        water_ID = self.water_ID
-        carbon_dioxide_ID = self.carbon_dioxide_ID
-        ash_cmp_ID = self.ash_component_ID
-        
+
         if sludge.phase != 'l':
             raise ValueError(f'The phase of incoming sludge is expected to be liquid not {sludge.phase}')
         if air.phase != 'g':
             raise ValueError(f'The phase of air is expected to be gas not {air.phase}')
         if fuel.phase != 'g':
             raise ValueError(f'The phase of fuel is expected to be gas not {fuel.phase}')
-        
-        inf = np.asarray(sludge.mass + air.mass + fuel.mass)
-        idx_n2 = cmps.index(nitrogen_ID)
-        idx_h2o = cmps.index(water_ID)
-        idx_co2 = cmps.index(carbon_dioxide_ID)
-        idx_ash = cmps.index(ash_cmp_ID)
-        i_mass = cmps.i_mass
-        i_iss = i_mass*(1-cmps.f_Vmass_Totmass)
-        
-        n2 = inf[idx_n2]
-        h2o = inf[idx_h2o]
-        
-        mass_ash = np.sum(inf*i_iss) - n2*i_mass[idx_n2] - h2o*i_mass[idx_h2o]
 
-        # Conservation of mass 
-        mass_flue_gas = np.sum(inf*i_mass) - mass_ash
-        mass_co2 = mass_flue_gas - n2*i_mass[idx_n2] - h2o*i_mass[idx_h2o] 
-        flue_gas.set_flow([n2, h2o, (mass_co2/i_mass[idx_co2])], 
-                          'kg/hr', (nitrogen_ID, water_ID, carbon_dioxide_ID))
-        ash.set_flow(mass_ash/i_mass[idx_ash],'kg/hr', (ash_cmp_ID,))
-        
-        # Energy balance 
-        # self.Heat_sludge = sludge.dry_mass*sludge.F_vol*self.calorific_value_sludge/1000 #in KJ/hr (mg/L)*(m3/hr)*(KJ/kg)=KJ/hr*(1/1000)
-        # self.Heat_air = np.sum(air.mass*cmps.i_mass)*self.Cp_air #in KJ/hr 
-        # self.Heat_fuel = np.sum(fuel.mass*cmps.i_mass)*self.calorific_value_fuel #in KJ/hr 
-        # self.Heat_flue_gas = self.process_efficiency*(self.Heat_sludge + self.Heat_air + self.Heat_fuel)
-        
-        # # Conservation of energy
-        # self.Heat_loss = self.Heat_sludge + self.Heat_air + self.Heat_fuel - self.Heat_flue_gas
-        
+        mass_ash, co2, n2, h2o, o2 = self._get_balance(np.asarray(sludge.mass + air.mass + fuel.mass))
+        if o2 < 0:
+            warn(f'{self.ID} does not receive enough oxygen for complete combustion '
+                 f'(short by {-o2:.4g} kg/hr); the flue gas oxygen is set to zero.')
+            o2 = 0.
+        flue_gas.empty()
+        ash.empty()
+        flue_gas.set_flow([n2, h2o, co2, o2], 'kg/hr',
+                          (self.nitrogen_ID, self.water_ID, self.carbon_dioxide_ID, self.oxygen_ID))
+        ash.set_flow(mass_ash, 'kg/hr', (self.ash_component_ID,))
+
+    def _design(self):
+        # Energy balance [kJ/hr], following BioSTEAM's BoilerTurbogenerator: the heat of
+        # combustion is the sum of the heating values of the feeds, and the efficiency
+        # defines the heat content of the flue gas and the heat loss
+        if self._combustion_data is None: self._compile_combustion()
+        data = self._combustion_data
+        hv = data['hv'][self.heating_value_basis] # J/mol = kJ/kmol
+        to_mol, i_mass = data['to_mol'], data['i_mass']
+        cmps = self.components
+        sludge, air, fuel = self.ins
+        i_h2o = cmps.index(self.water_ID)
+
+        if self.calorific_value_sludge is None:
+            self.heat_sludge = float((sludge.mass*to_mol) @ hv)
+        else:
+            sludge_mass = sludge.mass * i_mass # real mass
+            self.heat_sludge = (sludge_mass.sum()-sludge_mass[i_h2o]) * self.calorific_value_sludge
+        if self.calorific_value_fuel is None:
+            self.heat_fuel = float((fuel.mass*to_mol) @ hv)
+        else:
+            self.heat_fuel = float((fuel.mass*i_mass).sum()) * self.calorific_value_fuel
+        self.heat_combustion = self.heat_sludge + self.heat_fuel
+        self.heat_air = float((air.mass*i_mass).sum()) * self.cp_air * (air.T-self.T_ref)
+
+        # Evaporation of the water in the sludge (heating to the boiling point and vaporization)
+        water = cmps[self.water_ID]
+        T, Tb = sludge.T, water.Tb
+        Cn = water.Cn.l if hasattr(water.Cn, 'l') else water.Cn # liquid heat capacity [J/mol/K]
+        heat_up = Cn((T+Tb)/2) * (Tb-T) if T < Tb else 0.
+        self.heat_evaporation = float(sludge.mass[i_h2o]*to_mol[i_h2o]) * (water.Hvap(Tb)+heat_up)
+
+        heat_in = self.heat_combustion + self.heat_air
+        self.heat_flue_gas = self.process_efficiency * heat_in
+        self.heat_loss = heat_in - self.heat_flue_gas
+
     def _init_state(self):
-        self._state = np.zeros(4)
+        self._state = np.zeros(5) # ash, CO2, N2, H2O, O2 [mass/d]
         self._dstate = self._state * 0.
         self._cached_state = self._state.copy()
         self._cached_t = 0
@@ -673,56 +896,49 @@ class Incinerator(SanUnit):
         cmps = self.components
         flue_gas, ash = self.outs
         idx_ash = cmps.index(self.ash_component_ID)
-        idx_gases = cmps.indices([self.carbon_dioxide_ID, self.nitrogen_ID, self.water_ID])
+        idx_gases = cmps.indices([self.carbon_dioxide_ID, self.nitrogen_ID,
+                                  self.water_ID, self.oxygen_ID])
 
-        if flue_gas.state is None: flue_gas.state = np.array([0]*len(cmps)+[1])
-        if ash.state is None: ash.state = np.array([0]*len(cmps)+[1])
-        
+        # Float arrays, an integer array would truncate the flows
+        if flue_gas.state is None: flue_gas.state = np.append(np.zeros(len(cmps)), 1.)
+        if ash.state is None: ash.state = np.append(np.zeros(len(cmps)), 1.)
+
         flue_gas.state[idx_gases] = self._state[1:]
         ash.state[idx_ash] = self._state[0]
-        
+
     def _update_dstate(self):
         cmps = self.components
         flue_gas, ash = self.outs
         idx_ash = cmps.index(self.ash_component_ID)
-        idx_gases = cmps.indices([self.carbon_dioxide_ID, self.nitrogen_ID, self.water_ID])
+        idx_gases = cmps.indices([self.carbon_dioxide_ID, self.nitrogen_ID,
+                                  self.water_ID, self.oxygen_ID])
 
         if flue_gas.dstate is None: flue_gas.dstate = np.zeros(len(cmps)+1)
         if ash.dstate is None: ash.dstate = np.zeros(len(cmps)+1)
-        
+
         flue_gas.dstate[idx_gases] = self._dstate[1:]
         ash.dstate[idx_ash] = self._dstate[0]
-                
-        
+
+
     @property
     def AE(self):
         if self._AE is None:
             self._compile_AE()
         return self._AE
-    
+
     def _compile_AE(self):
         _state = self._state
         _dstate = self._dstate
         _update_state = self._update_state
         _update_dstate = self._update_dstate
         _cached_state = self._cached_state
-        cmps = self.components
-        idx_h2o = cmps.index(self.water_ID)
-        idx_n2 = cmps.index(self.nitrogen_ID)
-        idx_co2 = cmps.index(self.carbon_dioxide_ID)
-        idx_ash = cmps.index(self.ash_component_ID)
-        i_mass = cmps.i_mass
-        i_iss = i_mass*(1-cmps.f_Vmass_Totmass)
-        
-        def yt(t, QC_ins, dQC_ins):            
-            Mass_ins = np.diag(QC_ins[:,-1]) @ QC_ins[:,:-1]
-            n2 = Mass_ins[:, idx_n2].sum()
-            h2o = Mass_ins[:, idx_h2o].sum()
-            ash = np.sum(Mass_ins*i_iss) - n2*i_mass[idx_n2] - h2o*i_mass[idx_h2o]
-            co2 = np.sum(Mass_ins*i_mass) - ash - n2*i_mass[idx_n2] - h2o*i_mass[idx_h2o]
-            
-            _state[:] = [ash/i_mass[idx_ash], co2/i_mass[idx_co2], n2, h2o]
-            
+        _get_balance = self._get_balance
+
+        def yt(t, QC_ins, dQC_ins):
+            Mass_ins = np.diag(QC_ins[:,-1]) @ QC_ins[:,:-1] # one row per influent
+            _state[:] = _get_balance(Mass_ins.sum(axis=0))
+            _state[-1] = max(_state[-1], 0.) # no negative oxygen if the air is not enough
+
             if t > self._cached_t:
                 _dstate[:] = (_state - _cached_state)/(t - self._cached_t)
             _cached_state[:] = _state
