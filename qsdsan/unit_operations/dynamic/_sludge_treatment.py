@@ -716,8 +716,8 @@ class Incinerator(SanUnit):
         
         def yt(t, QC_ins, dQC_ins):            
             Mass_ins = np.diag(QC_ins[:,-1]) @ QC_ins[:,:-1]
-            n2 = Mass_ins[idx_n2]
-            h2o = Mass_ins[idx_h2o]
+            n2 = Mass_ins[:, idx_n2].sum()
+            h2o = Mass_ins[:, idx_h2o].sum()
             ash = np.sum(Mass_ins*i_iss) - n2*i_mass[idx_n2] - h2o*i_mass[idx_h2o]
             co2 = np.sum(Mass_ins*i_mass) - ash - n2*i_mass[idx_n2] - h2o*i_mass[idx_h2o]
             
