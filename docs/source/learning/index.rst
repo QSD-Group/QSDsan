@@ -25,7 +25,7 @@ Workshops
 
       +++
 
-      .. button-link:: https://github.com/QSD-Group/QSDsan-workshop/tree/main/2026-virtual
+      .. button-link:: https://github.com/QSD-Group/QSDsan-workshop/tree/2026-virtual/2026-virtual
          :color: primary
          :expand:
 
@@ -71,7 +71,7 @@ Workshops
 
       +++
 
-      .. button-link:: https://github.com/QSD-Group/QSDsan-workshop/tree/main/2022-EES
+      .. button-link:: https://github.com/QSD-Group/QSDsan-workshop/tree/2022-EES/editions/2022-EES
          :color: primary
          :expand:
 
