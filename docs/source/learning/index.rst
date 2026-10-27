@@ -13,6 +13,36 @@ Workshops
 .. grid:: 1 1 2 2
    :gutter: 4
 
+   .. grid-item-card:: Virtual QSDsan Workshop (October 2026)
+      :img-top: ../images/learning/qsdsan_2026.png
+
+      A two-session virtual workshop on ``QSDsan``. Session 1 covers components, streams,
+      units, and systems, then cost and environmental impacts (TEA and LCA). Session 2
+      covers uncertainty and sensitivity analysis, then dynamic simulation. The hands-on
+      notebooks run on your computer, on `Binder <https://mybinder.org/>`_, or on
+      `Google Colab <https://colab.research.google.com/>`_, and each has exercises with
+      hidden solutions, so you can follow them on your own.
+
+      +++
+
+      .. button-link:: https://github.com/QSD-Group/QSDsan-workshop/tree/main/2026-virtual
+         :color: primary
+         :expand:
+
+         Workshop Materials
+
+      .. button-link:: https://youtu.be/YrBc9CSg9kU
+         :color: secondary
+         :expand:
+
+         Video Recording, Session 1
+
+      .. button-link:: https://youtu.be/7zbhwiWNN-A
+         :color: secondary
+         :expand:
+
+         Video Recording, Session 2
+
    .. grid-item-card:: QSD Workshop at the AEESP Research and Education Conference
       :img-top: ../images/learning/aeesp.png
 
@@ -41,7 +71,7 @@ Workshops
 
       +++
 
-      .. button-link:: https://github.com/QSD-Group/QSDedu/tree/main/workshops
+      .. button-link:: https://github.com/QSD-Group/QSDsan-workshop/tree/main/2022-EES
          :color: primary
          :expand:
 
