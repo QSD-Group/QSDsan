@@ -649,7 +649,8 @@ def _rhos_masm2d(state_arr, params, acceptor_dependent_decay=True, h=None):
     if X_PAO > 0:
         pha = Monod(X_PHA/X_PAO, Kpha)
         rhos[9] *= Monod(S_A, Ka_PAO) * Monod(X_PP/X_PAO, Kpp)
-        rhos[[10,11]] *= pha * Monod(Kmax-X_PP/X_PAO, Kipp) * Monod(S_PO4, Kp_stor)
+        available_PP = max(Kmax-X_PP/X_PAO, 0.)
+        rhos[[10,11]] *= pha * Monod(available_PP, Kipp) * Monod(S_PO4, Kp_stor)
         rhos[[12,13]] *= pha
     
     if acceptor_dependent_decay:
