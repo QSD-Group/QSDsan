@@ -2,15 +2,24 @@
 """
 Self-contained mass-balance tests for QSDsan Junction process-model converters.
 
-Each junction is exercised standalone via `Junction._run()`. There is not
-reactor/system and no dependency on EXPOsan. We assert that the
-conversion conserves the quantities the interface is designed to conserve:
-COD and TKN for every junction, plus TP for the phosphorus-aware variants.
+Representative feeds exercise each junction standalone via `Junction._run()`;
+phosphorus-deficient edge cases also call `junction.reactions()` directly.
+There is no reactor, numerical integration, or dependency on EXPOsan. These
+checks isolate interface allocation errors from kinetics and solver behavior.
+The conserved quantities are COD and TKN for every junction, plus TP for the
+phosphorus-aware variants.
 
-These are characterization tests of existing converters: they pass when the
-balance holds and fail if a future change breaks it.
+The phosphorus regressions are necessary because converting between component
+sets with different i_P values can require more P than the source contains.
+The forward interface must limit its product allocation; the reverse interface
+may dissolve only available minerals and must reject an unrecoverable deficit.
+Clipping a substantial phosphate deficit to zero would create P, while reusing
+struvite already dissolved for N recovery would overdraw the mineral inventory.
+The tests therefore check nonnegative outputs as well as COD/N/P conservation.
+Their low-P compositions are deliberate stress cases, not calibration defaults.
 """
 import pytest
+import numpy as np
 import qsdsan as qs
 from qsdsan import process_models as pc, unit_operations as su, WasteStream
 
@@ -62,6 +71,7 @@ def _make_stream(name, create_cmps, concentrations):
     return ws
 
 
+# %% Representative forward/reverse interface balances
 def test_asm1_adm1_pair():
     # Forward: ASM1 -> ADM1
     inf_asm = _make_stream('inf_asm1', pc.create_asm1_cmps, _ASM1_INF)
@@ -209,3 +219,143 @@ def test_masm2d_adm1p_pair():
     assert_conserved(rev.ins[0], rev.outs[0], ('COD', 'TKN', 'TP'), rtol=1e-2)
 
     qs.main_flowsheet.clear()
+
+
+# %% Phosphorus-limited forward allocation
+@pytest.mark.parametrize('substrate_p,inert_p', [(0.00311, 0.00361),
+                                               (0.006149, 0.007139)])
+def test_masm2d_adm1p_low_p_allocation(substrate_p, inert_p):
+    """Restrict lipid allocation when low-P material cannot supply its P demand.
+
+    Retain these deliberately low structural-biomass i_P values as regression
+    inputs, not current plant settings. Reallocating COD to carbohydrate must
+    prevent negative S_IP without losing COD, nitrogen, or phosphorus.
+    """
+    concentrations = dict(_ASM2D_INF)
+    concentrations.update(
+        S_PO4=3.3505, S_F=79.8232, X_S=36251.9857,
+        X_H=22629.0355, X_AUT=1697.3254, X_I=44697.5586,
+        )
+    inf_asm = _make_stream(
+        'inf_masm2d_low_p', pc.create_masm2d_cmps, concentrations,
+        )
+    cmps_asm = qs.get_components()
+    for component_ID, i_N, i_P in (
+            ('S_F', 0.023464, substrate_p),
+            ('X_S', 0.023464, substrate_p),
+            ('S_I', 0.042021, inert_p),
+            ('X_I', 0.042021, inert_p),
+            ('X_H', 0.060305, 0.002369),
+            ('X_PAO', 0.060305, 0.002369),
+            ('X_AUT', 0.060305, 0.002369),
+            ):
+        component = getattr(cmps_asm, component_ID)
+        component.i_N = i_N
+        component.i_P = i_P
+    cmps_asm.refresh_constants()
+    asm = pc.mASM2d()
+
+    pc.create_adm1p_cmps()
+    adm = pc.ADM1p()
+    thermo_adm = qs.get_thermo()
+    fwd = su.mASM2dtoADM1p(
+        'fwd_adm1p_low_p', upstream=inf_asm, downstream='adm1p_low_p',
+        thermo=thermo_adm, isdynamic=False,
+        adm1_model=adm, asm2d_model=asm,
+        )
+    fwd._run()
+
+    eff = fwd.outs[0]
+    assert eff.iconc['S_IP'] >= 0.
+    assert eff.iconc['X_ch'] > 0.
+    assert np.all(np.asarray(eff.conc) >= -1e-8)
+    assert_conserved(inf_asm, eff, ('COD', 'TKN', 'TP'), rtol=1e-6)
+
+    qs.main_flowsheet.clear()
+
+
+# %% Phosphorus-deficient reverse mapping and mineral recovery
+@pytest.fixture
+def reverse_phosphorus_junction():
+    """Build an isolated reverse interface whose organic products require P.
+
+    The mASM2d X_S/S_F i_P values intentionally make carbohydrate/sugar mapping
+    demand more P than the dissolved feed supplies. This exercises post-mapping
+    recovery, which a balanced forward/reverse round trip need not trigger.
+    """
+    ca = pc.create_masm2d_cmps()
+    ca.X_S.i_P = ca.S_F.i_P = 0.006149
+    ca.refresh_constants()
+    ta = qs.get_thermo()
+    asm = pc.mASM2d()
+    cd = pc.create_adm1p_cmps()
+    adm = pc.ADM1p()
+    stream = qs.WasteStream('reverse_p_feed')
+    junction = su.ADM1ptomASM2d(
+        'reverse_p', upstream=stream, thermo=ta,
+        adm1_model=adm, asm2d_model=asm)
+    yield junction, cd, ca
+    qs.main_flowsheet.clear()
+
+
+def _reverse_phosphorus_feed(components):
+    """Return a low-dissolved-P feed in the interface's mg/L convention."""
+    values = np.zeros(len(components))
+    for name, value in dict(X_ch=10000., S_su=100., S_IP=0.1,
+                            S_IN=1000., S_IC=10000.).items():
+        values[components.index(name)] = value
+    return values
+
+
+@pytest.mark.parametrize('mineral', ['X_struv', 'X_newb', 'X_ACP',
+                                    'X_AlPO4', 'X_FePO4'])
+def test_post_mapping_p_recovered(reverse_phosphorus_junction, mineral):
+    """Recover a mapping-induced P deficit from each supported P mineral.
+
+    The input must remain unchanged and the mapped output must remain
+    nonnegative and conserve COD/N/P. This catches checking only the original
+    S_IP value instead of the phosphate remaining after organic remapping.
+    """
+    junction, cd, ca = reverse_phosphorus_junction
+    values = _reverse_phosphorus_feed(cd)
+    values[cd.index(mineral)] = 100. / getattr(cd, mineral).i_P
+    before = values.copy()
+    out = junction.reactions(values)
+    np.testing.assert_array_equal(values, before)
+    assert np.min(out) >= -1e-8
+    assert out[ca.index('S_PO4')] == pytest.approx(0., abs=1e-8)
+    for prop in ('i_COD', 'i_N', 'i_P'):
+        assert out @ getattr(ca, prop) == pytest.approx(
+            values @ getattr(cd, prop), rel=1e-9, abs=1e-8)
+
+
+@pytest.mark.parametrize('mineral_p', [0., 10.])
+def test_unrecoverable_p_rejected(reverse_phosphorus_junction, mineral_p):
+    """Reject insufficient P inventory instead of silently creating phosphate.
+
+    Both absent and insufficient mineral supplies must raise: clipping the
+    negative S_PO4 would hide an infeasible allocation and violate total P.
+    """
+    junction, cd, ca = reverse_phosphorus_junction
+    values = _reverse_phosphorus_feed(cd)
+    values[cd.index('X_struv')] = mineral_p / cd.X_struv.i_P
+    with pytest.raises(RuntimeError, match='negative S_PO4'):
+        junction.reactions(values)
+
+
+def test_n_then_p_uses_remaining_struvite(reverse_phosphorus_junction):
+    """Do not spend the original struvite inventory twice on N and P deficits.
+
+    With no dissolved inorganic N, nitrogen correction dissolves struvite
+    first. Subsequent P recovery must use the remaining inventory, keeping
+    mineral concentrations nonnegative and conserving both nutrients and COD.
+    """
+    junction, cd, ca = reverse_phosphorus_junction
+    values = _reverse_phosphorus_feed(cd)
+    values[cd.index('S_IN')] = 0.
+    values[cd.index('X_struv')] = 1000. / cd.X_struv.i_P
+    out = junction.reactions(values)
+    assert np.min(out) >= -1e-8
+    for prop in ('i_COD', 'i_N', 'i_P'):
+        assert out @ getattr(ca, prop) == pytest.approx(
+            values @ getattr(cd, prop), rel=1e-9, abs=1e-8)
