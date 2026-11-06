@@ -9,11 +9,16 @@ This module is developed by:
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
+
+Process construction, reaction evaluation, and model stoichiometry regressions.
+The ADM1p refresh regression belongs here because cache consistency is a process
+model responsibility, independent of any plant or junction configuration.
 '''
 
 
 
-__all__ = ('test_process', 'test_kinetic_reaction')
+__all__ = ('test_process', 'test_kinetic_reaction',
+           'test_adm1p_refresh_stoichiometry_invalidates_cached_matrix')
 
 def test_process():
     import pytest, os, qsdsan.process_models as pc
@@ -267,6 +272,43 @@ def test_kinetic_reaction():
         KRxn('SO2Cl2', n=1.5, k=1e-3, t=100, reaction='SO2Cl2 -> SO2 + Cl2')
 
 
+# %% Component-property changes and compiled model consistency
+def test_adm1p_refresh_stoichiometry_invalidates_cached_matrix():
+    """Refresh ADM1p's compiled matrix after changing component nutrient content.
+
+    Component i_N/i_P values may be changed after model construction to keep
+    coupled process models consistent. Refreshing component constants alone
+    does not rebuild the model's cached numeric stoichiometry. Evaluate the
+    original matrix first so this test exercises an already-populated cache,
+    then require model.refresh_stoichiometry() to invalidate and rebuild it.
+
+    A stale matrix can silently violate P conservation even if integration
+    succeeds. Verify both that the matrix changes and that each reaction's P
+    residual (stoichiometry @ i_P) returns to zero. These custom fractions are
+    stress-test inputs, not defaults or a frozen plant calibration.
+    """
+    import numpy as np
+    from qsdsan import process_models as pc
+
+    components = pc.create_adm1p_cmps()
+    model = pc.ADM1p()
+    original = np.asarray(model.stoichio_eval(), dtype=float).copy()
+
+    components.S_I.i_N = components.X_I.i_N = 0.042021
+    components.S_I.i_P = components.X_I.i_P = 0.007139
+    components.X_PAO.i_N = 0.060305
+    components.X_PAO.i_P = 0.002369
+    components.refresh_constants()
+
+    model.refresh_stoichiometry()
+    refreshed = np.asarray(model.stoichio_eval(), dtype=float)
+    residual = refreshed @ np.asarray(components.i_P, dtype=float)
+
+    assert not np.array_equal(refreshed, original)
+    assert np.max(np.abs(residual)) < 1e-10
+
+
 if __name__ == '__main__':
     test_process()
     test_kinetic_reaction()
+    test_adm1p_refresh_stoichiometry_invalidates_cached_matrix()

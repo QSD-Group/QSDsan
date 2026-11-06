@@ -3,6 +3,7 @@
 
 from ._abstract import Sampler, HydraulicDelay, Mixer, Splitter
 from ._pumping import Pump
+from ._sand_filtration import SandFiltration
 from ._anaerobic_reactor import AnaerobicCSTR
 from ._bioreactor import CSTR, BatchExperiment, PFR, AerobicDigester
 from ._clarifier import (
@@ -45,6 +46,7 @@ __all__ = (
     'GasExtractionMembrane', 'MembraneGasExtraction',
     'MetalDosage',
     'Pump',
+    'SandFiltration',
     'Thickener', 'Centrifuge', 'Incinerator',
     'HydraulicDelay',
 )

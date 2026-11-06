@@ -28,6 +28,8 @@ This module is developed by:
 
     Saumitra Rai <raisaumitra9@gmail.com>
 
+    Zixuan Wang <wyatt4428@gmail.com>
+
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
