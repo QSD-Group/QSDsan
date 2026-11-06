@@ -1024,6 +1024,9 @@ class WasteStream(SanStream):
 
             Price and impact item are not included.
 
+        The destination's time-series tracker and recorded history are preserved;
+        trackers are not physical properties to be averaged from inlet streams.
+
 
         Examples
         --------
@@ -1048,7 +1051,7 @@ class WasteStream(SanStream):
         SanStream.mix_from(self, others, **kwargs)
 
         for slot in _ws_specific_slots:
-            if not hasattr(self, slot):
+            if slot == '_scope' or not hasattr(self, slot):
                 continue
             #!!! This needs reviewing, might not be good to calculate some
             # attributes like pH
@@ -1266,7 +1269,15 @@ class WasteStream(SanStream):
         self.dstate = np.zeros_like(self.state)
 
     def _state2flows(self):
+        '''Write dynamic concentrations/flow to mass flows, including closed outlets.
+
+        Zero flow empties the material stream without clearing its concentration
+        state, derivative or tracker, so a temporarily closed outlet can reopen.
+        '''
         Q = self.state[-1] # m3/d
+        if Q == 0.:
+            self.empty()
+            return
         if self.phase == 'l':
             Cs = dict(zip(self.components.IDs, self.state[:-1]))
             Cs.pop('H2O', None)

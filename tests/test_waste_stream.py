@@ -22,6 +22,7 @@ def test_waste_stream():
     from numpy.testing import assert_allclose
     from math import isclose
     from qsdsan import set_thermo, Components, WasteStream
+    from qsdsan.unit_operations import Mixer
 
     components = Components.load_default()
     set_thermo(components)
@@ -41,6 +42,46 @@ def test_waste_stream():
     # TODO: After updating the default component properties,
     # add in tests here to make sure COD, etc. are calculated correctly
     assert_allclose(ws5.COD, 7414.267796, rtol=1e-2)
+
+    # Mixing must not average away an existing dynamic tracker.
+    assert not hasattr(ws5, '_scope')
+    Mixer('scope_mixer', ins=(ws3, ws4), outs=ws5)
+    ws5._init_state()
+    tracker = ws5.scope
+    tracker(0.)
+    recorded = tracker.record.copy()
+    ws5.mix_from((ws3, ws4))
+    assert ws5.scope is tracker
+    assert tracker.subject is ws5
+    assert_allclose(tracker.record, recorded)
+    assert_allclose(ws5.F_mass, 2015.0)
+    ws5._init_state()
+    tracker(1.)
+    assert_allclose(tracker.time_series, (0., 1.))
+
+    # A closed dynamic outlet has zero mass flow but retains its state to reopen.
+    for phase in ('l', 'g'):
+        outlet = WasteStream(f'closed_outlet_{phase}', phase=phase)
+        Mixer(f'closed_outlet_source_{phase}', ins=(ws3,), outs=outlet)
+        outlet.state = np.append(components.kwarray({'S_Ac': 100.}), 24.)
+        outlet.dstate = np.zeros_like(outlet.state)
+        outlet._state2flows()
+        original_mass = outlet.mass.copy()
+        assert outlet.F_mass > 0.
+        outlet.state[-1] = 0.
+        original_state = outlet.state.copy()
+        original_dstate = outlet.dstate.copy()
+        outlet_tracker = outlet.scope
+        outlet_tracker(0.)
+        outlet._state2flows()
+        assert outlet.F_mass == outlet.F_vol == 0.
+        assert_allclose(outlet.state, original_state)
+        assert_allclose(outlet.dstate, original_dstate)
+        assert outlet.scope is outlet_tracker
+        assert_allclose(outlet_tracker.time_series, (0.,))
+        outlet.state[-1] = 24.
+        outlet._state2flows()
+        assert_allclose(outlet.mass, original_mass)
 
     # Make sure below attributes are calculated based on flow info, cannot be set
     with pytest.raises(AttributeError):
