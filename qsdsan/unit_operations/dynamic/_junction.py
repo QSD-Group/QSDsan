@@ -10,6 +10,8 @@ This module is developed by:
 
     Saumitra Rai <mailto.raisaumitra9@gmail.com>
 
+    Zixuan Wang <wyatt4428@gmail.com>
+
 This module is under the University of Illinois/NCSA Open Source License.
 Please refer to https://github.com/QSD-Group/QSDsan/blob/main/LICENSE.txt
 for license details.
@@ -2762,21 +2764,28 @@ class ADM1ptomASM2d(A1junction):
                     asm_vals -= fraction_dissolve * X_MgCO3 * mgc_sto
                 if asm_vals[8] < 0:
                     asm_vals[8] = 0
-            if S_IN < 0:
+            if asm_vals[in_idx] < 0:
                 xn_mmp = sum(asm_vals[_mmp_idx] * mmp_in)
                 if xn_mmp > 0:
-                    fraction_dissolve = max(0, min(1, - S_IN / xn_mmp))
+                    fraction_dissolve = max(0, min(1, -asm_vals[in_idx] / xn_mmp))
                     asm_vals -= fraction_dissolve * X_struv * struv_sto
-                    X_struv = asm_vals[_mmp_idx[0]]
-            if S_IP < 0:
+            # Use post-mapping phosphate and minerals remaining after N correction.
+            if asm_vals[ip_idx] < 0:
                 xp_mmp = sum(asm_vals[_mmp_idx] * mmp_ip)
                 if xp_mmp > 0:
-                    fraction_dissolve = max(0, min(1, - S_IP / xp_mmp))
-                    asm_vals -= fraction_dissolve * X_struv * struv_sto
-                    asm_vals -= fraction_dissolve * X_newb * newb_sto
-                    asm_vals -= fraction_dissolve * X_ACP * acp_sto
-                    asm_vals -= fraction_dissolve * X_AlPO4 * alp_sto
-                    asm_vals -= fraction_dissolve * X_FePO4 * fep_sto
+                    fraction_dissolve = min(1., -asm_vals[ip_idx] / xp_mmp)
+                    remaining = asm_vals[_mmp_idx].copy()
+                    for mineral, sto in ((1, struv_sto), (2, newb_sto),
+                                         (3, acp_sto), (5, alp_sto), (6, fep_sto)):
+                        asm_vals -= fraction_dissolve * remaining[mineral] * sto
+            if asm_vals[ip_idx] < -self.atol:
+                raise RuntimeError(
+                    'ADM1ptomASM2d generated negative S_PO4 '
+                    f'({asm_vals[ip_idx]:.6g} mg P/L) after component mapping '
+                    'and mineral dissolution. Available phosphorus cannot '
+                    'support the specified X_S/S_F i_P values.')
+            if asm_vals[ip_idx] < 0.:
+                asm_vals[ip_idx] = 0.
                       
             # asm_vals = f_corr(adm_vals, asm_vals)
             return asm_vals
@@ -2963,6 +2972,43 @@ class mASM2dtoADM1p(A1junction):
         fep_sto = np.asarray(adm.stoichiometry.loc['FePO4_precipitation_dissolution'])
         
         xs_to_li = self.xs_to_li
+
+        def p_limited_li_ch(li, ch, available_p, source):
+            '''Return the closest lipid/carbohydrate split allowed by P.'''
+            li = max(0., li)
+            ch = max(0., ch)
+            pool = li + ch
+            tolerance = max(self.atol, 1e-12)
+            if available_p < -tolerance:
+                raise RuntimeError(
+                    f'{source} fixed products require more P than the source '
+                    f'contains ({-available_p:.6g} mg P/L deficit).')
+            available_p = max(0., available_p)
+            if pool == 0.:
+                return li, ch
+
+            delta_p = P_li - P_ch
+            if abs(delta_p) <= 1e-15:
+                required_p = pool * P_ch
+                if required_p > available_p + tolerance:
+                    raise RuntimeError(
+                        f'{source} products require {required_p:.6g} mg P/L, '
+                        f'but only {available_p:.6g} mg P/L is available.')
+                return li, ch
+
+            bound = (available_p - pool * P_ch) / delta_p
+            if delta_p > 0.:
+                li = min(li, max(0., bound))
+            else:
+                li = max(li, min(pool, max(0., bound)))
+            ch = pool - li
+            required_p = li * P_li + ch * P_ch
+            if required_p > available_p + tolerance:
+                raise RuntimeError(
+                    f'{source} cannot be mapped without a phosphorus deficit; '
+                    f'{required_p:.6g} mg P/L is required and '
+                    f'{available_p:.6g} mg P/L is available.')
+            return li, ch
         
         # To convert components from ASM2d to mADM1 (asm2d-2-madm1)
         def masm2d2adm1p(asm_vals):           
@@ -3034,6 +3080,11 @@ class mASM2dtoADM1p(A1junction):
             # PROCESS 3: biomass decay (X_H, X_AUT lysis) anaerobic
             bio = X_H + X_AUT
             _si, _ch, _pr, _li, _xi = bio * p3_stoichio
+            fixed_bio_p = _si*P_SI + _pr*P_pr + _xi*P_XI
+            _li, _ch = p_limited_li_ch(
+                _li, _ch, bio*P_XB - fixed_bio_p,
+                'mASM2d biomass decay',
+                )
             S_IC += bio*C_XB - (_si*C_SI + _ch*C_ch + _pr*C_pr + _li*C_li + _xi*C_XI)
             S_IN += bio*N_XB - (_si*N_SI + _ch*N_ch + _pr*N_pr + _li*N_li + _xi*N_XI)
             S_IP += bio*P_XB - (_si*P_SI + _ch*P_ch + _pr*P_pr + _li*P_li + _xi*P_XI)
@@ -3041,7 +3092,8 @@ class mASM2dtoADM1p(A1junction):
             # CONV 2: transform asm X_S into X_pr, X_li, X_ch
             X_ND = X_S*N_XS
             req_xcod = X_ND / N_pr
-            # Since X_pr_i_N >> X_pr_i_P there's no need to check req_xcod for N and P separately (CONFIRM LATER 05/16)
+            # Protein is allocated from source N first; the subsequent lipid-
+            # carbohydrate split is capped by the source's remaining P.
             
             # if available X_S is not enough to fulfill that protein requirement
             if X_S < req_xcod: # if X_S cod is not enough to convert all organic particulate N into pr
@@ -3051,6 +3103,11 @@ class mASM2dtoADM1p(A1junction):
                 X_pr = req_xcod 
                 X_li = xs_to_li * (X_S - X_pr)
                 X_ch = (X_S - X_pr) - X_li
+
+            X_li, X_ch = p_limited_li_ch(
+                X_li, X_ch, X_S*P_XS - X_pr*P_pr,
+                'mASM2d X_S conversion',
+                )
 
             S_IN += X_ND - X_pr*N_pr
             S_IC += X_S*C_XS - (X_pr*C_pr + X_li*C_li + X_ch*C_ch)
@@ -3101,6 +3158,14 @@ class mASM2dtoADM1p(A1junction):
                     adm_vals -= fraction_dissolve * X_ACP * acp_sto
                     adm_vals -= fraction_dissolve * X_AlPO4 * alp_sto
                     adm_vals -= fraction_dissolve * X_FePO4 * fep_sto
+
+            if adm_vals[ip_idx] < -self.atol:
+                raise RuntimeError(
+                    'mASM2dtoADM1p generated negative S_IP '
+                    f'({adm_vals[ip_idx]:.6g} mg P/L) after phosphorus-limited '
+                    'component allocation and mineral dissolution.')
+            if adm_vals[ip_idx] < 0.:
+                adm_vals[ip_idx] = 0.
 
             # adm_vals = f_corr(asm_vals, adm_vals)
             # adm_vals = f_corr(_asm_vals, adm_vals)
