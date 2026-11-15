@@ -24,7 +24,8 @@ from warnings import warn
 from math import ceil, pi
 from biosteam import HeatExchangerNetwork as HXN, HXprocess as HXP, HXutility as HXU
 from biosteam.units.design_tools.specification_factors import material_densities_lb_per_ft3
-from biosteam.exceptions import bounds_warning, DesignWarning
+from biosteam.exceptions import DesignWarning
+from ._tank import _bounds_warning
 from biosteam.units.design_tools import flash_vessel_design
 from ... import SanUnit, Construction
 from ...utils import auom
@@ -363,10 +364,10 @@ class HXutility(SanUnit, HXU):
                  'required', category=DesignWarning)
         VW, VWT = flash_vessel_design.compute_vessel_weight_and_wall_thickness(
             pressure, diameter, length, rho_M)
-        bounds_warning(self, 'Horizontal vessel weight', VW, 'lb',
-                       self._bounds['Horizontal vessel weight'], 'cost')
-        bounds_warning(self, 'Horizontal vessel diameter', diameter, 'ft',
-                       self._bounds['Horizontal vessel diameter'], 'cost')
+        _bounds_warning(self, 'Horizontal vessel weight', VW, 'lb',
+                        self._bounds['Horizontal vessel weight'], 'cost')
+        _bounds_warning(self, 'Horizontal vessel diameter', diameter, 'ft',
+                        self._bounds['Horizontal vessel diameter'], 'cost')
         Design = {}
         Design['Vessel type'] = 'Horizontal'
         Design['Length'] = length # ft

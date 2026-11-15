@@ -18,6 +18,7 @@ for license details.
 
 from warnings import warn
 from math import pi
+from inspect import signature, Parameter
 from biosteam.units import Tank as BSTTank, MixTank as BSTMixTank, StorageTank as BSTStorageTank
 from biosteam.exceptions import bounds_warning, DesignWarning
 from biosteam.units.design_tools import flash_vessel_design
@@ -31,6 +32,27 @@ __all__ = ('Tank', 'MixTank', 'StorageTank', )
 _lb_to_kg = auom('lb').conversion_factor('kg')
 _m_to_ft = auom('m').conversion_factor('ft')
 _Pa_to_psi = auom('Pa').conversion_factor('psi')
+
+# Compatibility with BioSTEAM versions before/after the `design_input` feature:
+# the latter drops the `kind` argument of `bounds_warning` and the `_default_*`
+# class attributes of `Tank`, taking the defaults from design inputs instead.
+_bounds_warning_has_kind = 'kind' in signature(bounds_warning).parameters
+
+def _bounds_warning(source, key, value, units, bounds, kind='cost'):
+    if _bounds_warning_has_kind:
+        bounds_warning(source, key, value, units, bounds, kind)
+    else:
+        bounds_warning(source, key, value, units, bounds)
+
+
+def _get_tank_default(cls, name):
+    '''Default value of a tank design parameter (e.g., ``tau``) for ``cls``.'''
+    legacy = getattr(cls, f'_default_{name}', Parameter.empty)
+    if legacy is not Parameter.empty: return legacy
+    for klass in cls.__mro__: # design inputs may be overridden by plain properties
+        default = getattr(klass.__dict__.get(name), 'default', Parameter.empty)
+        if default is not Parameter.empty: return default
+    raise AttributeError(f"{cls.__name__} has no default for '{name}'")
 
 
 class Tank(SanUnit, BSTTank, isabstract=True):
@@ -53,11 +75,12 @@ class Tank(SanUnit, BSTTank, isabstract=True):
                          init_with=init_with, F_BM_default=F_BM_default,
                          include_construction=include_construction,)
 
-        self.vessel_type = vessel_type or self._default_vessel_type
-        self.tau = tau or self._default_tau
-        self.V_wf = V_wf or self._default_V_wf
-        self.vessel_material = vessel_material or self._default_vessel_material
-        self.kW_per_m3 = kW_per_m3 or self._default_kW_per_m3
+        cls = type(self)
+        self.vessel_type = vessel_type or _get_tank_default(cls, 'vessel_type')
+        self.tau = tau or _get_tank_default(cls, 'tau')
+        self.V_wf = V_wf or _get_tank_default(cls, 'V_wf')
+        self.vessel_material = vessel_material or _get_tank_default(cls, 'vessel_material')
+        self.kW_per_m3 = kW_per_m3 or _get_tank_default(cls, 'kW_per_m3')
 
 
 class MixTank(Tank, BSTMixTank):
@@ -140,10 +163,10 @@ class StorageTank(Tank, BSTStorageTank):
                  'required', category=DesignWarning)
         VW, VWT = flash_vessel_design.compute_vessel_weight_and_wall_thickness(
             pressure, diameter, length, rho_M)
-        bounds_warning(self, 'Horizontal vessel weight', VW, 'lb',
-                       self._bounds['Horizontal vessel weight'], 'cost')
-        bounds_warning(self, 'Horizontal vessel diameter', diameter, 'ft',
-                       self._bounds['Horizontal vessel diameter'], 'cost')
+        _bounds_warning(self, 'Horizontal vessel weight', VW, 'lb',
+                        self._bounds['Horizontal vessel weight'], 'cost')
+        _bounds_warning(self, 'Horizontal vessel diameter', diameter, 'ft',
+                        self._bounds['Horizontal vessel diameter'], 'cost')
         Design = {}
         Design['Vessel type'] = 'Horizontal'
         Design['Length'] = length # ft

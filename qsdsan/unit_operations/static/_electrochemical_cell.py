@@ -130,7 +130,7 @@ class ElectrochemicalCell(SanUnit):
     Electrochemical cell                                      Units                              unit_1
     Electricity         Power                                    kW                            5.42e-05
                         Cost                                 USD/hr                            9.44e-06
-    Design              Electrode unit_1_Main_Anode - Nu...    ...                                   1
+    Design...Electrode unit_1_Main_Anode - Nu...    ...                                   1
                         Electrode unit_1_Main_Anode - Ma...    ...  titanium grid catalyst welded t...
                         Electrode unit_1_Main_Anode - Su...      m2                                   1
                         Electrode unit_1_Main_Cathode - ...    ...                                   1

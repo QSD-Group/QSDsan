@@ -30,6 +30,7 @@ from biosteam.units.design_tools.tank_design import (
     TankPurchaseCostAlgorithm
     )
 from ..bst import HXutility, MixTank
+from ..bst._tank import _get_tank_default
 from ..dynamic import Pump
 from ... import SanStream, SanUnit, Stream
 from ...utils import (
@@ -173,7 +174,7 @@ class InternalCirculationRx(MixTank):
         self.Y_biogas = Y_biogas
         self.Y_biomass = Y_biomass
         self.biodegradability = biodegradability
-        self.V_wf = V_wf or self._default_V_wf
+        self.V_wf = V_wf or _get_tank_default(type(self), 'V_wf')
         self.vessel_type = 'IC'
         self.vessel_material = vessel_material
         self.kW_per_m3 = kW_per_m3

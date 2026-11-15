@@ -46,7 +46,9 @@ class IsothermalCompressor(bst.units.IsothermalCompressor, qs.SanUnit):
     def _design(self):
         super()._design()
         D = self.design_results
-        power = D['Ideal power']/D['Driver efficiency']
+        # Newer BioSTEAM keeps the driver efficiency as an attribute, not a design result
+        efficiency = D['Driver efficiency'] if 'Driver efficiency' in D else self.driver_efficiency
+        power = D['Ideal power']/efficiency
         D['Number of 300 kW unit'] = floor(power/300)
         D['Number of 4 kW unit'] = 0
         if (power - D['Number of 300 kW unit']*300) <= 60:

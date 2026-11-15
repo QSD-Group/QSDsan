@@ -341,7 +341,9 @@ class KnockOutDrum(Reactor):
         # being assigned. Applying as a multiplier on baseline_purchase_costs instead.
         Reactor._cost(self)
         purchase_costs = self.baseline_purchase_costs
-        purchase_costs[f'{self.vessel_type} pressure vessel'] *= self.drum_cost_factor
+        # Newer BioSTEAM names this item 'Pressure vessel' regardless of vessel type
+        key = 'Pressure vessel' if 'Pressure vessel' in purchase_costs             else f'{self.vessel_type} pressure vessel'
+        purchase_costs[key] *= self.drum_cost_factor
 
 # =============================================================================
 # HTL
