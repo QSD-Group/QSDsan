@@ -118,8 +118,6 @@ class mSCWOGasModule(IsothermalCompressor):
         for attr, value in kwargs.items():
             setattr(self, attr, value)
         
-        self.ins.P = 101325
-        self.outs.P = self.P
     
     def _init_lca(self):
         self.include_construction = True

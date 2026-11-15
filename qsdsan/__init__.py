@@ -196,8 +196,12 @@ def default(utilities=True, CEPCI=True, flowsheet=True):
 # ── Upgrade main_flowsheet to SanMainFlowsheet in-place ──────────────────────
 # _construction.py / _transportation.py imported main_flowsheet by reference
 # above; upgrading the object in-place keeps all those references valid.
-from biosteam._unit import AbstractUnit as _AbstractUnit
-from thermosteam import AbstractStream as _AbstractStream
+try: # biosteam 2.54.0 / thermosteam 0.54.2 (released)
+    from biosteam._unit import AbstractUnit as _AbstractUnit
+    from thermosteam import AbstractStream as _AbstractStream
+except ImportError: # BioSTEAM master (Nov 2026+) dropped the Abstract* base classes
+    _AbstractUnit = _bst.Unit
+    _AbstractStream = _bst.Stream
 from biosteam._flowsheet import MainFlowsheet as _BstMainFlowsheet
 
 _qs_default_fs = SanFlowsheet.from_registries(

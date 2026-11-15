@@ -467,9 +467,9 @@ class BatchExperiment(SanUnit):
     ...     if v != 0:
     ...         print(f'{k}{" "*(7-len(k))}{v:.2f}')
     S_S    0.93
-    X_S    446.11
-    X_BH   25.72
-    X_P    39.24
+    X_S    446.1...
+    X_BH   25...
+    X_P    39.2...
     S_O    -0.00
     S_NO   -0.00
     S_NH   2.12
@@ -1405,10 +1405,10 @@ class AerobicDigester(CSTR):
         WasteStream-specific properties:
          pH         : 7.0
          Alkalinity : 2.5 mmol/L
-         COD        : 40986.7 mg/L
-         BOD        : 15415.3 mg/L
-         TC         : 13984.9 mg/L
-         TOC        : 13984.9 mg/L
+         COD        : 4098... mg/L
+         BOD        : 1541... mg/L
+         TC         : 1398... mg/L
+         TOC        : 1398... mg/L
          TN         : 3534.1 mg/L
          TP         : 458.2 mg/L
          TK         : 89.3 mg/L
