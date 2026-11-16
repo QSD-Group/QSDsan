@@ -175,10 +175,9 @@ class StorageTank(Tank, BSTStorageTank):
         Design['Wall thickness'] = VWT # in
         return Design
 
-    @property
-    def vessel_material(self):
-        return self._vessel_material
-    @vessel_material.setter
+    # Copies the parent's design input (or property, with older BioSTEAM)
+    # with this setter, so the validation and cost factor update are kept
+    @BSTStorageTank.vessel_material.setter
     def vessel_material(self, i):
         exist_material = getattr(self, '_vessel_material', None)
         BSTStorageTank.vessel_material.fset(self, i)

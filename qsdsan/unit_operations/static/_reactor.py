@@ -210,10 +210,9 @@ class Reactor(SanUnit, PressureVessel, isabstract=True):
 
             self.power_utility(self.kW_per_m3*Design['Total volume'])
         
-    @property
-    def vessel_material(self):
-        return self._vessel_material
-    @vessel_material.setter
+    # Copies the parent's design input (or property, with older BioSTEAM)
+    # with this setter, so the validation and cost factor update are kept
+    @PressureVessel.vessel_material.setter
     def vessel_material(self, i):
         exist_material = getattr(self, '_vessel_material', None)
         PressureVessel.vessel_material.fset(self, i)
