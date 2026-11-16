@@ -230,7 +230,7 @@ class ActivatedSludgeProcess(SanUnit):
                                         ins=hx_in, outs=hx_out, T=T)
         self.blower = blower = Blower('blower', linked_unit=self, N_reactor=N_train)
         self.air_piping = air_piping = GasPiping('air_piping', linked_unit=self, N_reactor=N_train)
-        self.equipments = (blower, air_piping)
+        self.equipment = [blower, air_piping]
         self.F_BM.update(F_BM)
         self.equipment_lifetime.update(lifetime)
 
@@ -422,7 +422,7 @@ class ActivatedSludgeProcess(SanUnit):
         # note that original code in ref 2 only considers O2,
         # here includes N2
         air_cfm = auom('m3/hr').convert(self.ins[1].F_vol, 'cfm')
-        blower, piping = self.equipments
+        blower, piping = self.equipment
         blower.N_reactor = piping.N_reactor = N_train
         blower.gas_demand_per_reactor = piping.gas_demand_per_reactor = air_cfm
         self.add_equipment_design()

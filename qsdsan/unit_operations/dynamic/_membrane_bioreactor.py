@@ -307,7 +307,7 @@ class AnMBR(SanUnit):
         for k, v in kwargs.items(): setattr(self, k, v)
 
         blower = self.blower = Blower(ID+'_blower', linked_unit=self)
-        self.equipments = (blower,)
+        self.equipment = [blower]
         self._check_design()
 
 
