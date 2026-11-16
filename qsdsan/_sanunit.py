@@ -523,9 +523,11 @@ class SanUnit(Unit, isabstract=True):
         lifetime = self.equipment_lifetime if isinstance(self.equipment_lifetime, dict) else None
         isa = isinstance
         get = getattr
-        def update_unit_attr(unit_attr, equip_ID, equip_attr):
+        def update_unit_attr(unit_attr, equip_ID, equip_attr, prefix):
             if isa(equip_attr, dict):
-                unit_attr.update(equip_attr)
+                # Keys are the parts of the equipment, which are named
+                # with the same prefix in the unit's cost items (see `add_equipment_cost`)
+                unit_attr.update(add_prefix(equip_attr, prefix))
             else:
                 unit_attr[equip_ID] = equip_attr
         for equip in self.equipment:
@@ -541,10 +543,10 @@ class SanUnit(Unit, isabstract=True):
                     (F_BM, F_D, F_P, F_M),
                     ('F_BM', 'F_D', 'F_P', 'F_M'),
                     ):
-                update_unit_attr(unit_attr, equip_ID, get(equip, equip_attr))
+                update_unit_attr(unit_attr, equip_ID, get(equip, equip_attr), prefix)
             equip_lifetime = get(equip, 'lifetime')
             if lifetime is not None and equip_lifetime is not None:
-                update_unit_attr(lifetime, equip_ID, equip_lifetime)
+                update_unit_attr(lifetime, equip_ID, equip_lifetime, prefix)
 
     def add_equipment_cost(self):
         unit_cost = self.baseline_purchase_costs
@@ -553,6 +555,18 @@ class SanUnit(Unit, isabstract=True):
             equip_cost = equip._baseline_purchase_costs = equip._cost()
             if isinstance(equip_cost, dict):
                 unit_cost.update(add_prefix(equip_cost, prefix))
+                # Factors/lifetime given as a single value apply to all parts
+                # (those given as dicts are added with the prefixes in `add_equipment_design`)
+                lifetime = self.equipment_lifetime
+                for unit_attr, equip_attr in (
+                        (self.F_BM, equip.F_BM), (self.F_D, equip.F_D),
+                        (self.F_P, equip.F_P), (self.F_M, equip.F_M),
+                        (lifetime if isinstance(lifetime, dict) else None, equip.lifetime),
+                        ):
+                    if unit_attr is None or equip_attr is None or isinstance(equip_attr, dict):
+                        continue
+                    for part in equip_cost:
+                        unit_attr[f'{prefix} - {part}'] = equip_attr
             else:
                 unit_cost[equip.ID] = equip_cost
 

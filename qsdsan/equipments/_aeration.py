@@ -72,7 +72,7 @@ class Blower(Equipment):
     def __init__(self, ID=None, linked_unit=None,
                  F_BM={
                      'Blowers': 2.22,
-                     'Blower piping': 1,
+                     'Blower air piping': 1,
                      'Blower building': 1.11,
                      },
                  lifetime=15, lifetime_unit='yr',
