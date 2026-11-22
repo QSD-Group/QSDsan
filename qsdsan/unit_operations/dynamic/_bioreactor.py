@@ -56,6 +56,14 @@ class CSTR(SanUnit):
     split : iterable of float
         Volumetric splits of effluent flows if there are more than one effluent.
         The default is None.
+    fixed_flows : dict, optional
+        Fixed volumetric flow rates (in [m^3/d]) of the effluents, as {index of
+        the effluent in `outs`: flow rate}, e.g., for an internal recycle with a
+        constant flow rate regardless of the influent flow. The flow of an effluent
+        is capped (at 99% of the total influent flow in total), and the remaining flow is
+        assigned to the other effluent(s) based on `split` (equally if not given).
+        Effluents with a fixed flow are ignored in `split` (the fractions of the
+        remaining effluents are renormalized). The default is None.
     V_max : float
         Designed volume, in [m^3]. The default is 1000.
         
@@ -96,7 +104,7 @@ class CSTR(SanUnit):
     
     _D_O2 = 2.10e-9   # m2/s
 
-    def __init__(self, ID='', ins=None, outs=(), split=None, thermo=None,
+    def __init__(self, ID='', ins=None, outs=(), split=None, fixed_flows=None, thermo=None,
                  init_with='WasteStream', V_max=1000, W_tank = 6.4, D_tank = 3.65,
                  freeboard = 0.61, t_wall = None, t_slab = None, aeration=2.0, 
                  DO_ID='S_O2', suspended_growth_model=None, 
@@ -118,6 +126,7 @@ class CSTR(SanUnit):
         self._concs = None
         self._mixed = WasteStream()
         self.split = split
+        self.fixed_flows = fixed_flows
         self._cache_OTR = None
 
         # # Design parameters 
@@ -267,6 +276,55 @@ class CSTR(SanUnit):
             self._split = np.array(split)/sum(split)
 
     @property
+    def fixed_flows(self):
+        '''[dict or NoneType] Fixed flow rates [m^3/d] of the effluents, {index in `outs`: flow rate}.'''
+        return self._fixed_flows
+
+    @fixed_flows.setter
+    def fixed_flows(self, fixed_flows):
+        if not fixed_flows: self._fixed_flows = None
+        else:
+            fixed_flows = {int(i): float(Q) for i, Q in fixed_flows.items()}
+            n = len(self._outs)
+            if any(i < 0 or i >= n for i in fixed_flows):
+                raise ValueError('indices in fixed_flows must be valid indices of outs')
+            if len(fixed_flows) >= n:
+                raise ValueError('at least one effluent must not have a fixed flow')
+            if any(Q < 0 for Q in fixed_flows.values()):
+                raise ValueError('fixed flows cannot be negative')
+            self._fixed_flows = fixed_flows
+
+    def _get_out_flows(self, Q_in, dQ_in=None):
+        '''
+        Get the flow rate (and its derivative if `dQ_in` is given) of each effluent
+        given the total influent flow `Q_in` (and its derivative `dQ_in`).
+        '''
+        n = len(self._outs)
+        split = self.split
+        fixed = self._fixed_flows
+        if not fixed:
+            frac = np.ones(n)/n if split is None else split
+            Qs = Q_in * frac
+            return Qs if dQ_in is None else (Qs, dQ_in * frac)
+        Qs = np.zeros(n)
+        dQs = np.zeros(n)
+        Q_left = Q_in
+        # Cap the fixed flows so that other effluents always receive some flow
+        # (e.g., when the flows are not yet converged)
+        cap = 0.99 * Q_in
+        scale = min(1., cap/sum(fixed.values())) if sum(fixed.values()) > 0 else 1.
+        for i, Q in fixed.items():
+            Qs[i] = Q * scale
+            Q_left -= Qs[i]
+            if scale < 1 and dQ_in is not None: dQs[i] = dQ_in * Q/sum(fixed.values()) * 0.99
+        free = [i for i in range(n) if i not in fixed]
+        frac = np.ones(len(free)) if split is None else split[free]
+        frac = frac/frac.sum()
+        Qs[free] = Q_left * frac
+        if dQ_in is not None: dQs[free] = (dQ_in - dQs.sum()) * frac
+        return Qs if dQ_in is None else (Qs, dQs)
+
+    @property
     def state(self):
         '''The state of the CSTR, including component concentrations [mg/L] and flow rate [m^3/d].'''
         if self._state is None: return None
@@ -301,20 +359,21 @@ class CSTR(SanUnit):
         aer = self._aeration
         if isinstance(aer, (float, int)): arr[self.components.index(self._DO_ID)] = aer
         arr[-1] = sum(ws.state[-1] for ws in self.ins)
-        if self.split is None: self._outs[0].state = arr
+        if self.split is None and not self._fixed_flows: self._outs[0].state = arr
         else:
-            for ws, spl in zip(self._outs, self.split):
+            for ws, Q in zip(self._outs, self._get_out_flows(arr[-1])):
                 y = arr.copy()
-                y[-1] *= spl
+                y[-1] = Q
                 ws.state = y
 
     def _update_dstate(self):
         arr = self._dstate
-        if self.split is None: self._outs[0].dstate = arr
+        if self.split is None and not self._fixed_flows: self._outs[0].dstate = arr
         else:
-            for ws, spl in zip(self._outs, self.split):
+            _, dQs = self._get_out_flows(self._state[-1], arr[-1])
+            for ws, dQ in zip(self._outs, dQs):
                 y = arr.copy()
-                y[-1] *= spl
+                y[-1] = dQ
                 ws.dstate = y
 
     def _run(self):
@@ -322,11 +381,12 @@ class CSTR(SanUnit):
         mixed = self._mixed # avoid creating multiple new streams
         mixed.mix_from(self.ins)
         Q = mixed.F_vol # m3/hr
-        if self.split is None: self.outs[0].copy_like(mixed)
+        if self.split is None and not self._fixed_flows: self.outs[0].copy_like(mixed)
         else:
-            for ws, spl in zip(self._outs, self.split):
+            Qs = self._get_out_flows(Q*24)/24 # m3/hr
+            for ws, Q_out in zip(self._outs, Qs):
                 ws.copy_like(mixed)
-                ws.set_total_flow(Q*spl, 'm3/hr')
+                ws.set_total_flow(Q_out, 'm3/hr')
 
     def get_retained_mass(self, biomass_IDs):
         cmps = self.components
